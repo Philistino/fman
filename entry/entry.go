@@ -16,17 +16,40 @@ import (
 )
 
 type Entry struct {
-	Name string
-	Size string
+	fs.FileInfo
+
+	SizeStr string
 
 	ModifyTime string
 	AccessTime string
 	ChangeTime string
 
 	Type        string
-	IsDir       bool
 	SymlinkName string
 	SymLinkPath string
+	timeStats   times.Timespec
+}
+
+// Name returns the basename of the file
+//
+// this method is provided because the ui creates
+// zeroed Entry structs in one place (which it really shouldn't)
+func (e Entry) Name() string {
+	if e.FileInfo == nil {
+		return ""
+	}
+	return e.FileInfo.Name()
+}
+
+// IsDir returns whether the file is a directory
+//
+// this method is provided because the ui creates
+// zeroed Entry structs in one place (which it really shouldn't)
+func (e Entry) IsDir() bool {
+	if e.FileInfo == nil {
+		return false
+	}
+	return e.FileInfo.IsDir()
 }
 
 func HighlightSyntax(name string, preview string) (string, error) {
@@ -56,12 +79,6 @@ func HighlightSyntax(name string, preview string) (string, error) {
 
 func GetEntry(info fs.FileInfo, path string) (Entry, error) {
 
-	timeStats, err := times.Stat(path)
-
-	if err != nil {
-		return Entry{}, err
-	}
-
 	// Get Entry size
 	size := humanize.IBytes(uint64(info.Size()))
 
@@ -81,20 +98,20 @@ func GetEntry(info fs.FileInfo, path string) (Entry, error) {
 	}
 
 	return Entry{
-		Name: info.Name(),
-		Size: size,
+		FileInfo: info,
+		SizeStr:  size,
 
-		Type:  mime.TypeByExtension(filepath.Ext(info.Name())),
-		IsDir: info.IsDir(),
+		Type: mime.TypeByExtension(filepath.Ext(info.Name())),
 
-		ModifyTime: humanize.Time(timeStats.ModTime()),
-		ChangeTime: humanize.Time(timeStats.ChangeTime()),
-		AccessTime: humanize.Time(timeStats.AccessTime()),
+		ModifyTime: humanize.Time(info.ModTime()),
+		// ChangeTime: humanize.Time(info.),
+		// AccessTime: humanize.Time(timeStats.AccessTime()),
+		// timeStats:  timeStats,
 	}, nil
 
 }
 
-func GetEntries(path string, showHidden bool) ([]Entry, error) {
+func GetEntries(path string, showHidden bool, dirsMixed bool) ([]Entry, error) {
 	os.Chdir(path)
 	newPath, _ := os.Getwd()
 
@@ -157,5 +174,43 @@ func GetEntries(path string, showHidden bool) ([]Entry, error) {
 		entries = append(entries, entry)
 	}
 
+	entries = sortE(
+		path,
+		entries,
+		sortType{
+			method: naturalSort,
+			option: dirfirstSort,
+		},
+		true,
+		true,
+		[]string{".*"},
+	)
+
+	// if !dirsMixed {
+	// 	sort.Slice(entries, func(i, j int) bool {
+	// 		switch {
+	// 		case entries[i].IsDir && !entries[j].IsDir:
+	// 			return true
+	// 		case !entries[i].IsDir && entries[j].IsDir:
+	// 			return false
+	// 		default:
+	// 			return entries[i].Name < entries[j].Name
+	// 		}
+	// 	})
+	// }
 	return entries, nil
 }
+
+// func sortEntries(entries []Entry) []Entry {
+// 	sort.Slice(entries, func(i, j int) bool {
+// 		switch {
+// 		case entries[i].IsDir() && !entries[j].IsDir:
+// 			return true
+// 		case !entries[i].IsDir && entries[j].IsDir:
+// 			return false
+// 		default:
+// 			return entries[i].Name < entries[j].Name
+// 		}
+// 	})
+// 	return entries
+// }

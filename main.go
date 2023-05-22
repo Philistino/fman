@@ -18,6 +18,7 @@ import (
 	"github.com/nore-dev/fman/keymap"
 	"github.com/nore-dev/fman/message"
 
+	"github.com/nore-dev/fman/model/buttonbar"
 	"github.com/nore-dev/fman/model/dialog"
 	"github.com/nore-dev/fman/model/entryinfo"
 	"github.com/nore-dev/fman/model/infobar"
@@ -28,6 +29,7 @@ import (
 )
 
 type App struct {
+	buttonBar buttonbar.ButtonBar
 	list      list.List
 	entryInfo entryinfo.EntryInfo
 	toolbar   toolbar.Toolbar
@@ -70,7 +72,7 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return app, tea.Quit
 		}
 	case tea.WindowSizeMsg:
-		app.flexBox.SetHeight(msg.Height - lipgloss.Height(app.toolbar.View()) - lipgloss.Height(app.toolbar.View()))
+		app.flexBox.SetHeight(msg.Height - lipgloss.Height(app.toolbar.View()) - lipgloss.Height(app.toolbar.View()) - lipgloss.Height(app.buttonBar.View()))
 		app.flexBox.SetWidth(msg.Width)
 
 		app.width = msg.Width
@@ -91,27 +93,18 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return app, nil
 	}
 
-	var listCmd, toolbarCmd, entryCmd, infobarCmd tea.Cmd
+	var listCmd, toolbarCmd, entryCmd, infobarCmd, buttonBarCmd tea.Cmd
 
 	app.list, listCmd = app.list.Update(msg)
 	app.toolbar, toolbarCmd = app.toolbar.Update(msg)
 	app.entryInfo, entryCmd = app.entryInfo.Update(msg)
 	app.infobar, infobarCmd = app.infobar.Update(msg)
+	app.buttonBar, buttonBarCmd = app.buttonBar.Update(msg)
 
-	return app, tea.Batch(listCmd, toolbarCmd, entryCmd, infobarCmd)
+	return app, tea.Batch(listCmd, toolbarCmd, entryCmd, infobarCmd, buttonBarCmd)
 }
 
 func (app *App) View() string {
-	app.flexBox.ForceRecalculate()
-
-	row := app.flexBox.Row(0)
-
-	// Set content of list view
-	row.Cell(0).SetContent(app.list.View())
-
-	// Set content of entry view
-	row.Cell(1).SetContent(app.entryInfo.View())
-
 	// Render the dialog if it is open
 	if app.dialog.Dialog().IsOpen() {
 		return zone.Scan(lipgloss.Place(
@@ -123,18 +116,25 @@ func (app *App) View() string {
 		))
 	}
 
-	view := zone.Mark("list", app.flexBox.Render())
-
-	if app.list.IsEmpty() {
+	var view string
+	switch {
+	case app.list.IsEmpty():
 		view = app.renderFull(theme.EmptyFolderStyle.Render("This folder is empty"))
-	}
-
-	if app.showHelp {
+	case app.showHelp:
 		view = app.renderFull(theme.EmptyFolderStyle.Render(app.help.View(keymap.Default)))
+	default:
+		app.flexBox.ForceRecalculate()
+		row := app.flexBox.Row(0)
+		// Set content of list view
+		row.Cell(0).SetContent(app.list.View())
+		// Set content of entry view
+		row.Cell(1).SetContent(app.entryInfo.View())
+		view = zone.Mark("list", app.flexBox.Render())
 	}
 
 	return zone.Scan(lipgloss.JoinVertical(
 		lipgloss.Top,
+		app.buttonBar.View(),
 		app.toolbar.View(),
 		view,
 		app.infobar.View(),
@@ -166,9 +166,13 @@ func main() {
 
 	theme.SetTheme(selectedTheme)
 
+	listX := list.New(&selectedTheme, cfg.Config.DirsMixed)
+	entryX := entryinfo.New(&selectedTheme, listX.SelectedEntry())
+
 	app := App{
-		list:      list.New(&selectedTheme),
-		entryInfo: entryinfo.New(&selectedTheme),
+		buttonBar: buttonbar.New(&selectedTheme),
+		list:      listX,
+		entryInfo: entryX,
 		toolbar:   toolbar.New(),
 		infobar:   infobar.New(),
 		dialog:    dialog.New(),

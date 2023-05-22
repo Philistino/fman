@@ -24,8 +24,9 @@ const (
 var Config = &Cfg{}
 
 type Cfg struct {
-	Theme string
-	Icons string
+	Theme     string
+	Icons     string
+	DirsMixed bool
 }
 
 func LoadConfig() error {
@@ -38,6 +39,9 @@ func LoadConfig() error {
 	}
 	if args.CommandLine.Icons != "" {
 		Config.Icons = args.CommandLine.Icons
+	}
+	if args.CommandLine.DirsMixed {
+		Config.DirsMixed = args.CommandLine.DirsMixed
 	}
 
 	// For each config value if neither config file or cli args provides a value

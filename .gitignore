@@ -24,3 +24,5 @@ go.work
 
 # Artifacts created by GoReleaser during release
 dist/
+
+.vscode/
