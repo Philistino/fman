@@ -18,6 +18,7 @@ type List struct {
 	entries []entry.Entry
 
 	showHidden bool
+	dirsMixed  bool
 
 	path string
 
@@ -84,7 +85,7 @@ func detectOpenCommand() string {
 	return "start"
 }
 
-func New(theme *theme.Theme) List {
+func New(theme *theme.Theme, dirsFirst bool) List {
 
 	path, err := filepath.Abs(".")
 
@@ -92,7 +93,7 @@ func New(theme *theme.Theme) List {
 		panic(err)
 	}
 
-	entries, err := entry.GetEntries(path, false)
+	entries, err := entry.GetEntries(path, false, dirsFirst)
 
 	if err != nil {
 		panic(err)
@@ -106,6 +107,7 @@ func New(theme *theme.Theme) List {
 		clickDelay:    0.5,
 		theme:         theme,
 		showHidden:    false,
+		dirsMixed:     dirsFirst,
 	}
 
 	rows := []*stickers.FlexBoxRow{

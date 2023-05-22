@@ -14,6 +14,9 @@ type KeyMap struct {
 	GoToParentDirectory   key.Binding
 	GoToSelectedDirectory key.Binding
 
+	GoBack    key.Binding
+	GoForward key.Binding
+
 	ScrollPreviewDown key.Binding
 	ScrollPreviewUp   key.Binding
 
@@ -28,32 +31,40 @@ type KeyMap struct {
 
 var Default = KeyMap{
 	MoveCursorUp: key.NewBinding(
-		key.WithKeys("w", "up", "k"),
-		key.WithHelp("w/↑/k", "Move cursor up"),
+		key.WithKeys("w", "up"),
+		key.WithHelp("w/↑", "Move cursor up"),
 	),
 	MoveCursorDown: key.NewBinding(
-		key.WithKeys("s", "down", "j"),
-		key.WithHelp("s/↓/j", "Move cursor down"),
+		key.WithKeys("s", "down"),
+		key.WithHelp("s/↓", "Move cursor down"),
 	),
 	GoToTop: key.NewBinding(
-		key.WithKeys("g"),
-		key.WithHelp("g", "Go to top"),
+		key.WithKeys("ctrl+up"),
+		key.WithHelp("ctrl+↑", "Go to Top"),
 	),
 	GoToBottom: key.NewBinding(
-		key.WithKeys("G"),
-		key.WithHelp("G", "Go to Bottom"),
+		key.WithKeys("ctrl+down"),
+		key.WithHelp("ctrl+↓", "Go to Bottom"),
 	),
 	GoToHomeDirectory: key.NewBinding(
 		key.WithKeys("~", "."),
 		key.WithHelp("~/.", "Go to Home Directory"),
 	),
 	GoToParentDirectory: key.NewBinding(
-		key.WithKeys("a", "h", "left"),
-		key.WithHelp("a/h/←", "Go to parent directory"),
+		key.WithKeys("a", "left"),
+		key.WithHelp("a/←", "Go to parent directory"),
 	),
 	GoToSelectedDirectory: key.NewBinding(
-		key.WithKeys("d", "l", "right"),
-		key.WithHelp("d/l/→", "Go to selected directory"),
+		key.WithKeys("d", "right"),
+		key.WithHelp("d/→", "Go to selected directory"),
+	),
+	GoBack: key.NewBinding(
+		key.WithKeys("alt+left"),
+		key.WithHelp("alt+←", "Go back"),
+	),
+	GoForward: key.NewBinding(
+		key.WithKeys("alt+right"),
+		key.WithHelp("alt+→", "Go forward"),
 	),
 	CopyToClipboard: key.NewBinding(
 		key.WithKeys("c"),
@@ -87,7 +98,7 @@ func (k KeyMap) ShortHelp() []key.Binding {
 func (k KeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.MoveCursorUp, k.MoveCursorDown, k.ScrollPreviewUp, k.ScrollPreviewDown},
-		{k.GoToTop, k.GoToBottom},
+		{k.GoToTop, k.GoToBottom, k.GoBack, k.GoForward},
 		{k.GoToHomeDirectory, k.GoToParentDirectory, k.GoToSelectedDirectory},
 		{k.OpenFile, k.ShowHiddenEntries, k.CopyToClipboard},
 	}

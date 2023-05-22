@@ -39,11 +39,11 @@ func (list *List) View() string {
 		entry := list.entries[index]
 		content := make([]strings.Builder, cellsLength)
 
-		name := truncateText(entry.Name, list.truncateLimit-2)
+		name := truncateText(entry.Name(), list.truncateLimit-2)
 
 		if entry.SymlinkName != "" {
 			content[0].WriteRune(theme.GetActiveIconTheme().SymlinkIcon)
-		} else if entry.IsDir {
+		} else if entry.IsDir() {
 			content[0].WriteRune(theme.GetActiveIconTheme().FolderIcon)
 		} else {
 			content[0].WriteRune(theme.GetActiveIconTheme().FileIcon)
@@ -51,7 +51,7 @@ func (list *List) View() string {
 
 		content[0].WriteRune(' ')
 		content[0].WriteString(strings.ReplaceAll(name, "-", "‐"))
-		content[1].WriteString(entry.Size)
+		content[1].WriteString(entry.SizeStr)
 		content[2].WriteString(entry.ModifyTime)
 
 		var style lipgloss.Style
@@ -81,13 +81,13 @@ func (list *List) View() string {
 			// Colors
 			if index == list.selected_index {
 				style = style.Foreground(list.Theme().SelectedItemFgColor)
-			} else if entry.Name[0] == '.' {
+			} else if entry.Name()[0] == '.' {
 				style = style.Foreground(list.Theme().HiddenFileColor)
 
-				if entry.IsDir {
+				if entry.IsDir() {
 					style = style.Foreground(list.Theme().HiddenFolderColor)
 				}
-			} else if entry.IsDir {
+			} else if entry.IsDir() {
 				style = style.Foreground(list.Theme().FolderColor)
 			} else {
 				style = style.Foreground(list.Theme().TextColor)

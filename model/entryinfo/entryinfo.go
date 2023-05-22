@@ -38,8 +38,9 @@ const margin = 2
 
 var previewStyle = lipgloss.NewStyle()
 
-func New(theme *theme.Theme) EntryInfo {
+func New(theme *theme.Theme, firstEntry entry.Entry) EntryInfo {
 	return EntryInfo{
+		entry:         firstEntry,
 		previewHeight: 10,
 		theme:         theme,
 		width:         10,
@@ -92,7 +93,7 @@ func (entryInfo *EntryInfo) getFullPath() string {
 		return entryInfo.entry.SymLinkPath
 	}
 
-	return filepath.Join(entryInfo.path, entryInfo.entry.Name)
+	return filepath.Join(entryInfo.path, entryInfo.entry.Name())
 }
 func (entryInfo *EntryInfo) handlePreview() tea.Cmd {
 	preview, err := entryInfo.getFilePreview(entryInfo.getFullPath())
@@ -103,7 +104,7 @@ func (entryInfo *EntryInfo) handlePreview() tea.Cmd {
 		return message.SendMessage(err.Error())
 	}
 
-	preview, err = entry.HighlightSyntax(entryInfo.entry.Name, preview)
+	preview, err = entry.HighlightSyntax(entryInfo.entry.Name(), preview)
 
 	if err != nil {
 		entryInfo.preview = entryInfo.renderNoPreview("Failed to highlight syntax")
@@ -139,7 +140,7 @@ func (entryInfo *EntryInfo) Update(msg tea.Msg) (EntryInfo, tea.Cmd) {
 			recover()
 		}()
 
-		if entryInfo.entry.IsDir {
+		if entryInfo.entry.IsDir() {
 			return *entryInfo, nil
 		}
 
@@ -155,7 +156,7 @@ func (entryInfo *EntryInfo) getFileInfo() string {
 
 	str.WriteByte('\n')
 
-	name := termenv.String(entryInfo.entry.Name).Bold().Underline().String()
+	name := termenv.String(entryInfo.entry.Name()).Bold().Underline().String()
 	str.WriteString(truncate.StringWithTail(name, uint(entryInfo.width-margin-1), "..."))
 
 	str.WriteByte('\n')
@@ -166,7 +167,7 @@ func (entryInfo *EntryInfo) getFileInfo() string {
 		typeStr = "Unknown type"
 	}
 
-	if entryInfo.entry.IsDir {
+	if entryInfo.entry.IsDir() {
 		typeStr = "Folder"
 	}
 
@@ -179,7 +180,7 @@ func (entryInfo *EntryInfo) getFileInfo() string {
 
 		icon := theme.GetActiveIconTheme().FileIcon
 
-		if entryInfo.entry.IsDir {
+		if entryInfo.entry.IsDir() {
 			style.Background(entryInfo.theme.FolderColor)
 			icon = theme.GetActiveIconTheme().FolderIcon
 		} else {
@@ -203,16 +204,14 @@ func (entryInfo *EntryInfo) getFileInfo() string {
 
 	str.WriteByte('\n')
 
-	str.WriteString(termenv.String("Accessed ").Italic().String())
-	str.WriteString(entryInfo.entry.AccessTime)
+	// str.WriteString(termenv.String("Accessed ").Italic().String())
+	// str.WriteString(entryInfo.entry.AccessTime)
 
 	return str.String()
 }
 
 func (entryInfo *EntryInfo) View() string {
-
 	fileInfo := entryInfo.getFileInfo()
-
 	entryInfo.previewHeight = entryInfo.height - lipgloss.Height(fileInfo)
 
 	return theme.EntryInfoStyle.Render(lipgloss.JoinVertical(lipgloss.Left,

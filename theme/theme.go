@@ -50,6 +50,9 @@ func SetTheme(theme Theme) {
 	ButtonStyle.BorderForeground(theme.ButtonBorderFgColor)
 	ButtonStyle.Background(theme.ButtonBgColor)
 
+	InactiveButtonStyle.BorderForeground(theme.ButtonBorderFgColor)
+	InactiveButtonStyle.Background(theme.ButtonBgColor)
+
 	PathStyle.Background(theme.PathElementBgColor)
 	PathStyle.Foreground(theme.PathElementFgColor)
 	PathStyle.BorderForeground(theme.PathElementBorderFgColor)

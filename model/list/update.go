@@ -28,7 +28,10 @@ func (list *List) getEntriesAbove() tea.Cmd {
 
 func (list *List) getEntriesBelow() tea.Cmd {
 	list.lastDirectory = ""
-	if !list.SelectedEntry().IsDir {
+	if len(list.entries) == 0 {
+		return nil
+	}
+	if !list.SelectedEntry().IsDir() {
 		return nil
 	}
 
@@ -36,7 +39,7 @@ func (list *List) getEntriesBelow() tea.Cmd {
 		return message.ChangePath(list.SelectedEntry().SymLinkPath)
 	}
 
-	path := filepath.Join(list.path, list.SelectedEntry().Name)
+	path := filepath.Join(list.path, list.SelectedEntry().Name())
 	return message.ChangePath(path)
 }
 
@@ -53,19 +56,19 @@ func getFullPath(entry entry.Entry, path string) string {
 		return entry.SymLinkPath
 	}
 
-	return filepath.Join(path, entry.Name)
+	return filepath.Join(path, entry.Name())
 }
 
 func (list *List) handlePathChange(path string) tea.Cmd {
 	var err error
 
 	list.path = path
-	list.entries, err = entry.GetEntries(list.path, list.showHidden)
+	list.entries, err = entry.GetEntries(list.path, list.showHidden, list.dirsMixed)
 
 	// Remember the last directory
 	if list.lastDirectory != "" {
 		for i, entry := range list.entries {
-			if entry.Name == list.lastDirectory && entry.IsDir {
+			if entry.Name() == list.lastDirectory && entry.IsDir() {
 				list.selected_index = i
 			}
 		}
@@ -99,7 +102,7 @@ func (list *List) handleMouseClick(msg tea.MouseMsg) tea.Cmd {
 	// Double click
 	time := time.Now()
 
-	if time.Sub(list.lastClickedTime).Seconds() < list.clickDelay && list.SelectedEntry().IsDir {
+	if time.Sub(list.lastClickedTime).Seconds() < list.clickDelay && list.SelectedEntry().IsDir() {
 		list.getEntriesBelow()
 		list.restrictIndex()
 		return func() tea.Msg {
@@ -205,7 +208,7 @@ func (list *List) Update(msg tea.Msg) (List, tea.Cmd) {
 			path := getFullPath(list.SelectedEntry(), list.path)
 
 			// If the file can be readable open the default editor for editing
-			if !list.SelectedEntry().IsDir && isFileReadable(path) {
+			if !list.SelectedEntry().IsDir() && isFileReadable(path) {
 				return *list, list.openEditor(path)
 			}
 
