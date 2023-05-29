@@ -1,4 +1,4 @@
-package historygen
+package history
 
 import (
 	"reflect"

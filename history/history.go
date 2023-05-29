@@ -1,4 +1,4 @@
-package historygen
+package history
 
 import (
 	"errors"
@@ -41,7 +41,7 @@ func (tracker *History[T]) Visit(leavingState T) {
 }
 
 // Back returns the last navigation state
-func (tracker *History[T]) Back(state T) (T, error) {
+func (tracker *History[T]) Back(leavingState T) (T, error) {
 	if tracker.BackEmpty() {
 		log.Println("backStack is empty")
 		var noop T
@@ -51,14 +51,14 @@ func (tracker *History[T]) Back(state T) (T, error) {
 	tracker.backStack = stack
 	tracker.fwdStack, _ = appendMaxLen(
 		tracker.fwdStack,
-		state,
+		leavingState,
 		tracker.maxStackSize,
 	)
 	return last, nil
 }
 
 // Forward returns the last navigation state in the case that the user went back
-func (tracker *History[T]) Foreward(state T) (T, error) {
+func (tracker *History[T]) Foreward(leavingState T) (T, error) {
 	if tracker.ForewardEmpty() {
 		log.Println("forwardStack is empty")
 		var noop T
@@ -68,7 +68,7 @@ func (tracker *History[T]) Foreward(state T) (T, error) {
 	tracker.fwdStack = stack
 	tracker.backStack, _ = appendMaxLen(
 		tracker.backStack,
-		state,
+		leavingState,
 		tracker.maxStackSize,
 	)
 	return last, nil
