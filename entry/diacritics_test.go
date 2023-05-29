@@ -31,6 +31,7 @@ import (
 const baseTestString = "Příliš žluťoučký kůň příšerně úpěl ďábelské ódy"
 
 func TestRemoveDiacritics(t *testing.T) {
+	t.Parallel()
 	testStr := baseTestString
 	expStr := "Prilis zlutoucky kun priserne upel dabelske ody"
 	checkRemoveDiacritics(testStr, expStr, t)
@@ -61,6 +62,7 @@ func checkRemoveDiacritics(testStr string, expStr string, t *testing.T) {
 }
 
 func TestSearchSettings(t *testing.T) {
+	t.Parallel()
 	runSearch(t, true, false, true, true, "Veřejný", "vere", true)
 
 	runSearch(t, true, false, true, false, baseTestString, "Zlutoucky", true)
