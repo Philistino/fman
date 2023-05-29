@@ -32,7 +32,7 @@ type App struct {
 	buttonBar buttonbar.ButtonBar
 	list      list.List
 	entryInfo entryinfo.EntryInfo
-	toolbar   toolbar.Toolbar
+	toolbar   *toolbar.Toolbar
 	infobar   infobar.Infobar
 	dialog    dialog.Model
 
@@ -87,6 +87,8 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		app.entryInfo.SetHeight(app.flexBox.GetHeight())
 
 		app.help.Width = msg.Width
+
+		app.toolbar.SetWidth(msg.Width)
 
 	case message.UpdateDialogMsg:
 		app.dialog.SetDialog(&msg.Dialog)
