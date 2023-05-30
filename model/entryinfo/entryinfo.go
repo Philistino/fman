@@ -1,12 +1,9 @@
 package entryinfo
 
 import (
-	"bufio"
-	"errors"
-	"os"
+	"context"
 	"path/filepath"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -33,8 +30,9 @@ type EntryInfo struct {
 	previewHeight int
 	previewOffset int
 
-	theme      *theme.Theme
-	eofReached bool // is set to true when the end of the file is reached in the preview
+	theme         *theme.Theme
+	eofReached    bool // is set to true when the end of the file is reached in the preview
+	previewCancel context.CancelFunc
 }
 
 const margin = 2
@@ -54,62 +52,19 @@ func (entryInfo *EntryInfo) Init() tea.Cmd {
 	return nil
 }
 
-// this implementation opens and closes the file for reading on every scroll, which is probably a little slow
-func (entryInfo *EntryInfo) getFilePreview(path string) (string, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return "", err
+func (entryInfo *EntryInfo) resetPreview() {
+	if entryInfo.previewCancel != nil {
+		entryInfo.previewCancel()
+		entryInfo.previewCancel = nil
 	}
-	defer f.Close()
-
-	strBuilder := strings.Builder{}
-	scanner := bufio.NewScanner(f)
-	for i := 0; i < entryInfo.previewHeight+entryInfo.previewOffset; i++ {
-		ok := scanner.Scan()
-		if !ok {
-			entryInfo.eofReached = true
-			break
-		}
-		if i < entryInfo.previewOffset {
-			continue
-		}
-		text := scanner.Text()
-		strBuilder.WriteString(text)
-		strBuilder.WriteByte('\n')
-	}
-
-	if !utf8.ValidString(strBuilder.String()) {
-		return "", errors.New("unable to show preview")
-	}
-	if err := scanner.Err(); err != nil {
-		return "", err
-	}
-	return strBuilder.String(), nil
-}
-
-func (entryInfo *EntryInfo) handlePreview() tea.Cmd {
-	preview, err := entryInfo.getFilePreview(entryInfo.getFullPath())
-
-	if err != nil {
-		entryInfo.preview = entryInfo.renderNoPreview("Unreadable Content")
-		return message.SendMessage(err.Error())
-	}
-
-	preview, err = entry.HighlightSyntax(entryInfo.entry.Name(), preview)
-
-	if err != nil {
-		entryInfo.preview = entryInfo.renderNoPreview("Failed to highlight syntax")
-		return message.SendMessage(err.Error())
-	}
-
-	// tabs are rendered with different widths based on terminal and font settings
-	// so we replace the tab with four spaces so we can reliably truncate each line
-	preview = strings.ReplaceAll(preview, "\t", "    ")
-	entryInfo.preview = preview
-	return nil
+	entryInfo.previewOffset = 0
+	entryInfo.eofReached = false
+	entryInfo.preview = entryInfo.renderNoPreview("Loading preview...")
 }
 
 func (entryInfo *EntryInfo) Update(msg tea.Msg) (EntryInfo, tea.Cmd) {
+	// var cmd tea.Cmd
+	// var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case message.PathMsg:
 		entryInfo.path = msg.Path
@@ -119,30 +74,44 @@ func (entryInfo *EntryInfo) Update(msg tea.Msg) (EntryInfo, tea.Cmd) {
 			if !entryInfo.eofReached {
 				entryInfo.previewOffset += 1
 			}
-			return *entryInfo, entryInfo.handlePreview()
+			ctx, cancel := context.WithCancel(context.Background())
+			entryInfo.previewCancel = cancel
+			return *entryInfo, getPreviewCmd(ctx, entryInfo.getFullPath(), entryInfo.previewHeight, entryInfo.previewOffset)
 		}
 		if key.Matches(msg, keymap.Default.ScrollPreviewUp) && entryInfo.previewOffset > 0 {
 			entryInfo.previewOffset -= 1
 			entryInfo.eofReached = false
-			return *entryInfo, entryInfo.handlePreview()
+			ctx, cancel := context.WithCancel(context.Background())
+			entryInfo.previewCancel = cancel
+			return *entryInfo, getPreviewCmd(ctx, entryInfo.getFullPath(), entryInfo.previewHeight, entryInfo.previewOffset)
 		}
 	case message.EntryMsg:
+		entryInfo.resetPreview()
 		entryInfo.entry = msg.Entry
-		entryInfo.previewOffset = 0
-		entryInfo.eofReached = false
-
-		entryInfo.preview = entryInfo.renderNoPreview("Loading preview...")
-
-		defer func() {
-			recover()
-		}()
 
 		if entryInfo.entry.IsDir() {
 			entryInfo.preview = entryInfo.renderNoPreview("Directory")
 			return *entryInfo, nil
 		}
-
-		return *entryInfo, entryInfo.handlePreview()
+		ctx, cancel := context.WithCancel(context.Background())
+		entryInfo.previewCancel = cancel
+		return *entryInfo, getPreviewCmd(ctx, entryInfo.getFullPath(), entryInfo.previewHeight, entryInfo.previewOffset)
+	case previewReadyMsg:
+		// check that the path matches so we don't set the preview based on the previous file
+		if msg.Path != entryInfo.getFullPath() {
+			return *entryInfo, nil
+		}
+		if msg.Err != nil {
+			entryInfo.preview = entryInfo.renderNoPreview("Failed to load preview")
+			return *entryInfo, nil
+		}
+		if msg.Preview != "" {
+			entryInfo.preview = msg.Preview
+		}
+		if msg.EndReached {
+			entryInfo.eofReached = true
+		}
+		return *entryInfo, nil
 	}
 
 	return *entryInfo, nil
