@@ -19,6 +19,8 @@ import (
 	"github.com/nore-dev/fman/theme"
 )
 
+// TODO: make preview async and cancel creation with context if moving to another directory
+
 type EntryInfo struct {
 	entry entry.Entry
 
@@ -31,7 +33,8 @@ type EntryInfo struct {
 	previewHeight int
 	previewOffset int
 
-	theme *theme.Theme
+	theme      *theme.Theme
+	eofReached bool // is set to true when the end of the file is reached in the preview
 }
 
 const margin = 2
@@ -51,28 +54,26 @@ func (entryInfo *EntryInfo) Init() tea.Cmd {
 	return nil
 }
 
+// this implementation opens and closes the file for reading on every scroll, which is probably a little slow
 func (entryInfo *EntryInfo) getFilePreview(path string) (string, error) {
-
-	strBuilder := strings.Builder{}
-
 	f, err := os.Open(path)
-
 	if err != nil {
 		return "", err
 	}
-
 	defer f.Close()
 
+	strBuilder := strings.Builder{}
 	scanner := bufio.NewScanner(f)
-
 	for i := 0; i < entryInfo.previewHeight+entryInfo.previewOffset; i++ {
-		scanner.Scan()
+		ok := scanner.Scan()
+		if !ok {
+			entryInfo.eofReached = true
+			break
+		}
 		if i < entryInfo.previewOffset {
 			continue
 		}
-
-		text := strings.ReplaceAll(scanner.Text(), "\t", "")
-
+		text := scanner.Text()
 		strBuilder.WriteString(text)
 		strBuilder.WriteByte('\n')
 	}
@@ -80,27 +81,17 @@ func (entryInfo *EntryInfo) getFilePreview(path string) (string, error) {
 	if !utf8.ValidString(strBuilder.String()) {
 		return "", errors.New("unable to show preview")
 	}
-
 	if err := scanner.Err(); err != nil {
 		return "", err
 	}
-
 	return strBuilder.String(), nil
 }
 
-func (entryInfo *EntryInfo) getFullPath() string {
-	if entryInfo.entry.SymLinkPath != "" {
-		return entryInfo.entry.SymLinkPath
-	}
-
-	return filepath.Join(entryInfo.path, entryInfo.entry.Name())
-}
 func (entryInfo *EntryInfo) handlePreview() tea.Cmd {
 	preview, err := entryInfo.getFilePreview(entryInfo.getFullPath())
 
 	if err != nil {
 		entryInfo.preview = entryInfo.renderNoPreview("Unreadable Content")
-
 		return message.SendMessage(err.Error())
 	}
 
@@ -111,28 +102,34 @@ func (entryInfo *EntryInfo) handlePreview() tea.Cmd {
 		return message.SendMessage(err.Error())
 	}
 
+	// tabs are rendered with different widths based on terminal and font settings
+	// so we replace the tab with four spaces so we can reliably truncate each line
+	preview = strings.ReplaceAll(preview, "\t", "    ")
 	entryInfo.preview = preview
 	return nil
 }
 
 func (entryInfo *EntryInfo) Update(msg tea.Msg) (EntryInfo, tea.Cmd) {
-
 	switch msg := msg.(type) {
 	case message.PathMsg:
 		entryInfo.path = msg.Path
+		entryInfo.eofReached = false
 	case tea.KeyMsg:
 		if key.Matches(msg, keymap.Default.ScrollPreviewDown) {
-			entryInfo.previewOffset += 1
+			if !entryInfo.eofReached {
+				entryInfo.previewOffset += 1
+			}
 			return *entryInfo, entryInfo.handlePreview()
 		}
 		if key.Matches(msg, keymap.Default.ScrollPreviewUp) && entryInfo.previewOffset > 0 {
 			entryInfo.previewOffset -= 1
+			entryInfo.eofReached = false
 			return *entryInfo, entryInfo.handlePreview()
 		}
-
 	case message.EntryMsg:
 		entryInfo.entry = msg.Entry
 		entryInfo.previewOffset = 0
+		entryInfo.eofReached = false
 
 		entryInfo.preview = entryInfo.renderNoPreview("Directory")
 
@@ -153,14 +150,10 @@ func (entryInfo *EntryInfo) Update(msg tea.Msg) (EntryInfo, tea.Cmd) {
 func (entryInfo *EntryInfo) getFileInfo() string {
 
 	str := strings.Builder{}
-
 	str.WriteByte('\n')
-
 	name := termenv.String(entryInfo.entry.Name()).Bold().Underline().String()
 	str.WriteString(truncate.StringWithTail(name, uint(entryInfo.width-margin-1), "..."))
-
 	str.WriteByte('\n')
-
 	typeStr := entryInfo.entry.Type
 
 	if typeStr == "" {
@@ -196,17 +189,10 @@ func (entryInfo *EntryInfo) getFileInfo() string {
 
 	str.WriteString(termenv.String("Modified ").Italic().String())
 	str.WriteString(entryInfo.entry.ModifyTime)
-
 	str.WriteByte('\n')
-
 	str.WriteString(termenv.String("Changed ").Italic().String())
 	str.WriteString(entryInfo.entry.ChangeTime)
-
 	str.WriteByte('\n')
-
-	// str.WriteString(termenv.String("Accessed ").Italic().String())
-	// str.WriteString(entryInfo.entry.AccessTime)
-
 	return str.String()
 }
 
@@ -214,13 +200,19 @@ func (entryInfo *EntryInfo) View() string {
 	fileInfo := entryInfo.getFileInfo()
 	entryInfo.previewHeight = entryInfo.height - lipgloss.Height(fileInfo)
 
-	return theme.EntryInfoStyle.Render(lipgloss.JoinVertical(lipgloss.Left,
-		previewStyle.
-			MaxHeight(entryInfo.previewHeight-margin).
-			Height(entryInfo.previewHeight-margin).
-			Width(entryInfo.width-margin).
-			MaxWidth(entryInfo.width-margin).Render(entryInfo.preview),
-		fileInfo))
+	return theme.EntryInfoStyle.Render(
+		lipgloss.JoinVertical(
+			lipgloss.Left,
+			previewStyle.
+				MaxHeight(entryInfo.previewHeight-margin).
+				Height(entryInfo.previewHeight-margin).
+				// uncomment the next line to wrap lines.
+				// Width(entryInfo.width-margin).
+				MaxWidth(entryInfo.width-margin).
+				Render(entryInfo.preview),
+			fileInfo,
+		),
+	)
 }
 
 func (entryInfo *EntryInfo) Width() int {
@@ -249,4 +241,11 @@ func (entryInfo *EntryInfo) renderNoPreview(text string) string {
 		lipgloss.WithWhitespaceChars("."),
 		lipgloss.WithWhitespaceForeground(theme.EvenItemStyle.GetBackground()),
 	)
+}
+
+func (entryInfo *EntryInfo) getFullPath() string {
+	if entryInfo.entry.SymLinkPath != "" {
+		return entryInfo.entry.SymLinkPath
+	}
+	return filepath.Join(entryInfo.path, entryInfo.entry.Name())
 }
