@@ -79,12 +79,6 @@ func (m ButtonBar) Update(msg tea.Msg) (ButtonBar, tea.Cmd) {
 }
 
 func (m ButtonBar) View() string {
-	// dialogBoxStyle := lipgloss.NewStyle().
-	// 	Border(lipgloss.NormalBorder(), true)
-
-	// horizontal := dialogBoxStyle.GetHorizontalFrameSize()
-	// dialogBoxStyle.Width(m.width - horizontal)
-
 	sectionWrapper := lipgloss.NewStyle().
 		Padding(1, 1)
 
