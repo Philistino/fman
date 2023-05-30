@@ -131,13 +131,14 @@ func (entryInfo *EntryInfo) Update(msg tea.Msg) (EntryInfo, tea.Cmd) {
 		entryInfo.previewOffset = 0
 		entryInfo.eofReached = false
 
-		entryInfo.preview = entryInfo.renderNoPreview("Directory")
+		entryInfo.preview = entryInfo.renderNoPreview("Loading preview...")
 
 		defer func() {
 			recover()
 		}()
 
 		if entryInfo.entry.IsDir() {
+			entryInfo.preview = entryInfo.renderNoPreview("Directory")
 			return *entryInfo, nil
 		}
 
@@ -204,7 +205,7 @@ func (entryInfo *EntryInfo) View() string {
 		lipgloss.JoinVertical(
 			lipgloss.Left,
 			previewStyle.
-				MaxHeight(entryInfo.previewHeight-margin).
+				MaxHeight(entryInfo.previewHeight).
 				Height(entryInfo.previewHeight-margin).
 				// uncomment the next line to wrap lines.
 				// Width(entryInfo.width-margin).
