@@ -21,9 +21,10 @@ const (
 type sortOption byte
 
 const (
-	dirfirstSort sortOption = 1 << iota
+	dirfirstSort sortOption = iota
 	hiddenSort
 	reverseSort
+	noneSort
 )
 
 type sortType struct {
@@ -131,13 +132,13 @@ func sortE(dirPath string, entries []Entry, sortT sortType, ignorecase, ignoredi
 		})
 	}
 
-	if sortT.option&reverseSort != 0 {
+	if sortT.option == reverseSort {
 		for i, j := 0, len(entries)-1; i < j; i, j = i+1, j-1 {
 			entries[i], entries[j] = entries[j], entries[i]
 		}
 	}
 
-	if sortT.option&dirfirstSort != 0 {
+	if sortT.option == dirfirstSort {
 		sort.SliceStable(entries, func(i, j int) bool {
 			if entries[i].IsDir() == entries[j].IsDir() {
 				return i < j
@@ -170,7 +171,7 @@ func sortE(dirPath string, entries []Entry, sortT sortType, ignorecase, ignoredi
 	// when hidden option is disabled, we move hidden files to the
 	// beginning of our file list and then set the beginning of displayed
 	// files to the first non-hidden file in the list
-	if sortT.option&hiddenSort == 0 {
+	if sortT.option == hiddenSort {
 		sort.SliceStable(entries, func(i, j int) bool {
 			if isHidden(entries[i], dirPath, hiddenfiles) && isHidden(entries[j], dirPath, hiddenfiles) {
 				return i < j

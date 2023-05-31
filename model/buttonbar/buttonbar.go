@@ -80,7 +80,7 @@ func (m ButtonBar) Update(msg tea.Msg) (ButtonBar, tea.Cmd) {
 
 func (m ButtonBar) View() string {
 	sectionWrapper := lipgloss.NewStyle().
-		Padding(1, 1)
+		Padding(0, 1, 1, 1)
 
 	var newFile, newFolder, cut, copy, paste, rename, delete, compress, extract string
 

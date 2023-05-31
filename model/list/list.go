@@ -85,16 +85,13 @@ func detectOpenCommand() string {
 	return "start"
 }
 
-func New(theme *theme.Theme, dirsFirst bool) List {
-
+func New(theme *theme.Theme, dirsMixed bool, showHidden bool) List {
 	path, err := filepath.Abs(".")
-
 	if err != nil {
 		panic(err)
 	}
 
-	entries, err := entry.GetEntries(path, false, dirsFirst)
-
+	entries, err := entry.GetEntries(path, showHidden, dirsMixed)
 	if err != nil {
 		panic(err)
 	}
@@ -106,8 +103,8 @@ func New(theme *theme.Theme, dirsFirst bool) List {
 		flexBox:       stickers.NewFlexBox(0, 0),
 		clickDelay:    0.5,
 		theme:         theme,
-		showHidden:    false,
-		dirsMixed:     dirsFirst,
+		showHidden:    showHidden,
+		dirsMixed:     dirsMixed,
 	}
 
 	rows := []*stickers.FlexBoxRow{

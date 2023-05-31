@@ -41,10 +41,8 @@ func (breadcrumb *Breadcrumb) Update(msg tea.Msg) (*Breadcrumb, tea.Cmd) {
 		// Quick Path Jump
 		// Mouse Support
 		for i := 0; i < len(pathParts); i++ {
-
 			if zone.Get(strconv.Itoa(i)).InBounds(msg) {
 				newPath := filepath.Join(pathParts[:i+1]...)
-
 				breadcrumb.path = newPath
 				return breadcrumb, message.ChangePath(breadcrumb.path)
 			}

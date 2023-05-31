@@ -40,6 +40,9 @@ func getPreviewCmd(ctx context.Context, path string, height int, offset int, rea
 		previewChan := make(chan previewReadyMsg)
 		errc := make(chan error, 1)
 		go func() {
+			defer close(previewChan)
+			defer close(errc)
+
 			if readDelay >= 0 {
 				time.Sleep(time.Millisecond * time.Duration(readDelay))
 			}
@@ -75,14 +78,18 @@ func getPreviewCmd(ctx context.Context, path string, height int, offset int, rea
 // this implementation opens and closes the file for reading on every scroll, which is probably a little slow.
 // I'm not too worried about it for now. The alternative would be to use a file descriptor and keep it open,
 // but managing the state of the file descriptor is a bit more complicated.
-// This also iterates through all the lines of the file up to the offset, which is also a little inefficient. However,
+// This also iterates through all the lines of the file up to the offset, which might also be inefficient. However,
 // once again, managing state would be more complicated, and the user is not likely to scroll thousands of lines
 // into the file on the preview.
-func getFilePreviewFunc(ctx context.Context, reader io.Reader, height int, offset int) (string, bool, error) {
+func getFilePreview(ctx context.Context, reader io.Reader, height int, offset int) (string, bool, error) {
 	strBuilder := strings.Builder{}
 	scanner := bufio.NewScanner(reader)
 	eofReached := false
+	validStr := false
 	for i := 0; i < height+offset; i++ {
+		if ctx.Err() != nil {
+			return "", eofReached, ctx.Err()
+		}
 		ok := scanner.Scan()
 		if !ok {
 			eofReached = true
@@ -91,12 +98,18 @@ func getFilePreviewFunc(ctx context.Context, reader io.Reader, height int, offse
 		if i < offset {
 			continue
 		}
+		// check encoding on each iteration until we find a valid non-empty string
+		if !validStr {
+			text := scanner.Text()
+			if text != "" {
+				validStr = utf8.ValidString(text)
+				if !validStr {
+					return "", eofReached, errors.New("unable to show preview")
+				}
+			}
+		}
 		strBuilder.Write(scanner.Bytes())
 		strBuilder.WriteByte('\n')
-	}
-
-	if !utf8.ValidString(strBuilder.String()) {
-		return "", eofReached, errors.New("unable to show preview")
 	}
 	if err := scanner.Err(); err != nil {
 		return "", eofReached, err
@@ -105,7 +118,7 @@ func getFilePreviewFunc(ctx context.Context, reader io.Reader, height int, offse
 }
 
 func handlePreviewFunc(ctx context.Context, reader io.Reader, path string, height int, offset int) (string, bool, error) {
-	preview, eofReached, err := getFilePreviewFunc(ctx, reader, height, offset)
+	preview, eofReached, err := getFilePreview(ctx, reader, height, offset)
 	if err != nil {
 		return "", eofReached, err
 	}

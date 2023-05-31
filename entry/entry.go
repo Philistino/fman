@@ -1,16 +1,12 @@
 package entry
 
 import (
-	"bytes"
 	"io/fs"
 	"mime"
 	"os"
 	"path/filepath"
 	"strconv"
 
-	"github.com/alecthomas/chroma/formatters"
-	"github.com/alecthomas/chroma/lexers"
-	"github.com/alecthomas/chroma/styles"
 	"github.com/djherbis/times"
 	"github.com/dustin/go-humanize"
 )
@@ -28,6 +24,7 @@ type Entry struct {
 	SymlinkName string
 	SymLinkPath string
 	timeStats   times.Timespec
+	IsHidden    bool
 }
 
 // Name returns the basename of the file
@@ -52,61 +49,34 @@ func (e Entry) IsDir() bool {
 	return e.FileInfo.IsDir()
 }
 
-func HighlightSyntax(name string, preview string) (string, error) {
-	var buffer bytes.Buffer
+func GetEntry(info fs.FileInfo, path string, hidden bool) (Entry, error) {
+	var size string
 
-	lexer := lexers.Match(name)
-
-	if lexer == nil {
-		lexer = lexers.Fallback
-	}
-
-	style := styles.Get("monokai")
-	formatter := formatters.Get("terminal")
-
-	iterator, err := lexer.Tokenise(nil, preview)
-
-	if err != nil {
-		return "", err
-	}
-
-	if err = formatter.Format(&buffer, style, iterator); err != nil {
-		return "", err
-	}
-
-	return buffer.String(), nil
-}
-
-func GetEntry(info fs.FileInfo, path string) (Entry, error) {
-
-	// Get Entry size
-	size := humanize.IBytes(uint64(info.Size()))
-
-	// If entry is a folder, get count of entries under this directory
 	if info.IsDir() {
+		// get count of entries under this directory
 		_entries, err := os.ReadDir(path)
-
 		if err != nil {
 			return Entry{}, err
 		}
-
-		size = strconv.Itoa(len(_entries)) + " entries"
-
-		if len(_entries) == 0 {
+		lenEntries := len(_entries)
+		switch {
+		case lenEntries == 0:
 			size = "Empty Folder"
+		case lenEntries == 1:
+			size = "1 entry"
+		default:
+			size = strconv.Itoa(lenEntries) + " entries"
 		}
+	} else {
+		size = humanize.Bytes(uint64(info.Size()))
 	}
 
 	return Entry{
-		FileInfo: info,
-		SizeStr:  size,
-
-		Type: mime.TypeByExtension(filepath.Ext(info.Name())),
-
+		FileInfo:   info,
+		SizeStr:    size,
+		Type:       mime.TypeByExtension(filepath.Ext(info.Name())),
 		ModifyTime: humanize.Time(info.ModTime()),
-		// ChangeTime: humanize.Time(info.),
-		// AccessTime: humanize.Time(timeStats.AccessTime()),
-		// timeStats:  timeStats,
+		IsHidden:   hidden,
 	}, nil
 
 }
@@ -116,33 +86,24 @@ func GetEntries(path string, showHidden bool, dirsMixed bool) ([]Entry, error) {
 	newPath, _ := os.Getwd()
 
 	files, err := os.ReadDir(newPath)
-
 	if err != nil {
-		return []Entry{}, err
+		return nil, err
 	}
 
 	entries := make([]Entry, 0, len(files))
-
 	for _, file := range files {
 		info, err := file.Info()
-
 		if err != nil {
 			continue
 		}
 
 		fullPath := filepath.Join(newPath, file.Name())
-
-		if err != nil {
-			continue
-		}
-
-		hidden, err := FileHidden(file.Name())
+		hidden := isHidden(info, newPath, []string{})
 		if err != nil || (hidden && !showHidden) {
 			continue
 		}
 
-		entry, err := GetEntry(info, fullPath)
-
+		entry, err := GetEntry(info, fullPath, hidden)
 		if err != nil {
 			continue
 		}
@@ -150,19 +111,16 @@ func GetEntries(path string, showHidden bool, dirsMixed bool) ([]Entry, error) {
 		// Handle Symlinks
 		if info.Mode()&os.ModeSymlink != 0 {
 			fullPath, err = os.Readlink(fullPath)
-
 			if err != nil {
 				continue
 			}
 
 			symInfo, err := os.Stat(fullPath)
-
 			if err != nil {
 				return []Entry{}, err
 			}
 
-			entry, err = GetEntry(symInfo, fullPath)
-
+			entry, err = GetEntry(symInfo, fullPath, hidden)
 			if err != nil {
 				return []Entry{}, err
 			}
@@ -174,43 +132,23 @@ func GetEntries(path string, showHidden bool, dirsMixed bool) ([]Entry, error) {
 		entries = append(entries, entry)
 	}
 
+	var dirsFirst sortOption
+	if dirsMixed {
+		dirsFirst = noneSort
+	} else {
+		dirsFirst = dirfirstSort
+	}
+
 	entries = sortE(
 		path,
 		entries,
 		sortType{
 			method: naturalSort,
-			option: dirfirstSort,
+			option: dirsFirst,
 		},
 		true,
 		true,
 		[]string{".*"},
 	)
-
-	// if !dirsMixed {
-	// 	sort.Slice(entries, func(i, j int) bool {
-	// 		switch {
-	// 		case entries[i].IsDir && !entries[j].IsDir:
-	// 			return true
-	// 		case !entries[i].IsDir && entries[j].IsDir:
-	// 			return false
-	// 		default:
-	// 			return entries[i].Name < entries[j].Name
-	// 		}
-	// 	})
-	// }
 	return entries, nil
 }
-
-// func sortEntries(entries []Entry) []Entry {
-// 	sort.Slice(entries, func(i, j int) bool {
-// 		switch {
-// 		case entries[i].IsDir() && !entries[j].IsDir:
-// 			return true
-// 		case !entries[i].IsDir && entries[j].IsDir:
-// 			return false
-// 		default:
-// 			return entries[i].Name < entries[j].Name
-// 		}
-// 	})
-// 	return entries
-// }

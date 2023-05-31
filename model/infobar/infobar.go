@@ -1,6 +1,7 @@
 package infobar
 
 import (
+	"log"
 	"strings"
 	"time"
 
@@ -25,14 +26,10 @@ type TickMsg time.Time
 const DEFAULT_MESSAGE = "--"
 
 func New() Infobar {
-
 	info, err := storage.GetStorageInfo()
-
 	if err != nil {
-		println("An error occurred")
-		println(err.Error())
+		log.Println("An error occurred while getting storage info", err.Error())
 	}
-
 	return Infobar{
 		progressWidth:   20,
 		messageDuration: 2,
@@ -58,12 +55,13 @@ func (infobar Infobar) clearMessage() tea.Cmd {
 }
 
 func (infobar Infobar) Update(msg tea.Msg) (Infobar, tea.Cmd) {
-
 	switch msg := msg.(type) {
-	case TickMsg: // Clear message
+	case TickMsg:
+		// Clear message
 		infobar.message = DEFAULT_MESSAGE
 		return infobar, infobar.clearMessage()
-	case message.NewMessageMsg: // Set new message
+	case message.NewMessageMsg:
+		// Set new message
 		infobar.message = msg.Message
 	case tea.WindowSizeMsg:
 		infobar.width = msg.Width
@@ -74,20 +72,15 @@ func (infobar Infobar) Update(msg tea.Msg) (Infobar, tea.Cmd) {
 func renderProgress(width int, usedSpace uint64, totalSpace uint64) string {
 	usedWidth := (int(usedSpace) * width / int(totalSpace))
 	usedStr := strings.Repeat("█", int(width-usedWidth))
-
 	return theme.ProgressStyle.Width(width).Render(usedStr)
 }
 
 func (infobar Infobar) View() string {
-
 	info := infobar.storageInfo
 	logo := theme.LogoStyle.Render(string(theme.GetActiveIconTheme().GopherIcon) + "FMAN")
-
 	progress := renderProgress(infobar.progressWidth, info.AvailableSpace, info.TotalSpace)
-
 	style := theme.InfobarStyle
-	usedSpace := lipgloss.JoinHorizontal(lipgloss.Center, " ", humanize.IBytes(info.AvailableSpace), "/", humanize.IBytes(info.TotalSpace))
-
+	usedSpace := lipgloss.JoinHorizontal(lipgloss.Center, " ", humanize.Bytes(info.AvailableSpace), "/", humanize.Bytes(info.TotalSpace), " free")
 	return lipgloss.JoinHorizontal(
 		lipgloss.Center,
 		logo,

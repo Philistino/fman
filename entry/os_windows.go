@@ -3,6 +3,7 @@
 package entry
 
 import (
+	"io/fs"
 	"log"
 	"os"
 	"os/exec"
@@ -105,7 +106,7 @@ func shellKill(cmd *exec.Cmd) error {
 
 func setUserUmask() {}
 
-func isExecutable(f os.FileInfo) bool {
+func isExecutable(f fs.FileInfo) bool {
 	exts := strings.Split(envPathExt, string(filepath.ListSeparator))
 	for _, e := range exts {
 		if strings.HasSuffix(strings.ToLower(f.Name()), strings.ToLower(e)) {
@@ -116,8 +117,8 @@ func isExecutable(f os.FileInfo) bool {
 	return false
 }
 
-func isHidden(f os.FileInfo, path string, hiddenfiles []string) bool {
-	ptr, err := windows.UTF16PtrFromString(filepath.Join(path, f.Name()))
+func isHidden(f fs.FileInfo, dirPath string, hiddenfiles []string) bool {
+	ptr, err := windows.UTF16PtrFromString(filepath.Join(dirPath, f.Name()))
 	if err != nil {
 		return false
 	}

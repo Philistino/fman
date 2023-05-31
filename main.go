@@ -14,7 +14,6 @@ import (
 	"github.com/muesli/termenv"
 	"github.com/nore-dev/fman/cfg"
 
-	"github.com/nore-dev/fman/args"
 	"github.com/nore-dev/fman/keymap"
 	"github.com/nore-dev/fman/message"
 
@@ -43,6 +42,7 @@ type App struct {
 
 	help     help.Model
 	showHelp bool
+	config   cfg.Cfg
 }
 
 func (app *App) Init() tea.Cmd {
@@ -51,22 +51,17 @@ func (app *App) Init() tea.Cmd {
 
 func (app *App) UpdatePath() tea.Cmd {
 	return func() tea.Msg {
-		path := args.CommandLine.Path
-
-		absolutePath, _ := filepath.Abs(path)
+		absolutePath, _ := filepath.Abs(app.config.Path)
 		return message.PathMsg{Path: absolutePath}
 	}
 }
 
 func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-
 	case tea.KeyMsg:
-
 		if key.Matches(msg, keymap.Default.ToggleHelp) {
 			app.showHelp = !app.showHelp
 		}
-
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return app, tea.Quit
@@ -160,16 +155,15 @@ func main() {
 	zone.NewGlobal()
 	defer zone.Close()
 
-	args.Initialize()
-	err := cfg.LoadConfig() // TODO: show error somewhere
+	cfg, err := cfg.LoadConfig() // TODO: show error somewhere
 	if err != nil {
 		log.Println(err)
 	}
-	selectedTheme := theme.GetActiveTheme(cfg.Config.Theme)
-
+	selectedTheme := theme.GetActiveTheme(cfg.Theme)
+	theme.SetIcons(cfg.Icons)
 	theme.SetTheme(selectedTheme)
 
-	listX := list.New(&selectedTheme, cfg.Config.DirsMixed)
+	listX := list.New(&selectedTheme, cfg.DirsMixed, !cfg.NoHidden)
 	entryX := entryinfo.New(&selectedTheme, listX.SelectedEntry(), 300)
 
 	app := App{
@@ -180,6 +174,7 @@ func main() {
 		infobar:   infobar.New(),
 		dialog:    dialog.New(),
 		flexBox:   stickers.NewFlexBox(0, 0),
+		config:    cfg,
 	}
 
 	app.help.FullSeparator = "   "
@@ -210,9 +205,7 @@ func main() {
 
 	if err := p.Start(); err != nil {
 		termenv.SetBackgroundColor(bg)
-
-		println("An error occured")
-		println(err.Error())
+		println("An error occured: ", err.Error())
 
 		os.Exit(1)
 	}

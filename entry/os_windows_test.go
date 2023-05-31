@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-// hide hides a
+// hide hides a file on windows
 // https://github.com/tobychui/goHidden/blob/main/hide.go
 func hide(filename string) error {
 	filenameW, err := syscall.UTF16PtrFromString(filename)
