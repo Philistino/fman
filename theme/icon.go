@@ -29,14 +29,13 @@ var nerdFont = iconSet{
 	RightArrowIcon:      '\uf061',
 	UpArrowIcon:         '\uf062',
 	BreadcrumbArrowIcon: '>',
-	// BreadcrumbArrowIcon: '\uf0a4',
-	GopherIcon:  '\ue627',
-	FileIcon:    '\uf15c',
-	FolderIcon:  '\uf07b',
-	SymlinkIcon: '\uf838',
-	TimeIcon:    '\uf017',
-	SizeIcon:    '\uf200',
-	NameIcon:    '\ue612',
+	GopherIcon:          '\ue627',
+	FileIcon:            '\uf15c',
+	FolderIcon:          '\uf07b',
+	SymlinkIcon:         '\uf838',
+	TimeIcon:            '\uf017',
+	SizeIcon:            '\uf200',
+	NameIcon:            '\ue612',
 }
 
 var emoji = iconSet{

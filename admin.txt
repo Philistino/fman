@@ -1,0 +1,45 @@
+use a filesystem abstraction, perhaps afero? perhaps this instead?
+https://pkg.go.dev/github.com/hack-pad/hackpadfs
+
+k6 uses a thin wrapper over afero so they can later move away from it:
+https://github.com/grafana/k6/tree/master/lib/fsext
+
+
+Todo:
+    Preview - toggle preview pane visibility
+    Preview - add config option for read delay. Default to 250 milliseconds?
+        Track whether a file was read or not, if it was, set delay to zero for following read
+    Preview - render markdown preview with glamour
+    Preview - MIME type is not very informative
+    Preview - could show line numbers but this might reduce the info shown too much
+    Preview - could show file name in selected style or not at all
+    
+    Bookmarks - add bookmarks
+    Bookmarks - toggle bookmark pane visibility
+    
+    FS operations - mkdir/mkfile/delete/etc. 
+    FS operations - Dialog to confirm Changes
+    
+    List navigation - do not circle back when reaching top or bottom
+    List navigation - add sort methods for each column
+    List navigation - click column header to sort (add arrow icon and reverse on second click)
+    List navigation - Toggle hidden button
+    List navigation - List navigation - Use nerd-font icons based on file type - default to emojis
+    
+    Multi-select filesystem objects
+    Implement real navigation history
+    Implement search
+    Put long error messages in a pop-up box at bottom
+    Pull navigation state out of UI
+    Only change working directory on exit
+    Make main() smaller
+    Move ui model out of main package
+    Write some tests
+
+Finished:
+    Sort directories and files separately
+    Truncate breadcrumb if it is too wide
+    Fix infinite scroll on file previews
+    Read file previews in separate go routine to prevent ui locking
+    List navigation - fix viewport scroll on directories with many entries
+    Remove change and access time, which aren't informative -- especially access time when we are previewing

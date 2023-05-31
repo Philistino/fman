@@ -154,6 +154,7 @@ func (app App) renderFull(str string) string {
 		lipgloss.WithWhitespaceForeground(app.list.Theme().EvenItemBgColor),
 	)
 }
+
 func main() {
 	// Initialize Bubblezone
 	zone.NewGlobal()
@@ -169,7 +170,7 @@ func main() {
 	theme.SetTheme(selectedTheme)
 
 	listX := list.New(&selectedTheme, cfg.Config.DirsMixed)
-	entryX := entryinfo.New(&selectedTheme, listX.SelectedEntry())
+	entryX := entryinfo.New(&selectedTheme, listX.SelectedEntry(), 300)
 
 	app := App{
 		buttonBar: buttonbar.New(&selectedTheme),

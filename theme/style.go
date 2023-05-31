@@ -12,14 +12,15 @@ var (
 			Height(1)
 
 	PathStyle = lipgloss.NewStyle().Padding(0, 1)
-	// Border(lipgloss.NormalBorder(), false, true)
 
 	SelectedItemStyle = lipgloss.NewStyle().Height(1)
 
-	ButtonStyle = lipgloss.NewStyle().Padding(0, 1).
+	ButtonStyle = lipgloss.NewStyle().
+			Padding(0, 1).
 			Border(lipgloss.NormalBorder(), false, true)
 
-	InactiveButtonStyle = lipgloss.NewStyle().Padding(0, 1).
+	InactiveButtonStyle = lipgloss.NewStyle().
+				Padding(0, 1).
 				Border(lipgloss.NormalBorder(), false, true).
 				Foreground(lipgloss.Color("#707070"))
 
