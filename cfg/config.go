@@ -16,16 +16,25 @@ const (
 	FmanConfigFileName = "config.toml"
 
 	// Config Defaults
-	DefaultTheme = "default"
+	DefaultTheme = "dracula"
 	DefaultIcons = "nerdfont"
+	DefaultDelay = 250
+	DefaultPath  = "."
 )
 
+// These pointers are a janky way to get None type values so we can know
+// if the user passed an argument or not and then prioritise the config file or cli.
+// This method will get a unruly if we have a lot of arguments because we will
+// have to add args in a few places
+
+// Cfg holds the configuration details for a session
 type Cfg struct {
-	Path      string `arg:"positional" default:"."`
-	Icons     string `default:"" help:"Icon set to use. Options are: nerdfont, material"`
-	DirsMixed bool   `arg:"--dirs-mixed" default:"false" help:"Do not sort files from directories"`
-	NoHidden  bool   `arg:"--no-hidden" default:"false" help:"Do not show hidden files"`
-	Theme     string `default:"" help:"Color theme to use. Options are: brogrammer, catppuccin-frappe, catppuccin-latte, catppuccin-macchiato, catppuccin-mocha, default, dracula, everblush, gruvbox, nord"`
+	Path         string `arg:"positional" help:"path to open. Defaults to current directory"`
+	Icons        string `default:"" help:"icon set to use. Options are: nerdfont, material"`
+	Theme        string `default:"" help:"color theme to use. Defaults to dracula. Options are: brogrammer, catppuccin-frappe, catppuccin-latte, catppuccin-macchiato, catppuccin-mocha, dracula, everblush, gruvbox, nord"`
+	DirsMixed    *bool  `arg:"--dirs-mixed" help:"do not sort files from directories. Defaults to false"`
+	NoHidden     *bool  `arg:"--no-hidden" help:"do not show hidden files. Defaults to false"`
+	PreviewDelay *int   `arg:"--preview-delay" placeholder:"DELAY" help:"delay (in milliseconds) before opening a file for previewing. This is meant to reduce io. Defaults to 250"`
 	// colorScheme theme.Theme // TODO: fetch colorscheme and icon map from theme and pin to config
 }
 
@@ -49,7 +58,6 @@ func loadConfigFile() (Cfg, error) {
 	if err != nil {
 		return fileCfg, err
 	}
-
 	fileContents, err := os.ReadFile(filepath.Join(home, FmanConfigDir, FmanConfigFileName))
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -58,7 +66,6 @@ func loadConfigFile() (Cfg, error) {
 			return fileCfg, err
 		}
 	}
-
 	_, err = toml.Decode(string(fileContents), &fileCfg)
 	if err != nil {
 		return fileCfg, errors.New("could not decode config file")
@@ -66,34 +73,54 @@ func loadConfigFile() (Cfg, error) {
 	return fileCfg, nil
 }
 
+// mergeConfigs takes the values from the cli and the config file and
+// prioritises the values from the cli, if they are not set.
 func mergeConfigs(cmdCfg Cfg, fileCfg Cfg) Cfg {
-	if cmdCfg.Theme == "" {
-		cmdCfg.Theme = fileCfg.Theme
+	if cmdCfg.Path == "" {
+		cmdCfg.Path = fileCfg.Path
 	}
 	if cmdCfg.Icons == "" {
 		cmdCfg.Icons = fileCfg.Icons
 	}
-	// because DirsMixed defaults to false, we will use the value from the config file
-	// if the value is not provided by the user at the command line.
-	if !cmdCfg.DirsMixed {
+	if cmdCfg.Theme == "" {
+		cmdCfg.Theme = fileCfg.Theme
+	}
+	if cmdCfg.DirsMixed == nil {
 		cmdCfg.DirsMixed = fileCfg.DirsMixed
 	}
-	// same as above
-	if !cmdCfg.NoHidden {
+	if cmdCfg.NoHidden == nil {
 		cmdCfg.NoHidden = fileCfg.NoHidden
+	}
+	if cmdCfg.PreviewDelay == nil {
+		cmdCfg.PreviewDelay = fileCfg.PreviewDelay
 	}
 
 	return cmdCfg
 }
 
+// For each config value, if neither config file or cli args provides a value
+// then use default values to fill config object.
 func setDefaults(cfg Cfg) Cfg {
-	// For each config value if neither config file or cli args provides a value
-	// then use default values to fill config object.
-	if cfg.Theme == "" {
-		cfg.Theme = DefaultTheme
+	if cfg.Path == "" {
+		cfg.Path = DefaultPath
 	}
 	if cfg.Icons == "" {
 		cfg.Icons = DefaultIcons
+	}
+	if cfg.Theme == "" {
+		cfg.Theme = DefaultTheme
+	}
+	if cfg.DirsMixed == nil {
+		cfg.DirsMixed = new(bool)
+		*cfg.DirsMixed = false
+	}
+	if cfg.NoHidden == nil {
+		cfg.NoHidden = new(bool)
+		*cfg.NoHidden = false
+	}
+	if cfg.PreviewDelay == nil {
+		cfg.PreviewDelay = new(int)
+		*cfg.PreviewDelay = DefaultDelay
 	}
 	return cfg
 }

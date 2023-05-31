@@ -163,8 +163,8 @@ func main() {
 	theme.SetIcons(cfg.Icons)
 	theme.SetTheme(selectedTheme)
 
-	listX := list.New(&selectedTheme, cfg.DirsMixed, !cfg.NoHidden)
-	entryX := entryinfo.New(&selectedTheme, listX.SelectedEntry(), 300)
+	listX := list.New(&selectedTheme, *cfg.DirsMixed, !*cfg.NoHidden)
+	entryX := entryinfo.New(&selectedTheme, listX.SelectedEntry(), *cfg.PreviewDelay)
 
 	app := App{
 		buttonBar: buttonbar.New(&selectedTheme),
