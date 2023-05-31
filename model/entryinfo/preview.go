@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/alecthomas/chroma/formatters"
@@ -31,11 +32,20 @@ func (p previewReadyMsg) Error() error {
 	return p.Err
 }
 
-func getPreviewCmd(ctx context.Context, path string, height int, offset int) tea.Cmd {
+// readDelay is how long in milliseconds to wait before reading the file.
+// If negative, it will not wait.
+// This is meant to avoid unnecessary disk io when the user is navigating quickly.
+func getPreviewCmd(ctx context.Context, path string, height int, offset int, readDelay int) tea.Cmd {
 	return func() tea.Msg {
 		previewChan := make(chan previewReadyMsg)
 		errc := make(chan error, 1)
 		go func() {
+			if readDelay >= 0 {
+				time.Sleep(time.Millisecond * time.Duration(readDelay))
+			}
+			if ctx.Err() != nil {
+				errc <- ctx.Err()
+			}
 			f, err := os.Open(path)
 			if err != nil {
 				errc <- err
@@ -62,7 +72,12 @@ func getPreviewCmd(ctx context.Context, path string, height int, offset int) tea
 	}
 }
 
-// this implementation opens and closes the file for reading on every scroll, which is probably a little slow
+// this implementation opens and closes the file for reading on every scroll, which is probably a little slow.
+// I'm not too worried about it for now. The alternative would be to use a file descriptor and keep it open,
+// but managing the state of the file descriptor is a bit more complicated.
+// This also iterates through all the lines of the file up to the offset, which is also a little inefficient. However,
+// once again, managing state would be more complicated, and the user is not likely to scroll thousands of lines
+// into the file on the preview.
 func getFilePreviewFunc(ctx context.Context, reader io.Reader, height int, offset int) (string, bool, error) {
 	strBuilder := strings.Builder{}
 	scanner := bufio.NewScanner(reader)

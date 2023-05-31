@@ -31,18 +31,23 @@ type EntryInfo struct {
 	theme         *theme.Theme
 	eofReached    bool // is set to true when the end of the file is reached in the preview
 	previewCancel context.CancelFunc
+
+	previewDelay int //  delay in ms before reading a preview
 }
 
 const margin = 2
 
 var previewStyle = lipgloss.NewStyle()
 
-func New(theme *theme.Theme, firstEntry entry.Entry) EntryInfo {
+// previewDelay is how long to wait on a file before reading it to create a preview.
+// This is meant to avoid unnecessary disk io when the user is navigating quickly.
+func New(theme *theme.Theme, firstEntry entry.Entry, previewDelay int) EntryInfo {
 	return EntryInfo{
 		entry:         firstEntry,
 		previewHeight: 10,
 		theme:         theme,
 		width:         10,
+		previewDelay:  previewDelay,
 	}
 }
 
@@ -67,13 +72,25 @@ func (entryInfo *EntryInfo) setNewEntry(entry entry.Entry) tea.Cmd {
 	}
 	// set default preview content
 	entryInfo.preview = entryInfo.renderNoPreview("Loading preview...")
-	return entryInfo.getPreview()
+	return entryInfo.getPreview(true)
 }
 
-func (entryInfo *EntryInfo) getPreview() tea.Cmd {
+func (entryInfo *EntryInfo) getPreview(delay bool) tea.Cmd {
 	ctx, cancel := context.WithCancel(context.Background())
 	entryInfo.previewCancel = cancel
-	return getPreviewCmd(ctx, entryInfo.getFullPath(), entryInfo.previewHeight, entryInfo.previewOffset)
+	var pDelay int
+	if delay {
+		pDelay = entryInfo.previewDelay
+	} else {
+		pDelay = 0
+	}
+	return getPreviewCmd(
+		ctx,
+		entryInfo.getFullPath(),
+		entryInfo.previewHeight,
+		entryInfo.previewOffset,
+		pDelay,
+	)
 }
 
 func (entryInfo *EntryInfo) handlePreviewMsg(msg previewReadyMsg) {
@@ -101,15 +118,19 @@ func (entryInfo *EntryInfo) Update(msg tea.Msg) (EntryInfo, tea.Cmd) {
 		entryInfo.eofReached = false
 	case tea.KeyMsg:
 		if key.Matches(msg, keymap.Default.ScrollPreviewDown) {
-			if !entryInfo.eofReached {
-				entryInfo.previewOffset++
+			if entryInfo.eofReached {
+				break
 			}
-			cmd = entryInfo.getPreview()
+			entryInfo.previewOffset++
+			cmd = entryInfo.getPreview(false)
 		}
-		if key.Matches(msg, keymap.Default.ScrollPreviewUp) && entryInfo.previewOffset > 0 {
+		if key.Matches(msg, keymap.Default.ScrollPreviewUp) {
+			if entryInfo.previewOffset < 1 {
+				break
+			}
 			entryInfo.previewOffset--
 			entryInfo.eofReached = false
-			cmd = entryInfo.getPreview()
+			cmd = entryInfo.getPreview(false)
 		}
 	case message.EntryMsg:
 		cmd = entryInfo.setNewEntry(msg.Entry)
@@ -161,24 +182,19 @@ func (entryInfo *EntryInfo) getFileInfo() string {
 
 	str.WriteString(termenv.String("Modified ").Italic().String())
 	str.WriteString(entryInfo.entry.ModifyTime)
-	str.WriteByte('\n')
-	str.WriteString(termenv.String("Changed ").Italic().String())
-	str.WriteString(entryInfo.entry.ChangeTime)
-	str.WriteByte('\n')
 	return str.String()
 }
 
 func (entryInfo *EntryInfo) View() string {
 	fileInfo := entryInfo.getFileInfo()
-	entryInfo.previewHeight = entryInfo.height - lipgloss.Height(fileInfo)
+	entryInfo.previewHeight = entryInfo.height - lipgloss.Height(fileInfo) - margin
 
 	return theme.EntryInfoStyle.Render(
 		lipgloss.JoinVertical(
 			lipgloss.Left,
 			previewStyle.
 				MaxHeight(entryInfo.previewHeight).
-				Height(entryInfo.previewHeight-margin).
-				// Width(entryInfo.width-margin). // uncomment this line to wrap lines.
+				Height(entryInfo.previewHeight). // could set Width(entryInfo.width-margin) here to to wrap lines.
 				MaxWidth(entryInfo.width-margin).
 				Render(entryInfo.preview),
 			fileInfo,
