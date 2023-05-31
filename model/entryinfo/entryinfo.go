@@ -16,8 +16,6 @@ import (
 	"github.com/nore-dev/fman/theme"
 )
 
-// TODO: make preview async and cancel creation with context if moving to another directory
-
 type EntryInfo struct {
 	entry entry.Entry
 
@@ -52,19 +50,51 @@ func (entryInfo *EntryInfo) Init() tea.Cmd {
 	return nil
 }
 
-func (entryInfo *EntryInfo) resetPreview() {
+func (entryInfo *EntryInfo) setNewEntry(entry entry.Entry) tea.Cmd {
+	entryInfo.entry = entry
+	// handle preview context cancellation
 	if entryInfo.previewCancel != nil {
 		entryInfo.previewCancel()
 		entryInfo.previewCancel = nil
 	}
+	// reset read position to start of file
 	entryInfo.previewOffset = 0
 	entryInfo.eofReached = false
+
+	if entry.IsDir() {
+		entryInfo.preview = entryInfo.renderNoPreview("Directory")
+		return nil
+	}
+	// set default preview content
 	entryInfo.preview = entryInfo.renderNoPreview("Loading preview...")
+	return entryInfo.getPreview()
+}
+
+func (entryInfo *EntryInfo) getPreview() tea.Cmd {
+	ctx, cancel := context.WithCancel(context.Background())
+	entryInfo.previewCancel = cancel
+	return getPreviewCmd(ctx, entryInfo.getFullPath(), entryInfo.previewHeight, entryInfo.previewOffset)
+}
+
+func (entryInfo *EntryInfo) handlePreviewMsg(msg previewReadyMsg) {
+	// check that the path matches so we don't set the current preview based on the previous file
+	if msg.Path != entryInfo.getFullPath() {
+		return
+	}
+	if msg.Err != nil {
+		entryInfo.preview = entryInfo.renderNoPreview("Failed to load preview")
+		return
+	}
+	if msg.Preview != "" {
+		entryInfo.preview = msg.Preview
+	}
+	if msg.EndReached {
+		entryInfo.eofReached = true
+	}
 }
 
 func (entryInfo *EntryInfo) Update(msg tea.Msg) (EntryInfo, tea.Cmd) {
-	// var cmd tea.Cmd
-	// var cmds []tea.Cmd
+	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case message.PathMsg:
 		entryInfo.path = msg.Path
@@ -72,49 +102,21 @@ func (entryInfo *EntryInfo) Update(msg tea.Msg) (EntryInfo, tea.Cmd) {
 	case tea.KeyMsg:
 		if key.Matches(msg, keymap.Default.ScrollPreviewDown) {
 			if !entryInfo.eofReached {
-				entryInfo.previewOffset += 1
+				entryInfo.previewOffset++
 			}
-			ctx, cancel := context.WithCancel(context.Background())
-			entryInfo.previewCancel = cancel
-			return *entryInfo, getPreviewCmd(ctx, entryInfo.getFullPath(), entryInfo.previewHeight, entryInfo.previewOffset)
+			cmd = entryInfo.getPreview()
 		}
 		if key.Matches(msg, keymap.Default.ScrollPreviewUp) && entryInfo.previewOffset > 0 {
-			entryInfo.previewOffset -= 1
+			entryInfo.previewOffset--
 			entryInfo.eofReached = false
-			ctx, cancel := context.WithCancel(context.Background())
-			entryInfo.previewCancel = cancel
-			return *entryInfo, getPreviewCmd(ctx, entryInfo.getFullPath(), entryInfo.previewHeight, entryInfo.previewOffset)
+			cmd = entryInfo.getPreview()
 		}
 	case message.EntryMsg:
-		entryInfo.resetPreview()
-		entryInfo.entry = msg.Entry
-
-		if entryInfo.entry.IsDir() {
-			entryInfo.preview = entryInfo.renderNoPreview("Directory")
-			return *entryInfo, nil
-		}
-		ctx, cancel := context.WithCancel(context.Background())
-		entryInfo.previewCancel = cancel
-		return *entryInfo, getPreviewCmd(ctx, entryInfo.getFullPath(), entryInfo.previewHeight, entryInfo.previewOffset)
+		cmd = entryInfo.setNewEntry(msg.Entry)
 	case previewReadyMsg:
-		// check that the path matches so we don't set the preview based on the previous file
-		if msg.Path != entryInfo.getFullPath() {
-			return *entryInfo, nil
-		}
-		if msg.Err != nil {
-			entryInfo.preview = entryInfo.renderNoPreview("Failed to load preview")
-			return *entryInfo, nil
-		}
-		if msg.Preview != "" {
-			entryInfo.preview = msg.Preview
-		}
-		if msg.EndReached {
-			entryInfo.eofReached = true
-		}
-		return *entryInfo, nil
+		entryInfo.handlePreviewMsg(msg)
 	}
-
-	return *entryInfo, nil
+	return *entryInfo, cmd
 }
 
 func (entryInfo *EntryInfo) getFileInfo() string {
@@ -176,8 +178,7 @@ func (entryInfo *EntryInfo) View() string {
 			previewStyle.
 				MaxHeight(entryInfo.previewHeight).
 				Height(entryInfo.previewHeight-margin).
-				// uncomment the next line to wrap lines.
-				// Width(entryInfo.width-margin).
+				// Width(entryInfo.width-margin). // uncomment this line to wrap lines.
 				MaxWidth(entryInfo.width-margin).
 				Render(entryInfo.preview),
 			fileInfo,

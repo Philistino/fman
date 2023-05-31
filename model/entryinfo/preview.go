@@ -31,24 +31,6 @@ func (p previewReadyMsg) Error() error {
 	return p.Err
 }
 
-func getPreviewCmdOLDKEEP(ctx context.Context, path string, height int, offset int) tea.Cmd {
-	return func() tea.Msg {
-		f, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-
-		preview, endReached, err := handlePreviewFunc(ctx, f, path, height, offset)
-		return previewReadyMsg{
-			Path:       path,
-			Preview:    preview,
-			Err:        err,
-			EndReached: endReached,
-		}
-	}
-}
-
 func getPreviewCmd(ctx context.Context, path string, height int, offset int) tea.Cmd {
 	return func() tea.Msg {
 		previewChan := make(chan previewReadyMsg)
