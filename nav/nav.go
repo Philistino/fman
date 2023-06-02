@@ -2,6 +2,7 @@ package nav
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/nore-dev/fman/entry"
 	"github.com/nore-dev/fman/history"
@@ -14,21 +15,6 @@ import (
 
 // Need to do something with symlinks
 
-type NavState struct {
-	path     string
-	selected map[string]struct{} // TODO: should this be a map[string]struct{} instead?
-}
-
-// Path returns the path to the directory of the NavState
-func (n NavState) Path() string {
-	return n.path
-}
-
-// Selected returns the selected items in the directory
-func (n NavState) Selected() map[string]struct{} {
-	return n.selected
-}
-
 type Nav struct {
 	hist        history.History[NavState]
 	currentPath string
@@ -37,73 +23,86 @@ type Nav struct {
 	dirsMixed   bool
 }
 
-func NewNav(path string, showHidden bool, dirsMixed bool) (*Nav, error) {
+func NewNav(showHidden bool, dirsMixed bool, startPath string) *Nav {
 	navi := &Nav{
 		hist:        history.NewHistory[NavState](1000),
 		showHidden:  showHidden,
 		dirsMixed:   dirsMixed,
-		currentPath: path,
+		currentPath: startPath,
 	}
-	entries, err := navi.getEntries(path)
-	if err != nil {
-		return navi, err
-	}
-	navi.entries = entries
-	return navi, nil
+	return navi
 }
 
-func (n *Nav) Go(path string, currSelected []string) ([]entry.Entry, NavState, error) {
+func (n *Nav) Go(path string, currSelected []string) DirState {
+
 	var err error
+	var state NavState
 	if path == "~" {
 		path, err = os.UserHomeDir()
 		if err != nil {
-			return nil, NavState{}, err
+			return n.newDirState(nil, state, err)
 		}
 	}
+	if path == n.currentPath {
+		state.selected = mapStruct(currSelected)
+		state.path = path
+		return n.newDirState(n.entries, state, err)
+	}
 
-	var emptyNav NavState // TODO: track navigation traversing up and down
 	entries, err := n.getEntries(path)
 	if err != nil {
-		return nil, emptyNav, err
+		return n.newDirState(nil, state, err)
 	}
-	n.hist.Visit(NavState{path: n.currentPath, selected: mapStruct(currSelected)})
+
+	// if the new path is the parent of the current path set the cursor to the current path
+	if path == filepath.Dir(n.currentPath) {
+		state.selected = mapStruct([]string{filepath.Base(n.currentPath)})
+	}
+	state.path = path
+
+	n.hist.Go(NavState{path: n.currentPath, selected: mapStruct(currSelected)})
 	n.currentPath = path
-	return entries, emptyNav, nil
+	n.entries = entries
+	return n.newDirState(n.entries, state, err)
 }
 
-func (n *Nav) Back(currSelected []string) ([]entry.Entry, NavState, error) {
+func (n *Nav) Back(currSelected []string) DirState {
 	state, commit, err := n.hist.Back(NavState{path: n.currentPath, selected: mapStruct(currSelected)})
 	if err != nil {
-		return nil, state, err
+		return n.newDirState(nil, state, err)
 	}
 	entries, err := n.getEntries(state.Path())
 	if err != nil {
-		return nil, state, err
+		return n.newDirState(nil, state, err)
 	}
 	commit()
 	n.currentPath = state.Path()
-	return entries, state, err
+	n.entries = entries
+	return n.newDirState(entries, state, err)
 }
 
-func (n *Nav) Forward(currSelected []string) ([]entry.Entry, NavState, error) {
+func (n *Nav) Forward(currSelected []string) DirState {
 	state, commit, err := n.hist.Foreward(NavState{path: n.currentPath, selected: mapStruct(currSelected)})
 	if err != nil {
-		return nil, state, err
+		return n.newDirState(nil, state, err)
 	}
+
 	entries, err := n.getEntries(state.Path())
 	if err != nil {
-		return nil, state, err
+		return n.newDirState(nil, state, err)
 	}
 	commit()
 	n.currentPath = state.Path()
-	return entries, state, err
+	n.entries = entries
+	return n.newDirState(entries, state, err)
 }
 
 // Reload reads and returns the current directory contents
-func (n *Nav) Reload(currSelected []string) ([]entry.Entry, NavState, error) {
+func (n *Nav) Reload(currSelected []string) DirState {
 	state := NavState{path: n.currentPath, selected: mapStruct(currSelected)}
 	entries, err := n.getEntries(n.currentPath)
-	return entries, state, err
+	n.entries = entries
+	return n.newDirState(entries, state, err)
 }
 
 func (n *Nav) CurrentPath() string {
@@ -137,4 +136,66 @@ func (n *Nav) SetDirsMixed(dirsMixed bool) {
 
 func (n *Nav) getEntries(path string) ([]entry.Entry, error) {
 	return entry.GetEntries(path, n.showHidden, n.dirsMixed)
+}
+
+type NavState struct {
+	path     string
+	selected map[string]struct{}
+}
+
+// Path returns the path to the directory of the NavState
+func (n NavState) Path() string {
+	return n.path
+}
+
+// Selected returns the selected items in the directory
+func (n NavState) Selected() map[string]struct{} {
+	return n.selected
+}
+
+type DirState struct {
+	NavState
+	entries    []entry.Entry
+	backActive bool
+	fwdActive  bool
+	upActive   bool
+	err        error
+}
+
+// Error returns the error or nil
+func (d DirState) Error() error {
+	return d.err
+}
+
+// Entries returns the directory entries
+func (d DirState) Entries() []entry.Entry {
+	return d.entries
+}
+
+// BackActive returns true if there is a back history
+func (d DirState) BackActive() bool {
+	return d.backActive
+}
+
+// ForwardActive returns true if there is a forward history
+func (d DirState) ForwardActive() bool {
+	return d.fwdActive
+}
+
+// UpActive returns true if the current directory is not the root
+func (d DirState) UpActive() bool {
+	return d.upActive
+}
+
+func isRoot(name string) bool { return filepath.Dir(name) == name }
+
+func (n *Nav) newDirState(entries []entry.Entry, nState NavState, err error) DirState {
+	return DirState{
+		NavState:   nState,
+		entries:    entries,
+		backActive: !n.hist.BackEmpty(),
+		fwdActive:  !n.hist.ForewardEmpty(),
+		upActive:   !isRoot(nState.Path()),
+		err:        err,
+	}
 }

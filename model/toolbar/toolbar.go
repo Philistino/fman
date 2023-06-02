@@ -9,10 +9,13 @@ import (
 	"github.com/nore-dev/fman/theme"
 )
 
+// TODO: active statuses, up should be active if not at root
+
 type Toolbar struct {
-	path         string
-	breadcrumb   *breadcrumb.Breadcrumb
-	previousPath string
+	breadcrumb *breadcrumb.Breadcrumb
+	backActive bool
+	fwdActive  bool
+	upActive   bool
 }
 
 func New() *Toolbar {
@@ -27,20 +30,21 @@ func (toolbar *Toolbar) Init() tea.Cmd {
 
 func (toolbar *Toolbar) Update(msg tea.Msg) (*Toolbar, tea.Cmd) {
 	switch msg := msg.(type) {
-	case message.PathMsg:
-		toolbar.previousPath = toolbar.path
-		toolbar.path = msg.Path
+	case message.DirChangedMsg:
+		toolbar.backActive = msg.BackActive()
+		toolbar.fwdActive = msg.ForwardActive()
+		toolbar.upActive = msg.UpActive()
 	case tea.MouseMsg:
 		if msg.Type != tea.MouseLeft {
 			return toolbar, nil
 		}
-		if zone.Get("forward").InBounds(msg) {
+		if zone.Get("forward").InBounds(msg) && toolbar.fwdActive {
 			return toolbar, message.NavFwdCmd()
 		}
-		if zone.Get("back").InBounds(msg) {
+		if zone.Get("back").InBounds(msg) && toolbar.backActive {
 			return toolbar, message.NavBackCmd()
 		}
-		if zone.Get("up").InBounds(msg) && toolbar.previousPath != "" {
+		if zone.Get("up").InBounds(msg) && toolbar.upActive {
 			return toolbar, message.NavUpCmd()
 		}
 	}
@@ -50,10 +54,33 @@ func (toolbar *Toolbar) Update(msg tea.Msg) (*Toolbar, tea.Cmd) {
 }
 
 func (toolbar *Toolbar) View() string {
+
+	var backBtn, fwdBtn, upBtn string
+
+	icons := theme.GetActiveIconTheme()
+
+	if toolbar.backActive {
+		backBtn = zone.Mark("back", theme.ButtonStyle.Render(string(icons.LeftArrowIcon)))
+	} else {
+		backBtn = zone.Mark("back", theme.InactiveButtonStyle.Render(string(icons.LeftArrowIcon)))
+	}
+
+	if toolbar.fwdActive {
+		fwdBtn = zone.Mark("forward", theme.ButtonStyle.Render(string(icons.RightArrowIcon)))
+	} else {
+		fwdBtn = zone.Mark("forward", theme.InactiveButtonStyle.Render(string(icons.RightArrowIcon)))
+	}
+
+	if toolbar.upActive {
+		upBtn = zone.Mark("up", theme.ButtonStyle.Render(string(icons.UpArrowIcon)))
+	} else {
+		upBtn = zone.Mark("up", theme.InactiveButtonStyle.Render(string(icons.UpArrowIcon)))
+	}
+
 	view := lipgloss.JoinHorizontal(lipgloss.Left,
-		zone.Mark("back", theme.ButtonStyle.Render(string(theme.GetActiveIconTheme().LeftArrowIcon))),
-		zone.Mark("forward", theme.ButtonStyle.Render(string(theme.GetActiveIconTheme().RightArrowIcon))),
-		zone.Mark("up", theme.ButtonStyle.Render(string(theme.GetActiveIconTheme().UpArrowIcon))),
+		backBtn,
+		fwdBtn,
+		upBtn,
 	)
 	return lipgloss.JoinHorizontal(lipgloss.Center, view, toolbar.breadcrumb.View())
 }

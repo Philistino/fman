@@ -78,21 +78,21 @@ func (list *List) View() string {
 
 			// Colors
 			if index == list.selected_index {
-				style = style.Foreground(list.Theme().SelectedItemFgColor)
+				style = style.Foreground(list.theme.SelectedItemFgColor)
 			} else if entry.IsHidden {
-				style = style.Foreground(list.Theme().HiddenFileColor)
+				style = style.Foreground(list.theme.HiddenFileColor)
 
 				if entry.IsDir() {
-					style = style.Foreground(list.Theme().HiddenFolderColor)
+					style = style.Foreground(list.theme.HiddenFolderColor)
 				}
 			} else if entry.IsDir() {
-				style = style.Foreground(list.Theme().FolderColor)
+				style = style.Foreground(list.theme.FolderColor)
 			} else {
-				style = style.Foreground(list.Theme().TextColor)
+				style = style.Foreground(list.theme.TextColor)
 			}
 
 			if i != 0 && index != list.selected_index {
-				style = style.Foreground(list.Theme().TextColor)
+				style = style.Foreground(list.theme.TextColor)
 			}
 
 			contents[i].WriteString(style.Render(content[i].String()))

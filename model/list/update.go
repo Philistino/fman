@@ -18,28 +18,6 @@ func (list *List) clearLastKey() tea.Cmd {
 	})
 }
 
-// func (list *List) getEntriesAbove() tea.Cmd {
-// 	list.lastDirectory = filepath.Base(list.path)
-// 	return message.ChangePath(filepath.Dir(list.path))
-// }
-
-// func (list *List) getEntriesBelow() tea.Cmd {
-// 	list.lastDirectory = ""
-// 	if len(list.entries) == 0 {
-// 		return nil
-// 	}
-// 	if !list.SelectedEntry().IsDir() {
-// 		return nil
-// 	}
-
-// 	if list.SelectedEntry().SymLinkPath != "" {
-// 		return message.ChangePath(list.SelectedEntry().SymLinkPath)
-// 	}
-
-// 	path := filepath.Join(list.path, list.SelectedEntry().Name())
-// 	return message.ChangePath(path)
-// }
-
 func (list *List) restrictIndex() {
 	if list.selected_index < 0 {
 		list.selected_index = len(list.entries) - 1
@@ -60,10 +38,13 @@ func (list *List) handlePathChange(newDir message.DirChangedMsg) tea.Cmd {
 	if newDir.Error() != nil {
 		return message.SendMessage(newDir.Error().Error())
 	}
-	list.entries = newDir.Entries
+	list.entries = newDir.Entries()
+	selected := newDir.Selected()
 	matched := false
 	for i, entry := range list.entries {
-		_, ok := newDir.Selected[entry.Name()]
+		// TODO: should this be for directories only?
+		// TODO: need to set the cursor in case of multi selects
+		_, ok := selected[entry.Name()]
 		if !ok {
 			continue
 		}
@@ -76,17 +57,6 @@ func (list *List) handlePathChange(newDir message.DirChangedMsg) tea.Cmd {
 
 	list.restrictIndex()
 	list.flexBox.ForceRecalculate()
-
-	// TODO manage this state in Nav
-	// // Remember the last directory
-	// if list.lastDirectory != "" {
-	// 	for i, entry := range list.entries {
-	// 		if entry.Name() == list.lastDirectory && entry.IsDir() {
-	// 			list.selected_index = i
-	// 		}
-	// 	}
-	// }
-
 	return message.UpdateEntry(list.SelectedEntry())
 }
 
@@ -120,6 +90,10 @@ func (list *List) resizeList() {
 }
 
 func (list *List) Update(msg tea.Msg) (List, tea.Cmd) {
+	if !list.focused {
+		return *list, nil
+	}
+
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		list.resizeList()
@@ -180,9 +154,7 @@ func (list *List) Update(msg tea.Msg) (List, tea.Cmd) {
 		}
 
 	}
-
 	list.restrictIndex()
-
 	return *list, nil
 
 }

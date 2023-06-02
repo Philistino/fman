@@ -27,7 +27,7 @@ type EntryInfo struct {
 	previewHeight int
 	previewOffset int
 
-	theme         *theme.Theme
+	theme         theme.Theme
 	eofReached    bool // is set to true when the end of the file is reached in the preview
 	previewCancel context.CancelFunc
 
@@ -40,9 +40,9 @@ var previewStyle = lipgloss.NewStyle()
 
 // previewDelay is how long to wait on a file before reading it to create a preview.
 // This is meant to avoid unnecessary disk io when the user is navigating quickly.
-func New(theme *theme.Theme, firstEntry entry.Entry, previewDelay int) EntryInfo {
+func New(theme theme.Theme, previewDelay int) EntryInfo {
 	return EntryInfo{
-		entry:         firstEntry,
+		// entry:         firstEntry,
 		previewHeight: 10,
 		theme:         theme,
 		width:         10,
@@ -112,8 +112,8 @@ func (entryInfo *EntryInfo) handlePreviewMsg(msg previewReadyMsg) {
 func (entryInfo *EntryInfo) Update(msg tea.Msg) (EntryInfo, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
-	case message.PathMsg:
-		entryInfo.path = msg.Path
+	case message.DirChangedMsg: // Can this can be merged with message.EntryMsg?
+		entryInfo.path = msg.Path()
 		entryInfo.eofReached = false
 	case tea.KeyMsg:
 		if key.Matches(msg, keymap.Default.ScrollPreviewDown) {

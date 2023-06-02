@@ -1,10 +1,7 @@
 package list
 
 import (
-	"bufio"
-	"os"
 	"time"
-	"unicode/utf8"
 
 	"github.com/76creates/stickers"
 	tea "github.com/charmbracelet/bubbletea"
@@ -27,21 +24,20 @@ type List struct {
 	lastClickedTime time.Time
 	clickDelay      float64
 
-	theme *theme.Theme
+	theme theme.Theme
 
 	lastKeyCharacter byte
-
-	lastDirectory string
+	focused          bool
 }
 
-func New(theme *theme.Theme, entries []entry.Entry) List {
+func New(theme theme.Theme) List {
 
 	list := List{
-		entries:       entries,
 		truncateLimit: 100,
 		flexBox:       stickers.NewFlexBox(0, 0),
 		clickDelay:    0.5,
 		theme:         theme,
+		focused:       true,
 	}
 
 	rows := []*stickers.FlexBoxRow{
@@ -64,28 +60,14 @@ func (list *List) Init() tea.Cmd {
 }
 
 func (list *List) SelectedEntry() entry.Entry {
-
 	if len(list.entries) == 0 {
 		return entry.Entry{}
 	}
-
 	return list.entries[list.selected_index]
-}
-
-func (list *List) Theme() *theme.Theme {
-	return list.theme
-}
-
-func (list *List) Width() int {
-	return list.width
 }
 
 func (list *List) SetWidth(width int) {
 	list.width = width
-}
-
-func (list *List) Height() int {
-	return list.height
 }
 
 func (list *List) SetHeight(height int) {
@@ -114,17 +96,18 @@ func truncateText(str string, max int) string {
 	return str
 }
 
-func isFileReadable(path string) bool {
-	file, err := os.Open(path)
+// Focused returns the focus state of the table.
+func (m *List) Focused() bool {
+	return m.focused
+}
 
-	if err != nil {
-		return false
-	}
+// Focus focuses the table, allowing the user to move around the rows and
+// interact.
+func (m *List) Focus() {
+	m.focused = true
+}
 
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-
-	scanner.Scan()
-	return utf8.ValidString(scanner.Text())
+// Blur blurs the table, preventing selection or movement.
+func (m *List) Blur() {
+	m.focused = false
 }

@@ -31,11 +31,10 @@ type ButtonBar struct {
 	fileSelected           bool
 	clipBoardEmpty         bool
 	onlyCompressedSelected bool
-	theme                  *theme.Theme
 }
 
-func New(theme *theme.Theme) ButtonBar {
-	return ButtonBar{theme: theme}
+func New() ButtonBar {
+	return ButtonBar{}
 }
 
 func (m ButtonBar) Init() tea.Cmd {
@@ -86,6 +85,7 @@ func (m ButtonBar) View() string {
 
 	newFile = theme.ButtonStyle.Render("New File")
 	newFolder = theme.ButtonStyle.Render("New Folder")
+
 	if m.fileSelected {
 		cut = theme.ButtonStyle.Render("Cut")
 		copy = theme.ButtonStyle.Render("Copy")
@@ -97,6 +97,7 @@ func (m ButtonBar) View() string {
 		rename = theme.InactiveButtonStyle.Render("Rename")
 		delete = theme.InactiveButtonStyle.Render("Delete")
 	}
+
 	if m.onlyCompressedSelected {
 		compress = theme.InactiveButtonStyle.Render("Compress")
 		extract = theme.ButtonStyle.Render("Extract")

@@ -1,9 +1,11 @@
 package message
 
 import (
+	"bufio"
 	"os"
 	"os/exec"
 	"runtime"
+	"unicode/utf8"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/nore-dev/fman/entry"
@@ -86,6 +88,18 @@ func NavDownCmd(name string) tea.Cmd {
 	}
 }
 
+type NavOtherMsg struct {
+	Path string
+}
+
+func NavOtherCmd(path string) tea.Cmd {
+	return func() tea.Msg {
+		return NavOtherMsg{
+			Path: path,
+		}
+	}
+}
+
 func ChangePath(path string) tea.Cmd {
 	return func() tea.Msg {
 		return PathMsg{Path: path}
@@ -111,27 +125,15 @@ func UpdateDialog(dialog *dialog.Dialog) tea.Cmd {
 }
 
 type DirChangedMsg struct {
-	Path     string
-	Entries  []entry.Entry
-	Selected map[string]struct{}
-	err      error
+	nav.DirState
 }
 
-func (d DirChangedMsg) Error() error {
-	return d.err
+func handleNav(state nav.DirState) tea.Msg {
+	return DirChangedMsg{state}
 }
 
-func handleNav(entries []entry.Entry, state nav.NavState, err error) tea.Msg {
-	if err != nil {
-		return SendMessage(err.Error())
-	}
-	return DirChangedMsg{
-		Path:     state.Path(),
-		Entries:  entries,
-		Selected: state.Selected(),
-	}
-}
-
+// HandleFwdCmd fetches the forward state of the nav and returns a message to
+// broadcast the new state
 func HandleFwdCmd(navi *nav.Nav, currentSelected []string) tea.Cmd {
 	return func() tea.Msg {
 		return handleNav(
@@ -142,6 +144,8 @@ func HandleFwdCmd(navi *nav.Nav, currentSelected []string) tea.Cmd {
 	}
 }
 
+// HandleBackCmd fetches the last state of the nav and returns a message to
+// broadcast the new state
 func HandleBackCmd(navi *nav.Nav, currentSelected []string) tea.Cmd {
 	return func() tea.Msg {
 		return handleNav(
@@ -152,11 +156,25 @@ func HandleBackCmd(navi *nav.Nav, currentSelected []string) tea.Cmd {
 	}
 }
 
+// HandleNavCmd fetches a new state of the nav and returns a message to
+// broadcast the new state
 func HandleNavCmd(navi *nav.Nav, currentSelected []string, path string) tea.Cmd {
 	return func() tea.Msg {
 		return handleNav(
 			navi.Go(
 				path,
+				currentSelected,
+			),
+		)
+	}
+}
+
+// HandleReloadCmd reloads the current directory and returns a message to
+// broadcast the returned state state
+func HandleReloadCmd(navi *nav.Nav, currentSelected []string) tea.Cmd {
+	return func() tea.Msg {
+		return handleNav(
+			navi.Reload(
 				currentSelected,
 			),
 		)
@@ -197,4 +215,19 @@ func detectOpenCommand() string {
 	}
 
 	return "start"
+}
+
+func isFileReadable(path string) bool {
+	file, err := os.Open(path)
+
+	if err != nil {
+		return false
+	}
+
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	scanner.Scan()
+	return utf8.ValidString(scanner.Text())
 }
