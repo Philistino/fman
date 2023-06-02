@@ -47,8 +47,8 @@ var Default = KeyMap{
 		key.WithHelp("ctrl+↓", "Go to Bottom"),
 	),
 	GoToHomeDirectory: key.NewBinding(
-		key.WithKeys("~", "."),
-		key.WithHelp("~/.", "Go to Home Directory"),
+		key.WithKeys("~"),
+		key.WithHelp("~", "Go to Home Directory"),
 	),
 	GoToParentDirectory: key.NewBinding(
 		key.WithKeys("a", "left"),

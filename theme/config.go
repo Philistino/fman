@@ -8,14 +8,13 @@ var themes = ThemeMap{
 	"catppuccin-latte":     CatppuccinThemeLatte,
 	"catppuccin-macchiato": CatppuccinThemeMacchiato,
 	"catppuccin-mocha":     CatppuccinThemeMocha,
-	"default":              DefaultTheme,
-	"dracula":              DefaultTheme,
+	"dracula":              DraculaTheme,
 	"everblush":            EverblushTheme,
 	"gruvbox":              GruvboxTheme,
 	"nord":                 NordTheme,
 }
 
-// Tries to match provided flag value for --theme against
+// GetActiveTheme tries to match provided flag value for --theme against
 // an existing ThemeMap and returns default theme if theme
 // name does not match any records
 // in the ThemeMap (due to a typo for example)
@@ -23,5 +22,5 @@ func GetActiveTheme(themeNameCandidate string) (theme Theme) {
 	if _, ok := themes[themeNameCandidate]; ok {
 		return themes[themeNameCandidate]
 	}
-	return DefaultTheme
+	return DraculaTheme
 }

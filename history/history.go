@@ -2,7 +2,6 @@ package history
 
 import (
 	"errors"
-	"log"
 )
 
 // The back and forward stacks could probably be implemented by indexing a single slice
@@ -11,12 +10,24 @@ import (
 // for other solutions see: https://leetcode.com/problems/design-browser-history/solutions/
 // https://leetcode.com/problems/design-browser-history/solutions/3317377/100ms-34-41-8-5mb-5-38-go-solution/
 
-// History is a struct that tracks the forward and backward navigation state
+// History is a struct that tracks forward and backward navigation state
+// It does not have synchronization/locking
 type History[T any] struct {
 	maxStackSize int
 	backStack    []T
 	fwdStack     []T
 }
+
+// Commit is a function that commits the change in state due
+// to a back or forward navigation to the history.
+// It is returned when when a back or forward navigation occurs
+// and it should be called if the state is changed successfully.
+// If whatever state is returned by back or forward cannot be returned to,
+// do not call commit, and the history struct will remain at the state prior
+// to the call to Forward() or Back().
+//
+// After the first call, subsequent calls to commit do nothing.
+type Commit func()
 
 // NewHistory returns a new History struct.
 //
@@ -41,37 +52,53 @@ func (tracker *History[T]) Visit(leavingState T) {
 }
 
 // Back returns the last navigation state
-func (tracker *History[T]) Back(leavingState T) (T, error) {
+func (tracker *History[T]) Back(leavingState T) (T, Commit, error) {
 	if tracker.BackEmpty() {
-		log.Println("backStack is empty")
 		var noop T
-		return noop, errors.New("backStack is empty")
+		return noop, func() {}, errors.New("backStack is empty")
 	}
+
 	last, stack := pop(tracker.backStack)
-	tracker.backStack = stack
-	tracker.fwdStack, _ = appendMaxLen(
-		tracker.fwdStack,
-		leavingState,
-		tracker.maxStackSize,
-	)
-	return last, nil
+
+	done := false
+	commit := func() {
+		if done {
+			return
+		}
+		tracker.backStack = stack
+		tracker.fwdStack, _ = appendMaxLen(
+			tracker.fwdStack,
+			leavingState,
+			tracker.maxStackSize,
+		)
+		done = true
+	}
+	return last, commit, nil
 }
 
 // Forward returns the last navigation state in the case that the user went back
-func (tracker *History[T]) Foreward(leavingState T) (T, error) {
+func (tracker *History[T]) Foreward(leavingState T) (T, Commit, error) {
 	if tracker.ForewardEmpty() {
-		log.Println("forwardStack is empty")
 		var noop T
-		return noop, errors.New("forwardStack is empty")
+		return noop, func() {}, errors.New("forwardStack is empty")
 	}
+
 	last, stack := pop(tracker.fwdStack)
-	tracker.fwdStack = stack
-	tracker.backStack, _ = appendMaxLen(
-		tracker.backStack,
-		leavingState,
-		tracker.maxStackSize,
-	)
-	return last, nil
+
+	done := false
+	commit := func() {
+		if done {
+			return
+		}
+		tracker.fwdStack = stack
+		tracker.backStack, _ = appendMaxLen(
+			tracker.backStack,
+			leavingState,
+			tracker.maxStackSize,
+		)
+		done = true
+	}
+	return last, commit, nil
 }
 
 // ForewardEmpty returns true if the forward stack is empty
@@ -86,6 +113,8 @@ func (tracker *History[T]) BackEmpty() bool {
 
 // pop returns the last element of a slice
 // and the slice with that last element removed
+//
+// # This does not mutate the given slice
 //
 // Look before you leap!! This will panic on an empty slice
 func pop[T any](s []T) (T, []T) {

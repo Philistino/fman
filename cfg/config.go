@@ -18,7 +18,7 @@ const (
 	// Config Defaults
 	DefaultTheme = "dracula"
 	DefaultIcons = "nerdfont"
-	DefaultDelay = 250
+	DefaultDelay = 200
 	DefaultPath  = "."
 )
 
@@ -30,11 +30,11 @@ const (
 // Cfg holds the configuration details for a session
 type Cfg struct {
 	Path         string `arg:"positional" help:"path to open. Defaults to current directory"`
-	Icons        string `default:"" help:"icon set to use. Options are: nerdfont, material"`
+	Icons        string `default:"" help:"icon set to use. Options are: nerdfont, emoji, none. Defaults to emoji"`
 	Theme        string `default:"" help:"color theme to use. Defaults to dracula. Options are: brogrammer, catppuccin-frappe, catppuccin-latte, catppuccin-macchiato, catppuccin-mocha, dracula, everblush, gruvbox, nord"`
 	DirsMixed    *bool  `arg:"--dirs-mixed" help:"do not sort files from directories. Defaults to false"`
 	NoHidden     *bool  `arg:"--no-hidden" help:"do not show hidden files. Defaults to false"`
-	PreviewDelay *int   `arg:"--preview-delay" placeholder:"DELAY" help:"delay (in milliseconds) before opening a file for previewing. This is meant to reduce io. Defaults to 250"`
+	PreviewDelay *int   `arg:"--preview-delay" placeholder:"DELAY" help:"delay in milliseconds before opening a file for previewing. This is meant to reduce io. Defaults to 250"`
 	// colorScheme theme.Theme // TODO: fetch colorscheme and icon map from theme and pin to config
 }
 

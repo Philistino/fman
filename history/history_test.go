@@ -37,7 +37,8 @@ func TestBack(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			got, _ := tc.tracker.Back(2)
+			got, commit, _ := tc.tracker.Back(2)
+			commit()
 			if !reflect.DeepEqual(got, tc.wantNavState) {
 				t.Errorf("Invalid response for %+q. Got %+q, want %+q", tc.tracker, got, tc.wantNavState)
 			}
@@ -56,27 +57,38 @@ func TestForward(t *testing.T) {
 		fwdStack:     []string{},
 	}
 	final := "/1/2/3/4" // start and end state wanted
-	tracker.Back(final)
-	tracker.Back("/1/2/3")
-	s, _ := tracker.Back("/1/2")
+	_, commit, _ := tracker.Back(final)
+	commit()
+	_, commit, _ = tracker.Back("/1/2/3")
+	commit()
+	s, commit, _ := tracker.Back("/1/2")
+	commit()
+	commit()
 	if s != "/1" {
-		t.Errorf("Invalid response for %+q. Got %+q, want %+q", tracker, s, "/1")
+		t.Errorf("Invalid response for Back %+q. Got %+q, want %+q", tracker, s, "/1")
 	}
 
-	tracker.Foreward("/1")
-	tracker.Foreward("/1/2")
-	s, _ = tracker.Foreward("/1/2/3")
+	_, commit, _ = tracker.Foreward("/1")
+	commit()
+	commit() // call commit multiple times should be a no-op
+	commit()
+	_, commit, _ = tracker.Foreward("/1/2")
+	commit()
+	s, commit, _ = tracker.Foreward("/1/2/3")
+	commit()
 	if s != final {
 		t.Errorf("Invalid response for %+q. Got %+q, want %+q", tracker, s, final)
 	}
 
 	// fwdStack should be empty so this will cause an error
-	_, err := tracker.Foreward("/1/2/3/4")
+	_, commit, err := tracker.Foreward("/1/2/3/4")
+	commit()
 	if err == nil {
 		t.Errorf("Invalid response for error. Got %+q, want not nil", err)
 	}
 
-	s, _ = tracker.Back(final)
+	s, commit, _ = tracker.Back(final)
+	commit()
 	tracker.Visit(s)
 	if !tracker.ForewardEmpty() {
 		t.Errorf("Tracker forward stack should be empty.  Got %+q", tracker.fwdStack)
@@ -107,6 +119,9 @@ func TestPop(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.desc, func(t *testing.T) {
 			gotVal, gotRest := pop(tc.in)
+			if len(tc.in) != len(gotRest)+1 {
+				t.Error("In should not have been modified")
+			}
 			if gotVal != tc.out {
 				t.Errorf("Invalid response for %+q. Got %+q, want %+q", tc.in, gotVal, tc.out)
 			}

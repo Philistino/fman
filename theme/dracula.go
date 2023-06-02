@@ -2,7 +2,7 @@ package theme
 
 import "github.com/charmbracelet/lipgloss"
 
-var DefaultTheme = Theme{
+var DraculaTheme = Theme{
 	EvenItemBgColor:          lipgloss.Color("#44475a"),
 	SelectedItemBgColor:      lipgloss.Color("#ff79c6"),
 	SelectedItemFgColor:      lipgloss.Color("#282a36"),
