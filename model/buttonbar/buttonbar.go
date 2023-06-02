@@ -7,12 +7,10 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	zone "github.com/lrstanley/bubblezone"
 	"github.com/nore-dev/fman/message"
-	"github.com/nore-dev/fman/model/dialog"
 	"github.com/nore-dev/fman/theme"
 )
 
 // have to activate and deactivate buttons based on state
-//	back and forward
 
 // Buttons:
 // 	- cut activate when item select
@@ -26,15 +24,21 @@ import (
 //	- extract activate when compressed item select
 
 type ButtonBar struct {
-	id                     string
-	width                  int
-	fileSelected           bool
-	clipBoardEmpty         bool
-	onlyCompressedSelected bool
+	id                string
+	width             int
+	fileSelected      bool
+	clipBoardFull     bool
+	selectedIsArchive bool
+	focused           bool
 }
 
 func New() ButtonBar {
-	return ButtonBar{}
+	return ButtonBar{
+		id:            "buttonbar",
+		fileSelected:  false,
+		clipBoardFull: false,
+		focused:       true,
+	}
 }
 
 func (m ButtonBar) Init() tea.Cmd {
@@ -42,37 +46,42 @@ func (m ButtonBar) Init() tea.Cmd {
 }
 
 func (m ButtonBar) Update(msg tea.Msg) (ButtonBar, tea.Cmd) {
+	if !m.focused {
+		return m, nil
+	}
+
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
+	case message.EntryMsg:
+		m.fileSelected = true
+	case message.DirChangedMsg:
+		m.fileSelected = false
+	case message.InternalCopyMsg:
+		m.clipBoardFull = true
 	case tea.MouseMsg:
 		if msg.Type != tea.MouseLeft {
 			return m, nil
 		}
 		switch {
 		case zone.Get(m.id + "new file").InBounds(msg):
-			d := dialog.Default("new file")
-			d.SetTitle("Create new file?")
-			cmd = message.UpdateDialog(&d)
 			log.Println("Clicked new file!")
 		case zone.Get(m.id + "new folder").InBounds(msg):
 			log.Println("Clicked new folder!")
-		case zone.Get(m.id + "cut").InBounds(msg):
+		case zone.Get(m.id+"cut").InBounds(msg) && m.fileSelected:
 			log.Println("Clicked cut!")
-		case zone.Get(m.id + "copy").InBounds(msg):
-			log.Println("Clicked copy!")
-		case zone.Get(m.id + "paste").InBounds(msg):
+		case zone.Get(m.id+"copy").InBounds(msg) && m.fileSelected:
+			cmd = message.InternalClipboardCmd()
+		case zone.Get(m.id+"paste").InBounds(msg) && m.clipBoardFull:
 			log.Println("Clicked paste!")
-		case zone.Get(m.id + "rename").InBounds(msg):
+		case zone.Get(m.id+"rename").InBounds(msg) && m.fileSelected:
 			log.Println("Clicked rename!")
-		case zone.Get(m.id + "delete").InBounds(msg):
+		case zone.Get(m.id+"delete").InBounds(msg) && m.fileSelected:
 			log.Println("Clicked delete!")
-		case zone.Get(m.id + "compress").InBounds(msg):
-			log.Println("Clicked compress!")
-		case zone.Get(m.id + "extract").InBounds(msg):
+			// case zone.Get(m.id + "compress").InBounds(msg):
+			// case zone.Get(m.id + "extract").InBounds(msg):
 		}
-		return m, cmd
 	}
 	return m, cmd
 }
@@ -81,7 +90,7 @@ func (m ButtonBar) View() string {
 	sectionWrapper := lipgloss.NewStyle().
 		Padding(0, 1, 1, 1)
 
-	var newFile, newFolder, cut, copy, paste, rename, delete, compress, extract string
+	var newFile, newFolder, cut, copy, paste, rename, delete string
 
 	newFile = theme.ButtonStyle.Render("New File")
 	newFolder = theme.ButtonStyle.Render("New Folder")
@@ -98,13 +107,23 @@ func (m ButtonBar) View() string {
 		delete = theme.InactiveButtonStyle.Render("Delete")
 	}
 
-	if m.onlyCompressedSelected {
-		compress = theme.InactiveButtonStyle.Render("Compress")
-		extract = theme.ButtonStyle.Render("Extract")
+	if m.clipBoardFull {
+		paste = theme.ButtonStyle.Render("Paste")
 	} else {
-		compress = theme.ButtonStyle.Render("Compress")
-		extract = theme.InactiveButtonStyle.Render("Extract")
+		paste = theme.InactiveButtonStyle.Render("Paste")
 	}
+
+	// var compress, extract string
+	// if !m.fileSelected {
+	// 	compress = theme.InactiveButtonStyle.Render("Compress")
+	// 	extract = theme.InactiveButtonStyle.Render("Extract")
+	// } else if m.selectedIsArchive {
+	// 	compress = theme.InactiveButtonStyle.Render("Compress")
+	// 	extract = theme.ButtonStyle.Render("Extract")
+	// } else {
+	// 	compress = theme.ButtonStyle.Render("Compress")
+	// 	extract = theme.InactiveButtonStyle.Render("Extract")
+	// }
 
 	buttons := lipgloss.JoinHorizontal(
 		lipgloss.Top,
@@ -125,13 +144,13 @@ func (m ButtonBar) View() string {
 				zone.Mark(m.id+"delete", delete),
 			),
 		),
-		sectionWrapper.Copy().BorderLeft(false).BorderRight(false).PaddingRight(0).Render(
-			lipgloss.JoinHorizontal(
-				lipgloss.Top,
-				zone.Mark(m.id+"compress", compress),
-				zone.Mark(m.id+"extract", extract),
-			),
-		),
+		// sectionWrapper.Copy().BorderLeft(false).BorderRight(false).PaddingRight(0).Render(
+		// 	lipgloss.JoinHorizontal(
+		// 		lipgloss.Top,
+		// 		zone.Mark(m.id+"compress", compress),
+		// 		zone.Mark(m.id+"extract", extract),
+		// 	),
+		// ),
 	)
 	return lipgloss.JoinHorizontal(lipgloss.Left, buttons)
 }
