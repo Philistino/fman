@@ -27,29 +27,18 @@ func (breadcrumb *Breadcrumb) Init() tea.Cmd {
 }
 
 func (breadcrumb *Breadcrumb) Update(msg tea.Msg) (*Breadcrumb, tea.Cmd) {
+	var cmd tea.Cmd
 	switch msg := msg.(type) {
-	case message.PathMsg:
-		breadcrumb.path = msg.Path
-		breadcrumb.updateView()
-	case tea.MouseMsg:
-		if msg.Type != tea.MouseLeft {
+	case message.DirChangedMsg:
+		if msg.Error() != nil {
 			return breadcrumb, nil
 		}
-
-		pathParts := strings.SplitAfter(breadcrumb.path, string(filepath.Separator))
-
-		// Quick Path Jump
-		// Mouse Support
-		for i := 0; i < len(pathParts); i++ {
-			if zone.Get(strconv.Itoa(i)).InBounds(msg) {
-				newPath := filepath.Join(pathParts[:i+1]...) // TODO: this is a bit hacky. Should set the breadcrumb on directory change
-				breadcrumb.path = newPath
-				return breadcrumb, message.ChangePath(breadcrumb.path)
-			}
-		}
+		breadcrumb.path = msg.Path()
+		breadcrumb.updateView()
+	case tea.MouseMsg:
+		cmd = breadcrumb.handleMouseMsg(msg)
 	}
-
-	return breadcrumb, nil
+	return breadcrumb, cmd
 }
 
 func (breadcrumb *Breadcrumb) View() string {
@@ -58,6 +47,21 @@ func (breadcrumb *Breadcrumb) View() string {
 		parts = append(parts, zone.Mark(strconv.Itoa(i), part))
 	}
 	return lipgloss.NewStyle().MarginLeft(2).Render(strings.Join(parts, ""))
+}
+
+func (breadcrumb *Breadcrumb) handleMouseMsg(msg tea.MouseMsg) tea.Cmd {
+	if msg.Type != tea.MouseLeft {
+		return nil
+	}
+	pathParts := strings.SplitAfter(breadcrumb.path, string(filepath.Separator))
+	for i := 0; i < len(pathParts); i++ {
+		if !zone.Get(strconv.Itoa(i)).InBounds(msg) {
+			continue
+		}
+		clicked := filepath.Join(pathParts[:i+1]...)
+		return message.NavOtherCmd(clicked)
+	}
+	return nil
 }
 
 // updateView creates the renderable breadcrumb for the given path
@@ -77,7 +81,7 @@ func (breadcrumb *Breadcrumb) updateView() {
 	for i, part := range pathParts {
 
 		// this was in the old implementation. Is this only for root?
-		if pathParts[i] == "" {
+		if part == "" {
 			continue
 		}
 
