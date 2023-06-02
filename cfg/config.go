@@ -16,16 +16,17 @@ const (
 	FmanConfigFileName = "config.toml"
 
 	// Config Defaults
-	DefaultTheme = "dracula"
-	DefaultIcons = "nerdfont"
-	DefaultDelay = 200
-	DefaultPath  = "."
+	DefaultTheme     = "dracula"
+	DefaultIcons     = "nerdfont"
+	DefaultDelay     = 200
+	DefaultPath      = "."
+	DefaultDirsMixed = false
+	DefaultNoHidden  = false
 )
 
-// These pointers are a janky way to get None type values so we can know
-// if the user passed an argument or not and then prioritise the config file or cli.
-// This method will get a unruly if we have a lot of arguments because we will
-// have to add args in a few places
+// These pointers are a janky way to get Nonetype values so we can know
+// if the user passed an argument or not either via the cli or config file, and then prioritise the config file or cli.
+// This approach will get a unruly if we have a lot of arguments because we will have to add args in a few places
 
 // Cfg holds the configuration details for a session
 type Cfg struct {
@@ -38,6 +39,9 @@ type Cfg struct {
 	// colorScheme theme.Theme // TODO: fetch colorscheme and icon map from theme and pin to config
 }
 
+// LoadConfig loads the configuration from the cli and config file (if present).
+//
+// It returns an error if the config file exists but could not be read or parsed
 func LoadConfig() (Cfg, error) {
 	cli := loadCliArgs()
 	fileCfg, err := loadConfigFile()
@@ -98,7 +102,7 @@ func mergeConfigs(cmdCfg Cfg, fileCfg Cfg) Cfg {
 	return cmdCfg
 }
 
-// For each config value, if neither config file or cli args provides a value
+// for each config value, if neither config file or cli args provides a value
 // then use default values to fill config object.
 func setDefaults(cfg Cfg) Cfg {
 	if cfg.Path == "" {
@@ -112,11 +116,11 @@ func setDefaults(cfg Cfg) Cfg {
 	}
 	if cfg.DirsMixed == nil {
 		cfg.DirsMixed = new(bool)
-		*cfg.DirsMixed = false
+		*cfg.DirsMixed = DefaultDirsMixed
 	}
 	if cfg.NoHidden == nil {
 		cfg.NoHidden = new(bool)
-		*cfg.NoHidden = false
+		*cfg.NoHidden = DefaultNoHidden
 	}
 	if cfg.PreviewDelay == nil {
 		cfg.PreviewDelay = new(int)
