@@ -89,7 +89,7 @@ func TestForward(t *testing.T) {
 
 	s, commit, _ = tracker.Back(final)
 	commit()
-	tracker.Visit(s)
+	tracker.Go(s)
 	if !tracker.ForewardEmpty() {
 		t.Errorf("Tracker forward stack should be empty.  Got %+q", tracker.fwdStack)
 	}

@@ -2,6 +2,7 @@ package history
 
 import (
 	"errors"
+	"math"
 )
 
 // The back and forward stacks could probably be implemented by indexing a single slice
@@ -18,6 +19,8 @@ type History[T any] struct {
 	fwdStack     []T
 }
 
+var ErrStackEmpty = errors.New("stack is empty")
+
 // Commit is a function that commits the change in state due
 // to a back or forward navigation to the history.
 // It is returned when when a back or forward navigation occurs
@@ -32,17 +35,21 @@ type Commit func()
 // NewHistory returns a new History struct.
 //
 // maxStackSize is the maximum number of states to be stored in each of the back and forward stacks.
+// if maxStackSize is less than 1, the default is math.MaxInt which varies by system, but is typically an int64.
 func NewHistory[T any](maxStackSize int) History[T] {
+	if maxStackSize <= 0 {
+		maxStackSize = math.MaxInt
+	}
 	return History[T]{
 		maxStackSize: maxStackSize,
 	}
 }
 
-// Visit adds a prior state to the backStack it should be called before
+// Go adds a prior state to the backStack it should be called before
 // changing to a new directory independent of the back or forward stacks
 //
 // leavingState is the state that the user is leaving from.
-func (tracker *History[T]) Visit(leavingState T) {
+func (tracker *History[T]) Go(leavingState T) {
 	tracker.backStack, _ = appendMaxLen(
 		tracker.backStack,
 		leavingState,
@@ -55,7 +62,7 @@ func (tracker *History[T]) Visit(leavingState T) {
 func (tracker *History[T]) Back(leavingState T) (T, Commit, error) {
 	if tracker.BackEmpty() {
 		var noop T
-		return noop, func() {}, errors.New("backStack is empty")
+		return noop, func() {}, ErrStackEmpty
 	}
 
 	last, stack := pop(tracker.backStack)
@@ -80,7 +87,7 @@ func (tracker *History[T]) Back(leavingState T) (T, Commit, error) {
 func (tracker *History[T]) Foreward(leavingState T) (T, Commit, error) {
 	if tracker.ForewardEmpty() {
 		var noop T
-		return noop, func() {}, errors.New("forwardStack is empty")
+		return noop, func() {}, ErrStackEmpty
 	}
 
 	last, stack := pop(tracker.fwdStack)
