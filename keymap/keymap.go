@@ -3,30 +3,21 @@ package keymap
 import "github.com/charmbracelet/bubbles/key"
 
 type KeyMap struct {
-	MoveCursorUp   key.Binding
-	MoveCursorDown key.Binding
-
-	GoToTop    key.Binding
-	GoToBottom key.Binding
-
-	GoToHomeDirectory key.Binding
-
+	MoveCursorUp          key.Binding
+	MoveCursorDown        key.Binding
+	GoToTop               key.Binding
+	GoToBottom            key.Binding
+	GoToHomeDirectory     key.Binding
 	GoToParentDirectory   key.Binding
 	GoToSelectedDirectory key.Binding
-
-	GoBack    key.Binding
-	GoForward key.Binding
-
-	ScrollPreviewDown key.Binding
-	ScrollPreviewUp   key.Binding
-
-	CopyToClipboard key.Binding
-
-	OpenFile key.Binding
-
-	ShowHiddenEntries key.Binding
-
-	ToggleHelp key.Binding
+	GoBack                key.Binding
+	GoForward             key.Binding
+	ScrollPreviewDown     key.Binding
+	ScrollPreviewUp       key.Binding
+	CopyToClipboard       key.Binding
+	OpenFile              key.Binding
+	ShowHiddenEntries     key.Binding
+	ToggleHelp            key.Binding
 }
 
 var Default = KeyMap{

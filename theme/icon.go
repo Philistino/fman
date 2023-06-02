@@ -1,9 +1,5 @@
 package theme
 
-import (
-	"github.com/nore-dev/fman/cfg"
-)
-
 type iconSet struct {
 	LeftArrowIcon  rune
 	RightArrowIcon rune
@@ -39,18 +35,14 @@ var nerdFont = iconSet{
 }
 
 var emoji = iconSet{
-	LeftArrowIcon:  '◀',
-	RightArrowIcon: '▶',
-	UpArrowIcon:    '🔼',
-	// BreadcrumbArrowIcon: '👉',
+	LeftArrowIcon:       '◀',
+	RightArrowIcon:      '▶',
+	UpArrowIcon:         '▲',
 	BreadcrumbArrowIcon: '>',
 	GopherIcon:          '🐻',
 	FileIcon:            '📄',
 	FolderIcon:          '📁',
 	SymlinkIcon:         '🔗',
-	TimeIcon:            '⏰',
-	SizeIcon:            '📊',
-	NameIcon:            '🏷',
 }
 
 var noIcons = iconSet{
@@ -66,6 +58,16 @@ var iconProviders = iconSets{
 	"none":     noIcons,
 }
 
+var iconsG string
+
+func SetIcons(icons string) {
+	iconsG = icons
+}
+
 func GetActiveIconTheme() iconSet {
-	return iconProviders[cfg.Config.Icons]
+	set, ok := iconProviders[iconsG]
+	if !ok {
+		return iconProviders["emoji"]
+	}
+	return set
 }

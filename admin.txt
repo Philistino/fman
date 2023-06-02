@@ -1,40 +1,64 @@
-use a filesystem abstraction, perhaps afero? perhaps this instead?
-https://pkg.go.dev/github.com/hack-pad/hackpadfs
-
 k6 uses a thin wrapper over afero so they can later move away from it:
 https://github.com/grafana/k6/tree/master/lib/fsext
 
-
 Todo:
     Preview - toggle preview pane visibility
-    Preview - add config option for read delay. Default to 250 milliseconds?
-        Track whether a file was read or not, if it was, set delay to zero for following read
     Preview - render markdown preview with glamour
-    Preview - MIME type is not very informative
-    Preview - could show line numbers but this might reduce the info shown too much
-    Preview - could show file name in selected style or not at all
-    
-    Bookmarks - add bookmarks
-    Bookmarks - toggle bookmark pane visibility
-    
+    Preview - could preview directories
+    Preview - move file reading out of ui
+    Preview - could use a struct and keep file handle open. Read for the new line positions, then seek between them on scroll?
+    Preview - Track whether a file was read or not, if it was, set delay to zero for following read
+
     FS operations - mkdir/mkfile/delete/etc. 
     FS operations - Dialog to confirm Changes
+    FS operations - Dialog to show progress. I could show progress in the preview pane instead of the preview
+
+    List - getting 1 frame of empty dir before being updated with entries -- I think this has been fixed
+    List - do not circle back when reaching top or bottom
+    List - add sort methods for each column
+    List - click column header to sort (add arrow icon and reverse on second click)
+    List - freeze list on navs and show spinner if taking more than 100 milliseconds
+    List - cursor can be set more proactively
+        Should history only track the cursor, not selected?
+        Should chdirs one up and one down return the prior state of that dir despite not truly being a back or fwd?
+            Get the back nav state, if the path matches the new dir, take selected but but do not commit a back to the history  
+    List - Multi-select filesystem objects
+    List - Emit msgs on selection changes
+        If multi-selecting, what to do with preview? Show preview for cursor or none?
+
+    ButtonBar - Add a toggle hidden button - how to track this in history? It's a reload, so just don't record it in history
     
-    List navigation - do not circle back when reaching top or bottom
-    List navigation - add sort methods for each column
-    List navigation - click column header to sort (add arrow icon and reverse on second click)
-    List navigation - Toggle hidden button
-    List navigation - List navigation - Use nerd-font icons based on file type - default to emojis
-    
-    Multi-select filesystem objects
-    Implement real navigation history
-    Implement search
-    Put long error messages in a pop-up box at bottom
+    All buttons - activate or deactivate based on selection/"clipboard" state 
+
+    Infobar - move away from tea.Tick, which is not a fixed duration
+    Infobar - need to track state of messages. If a new message comes in before the last one is cleared, clear the old message for a moment and add the new message
+        make sure the old clear duration is ignored when it comes 
+
+    Implement real navigation history - Done but need to write some tests
+    Put long error messages in a pop-up box at bottom and shorten other views. Can freeze list?
     Pull navigation state out of UI
-    Only change working directory on exit
+    Only change working directory on exit - this makes sense if not execing commands
     Make main() smaller
-    Move ui model out of main package
     Write some tests
+    Clean up theme/icon configuration and globals
+        Icon sets and themes should be enums
+    Return early if starting directory DNE or not reachable
+    Clean filepaths from cli/config file
+    Toggle-able themes
+
+    Change filesystem calls from os to fs at least for reading. Could use afero, std lib, hackpadfs? 
+    Caching filesystem reads
+    Read aheads in filetree
+        
+    Big features:
+        Implement search (fzf?)
+        Integrate with zoxide?
+        Bookmarks
+            Add bookmark functionality
+            Toggle bookmark pane visibility
+
+    Ruled out for now:
+        List navigation - Use nerd-font icons based on file type - default to emojis. gorunewidth does not calculate many glyph's widths accurately which disruptes accurate ui rendering 
 
 Finished:
     Sort directories and files separately
@@ -43,3 +67,16 @@ Finished:
     Read file previews in separate go routine to prevent ui locking
     List navigation - fix viewport scroll on directories with many entries
     Remove change and access time, which aren't informative -- especially access time when we are previewing
+    Preview - MIME type is not very informative
+    Preview - add config option for read delay. Default to 250 milliseconds?
+    Preview - could show file name in cursor style or not at all. Chose not at all
+    Preview - could show line numbers but this might reduce the info shown too much
+    List navigation - On nav up, set cursor to directory just in 
+    Breadcrumb - update path after directory is actually changed
+    Make entry info ok for starting on empty directory
+    History is saving the prior state during the first nav.Go, which is actually going to the start position. 
+        This is a bug but the only consequence is that you can hit the back button once more than you should be able to
+        Perhaps only record the nav when moving away from starting position
+        Fixed by starting with a reload (which is slightly hacky. See comment in App.Init())
+    Move ui model out of main package
+    Toggle activattion on Back/Fwd/Up buttons

@@ -41,9 +41,9 @@ type App struct {
 	showHelp bool
 	config   cfg.Cfg
 
-	navi  *nav.Nav
-	theme theme.Theme
-	// icon set
+	navi              *nav.Nav
+	theme             theme.Theme
+	internalClipboard []string // slice of paths to items in the "clipboard"
 }
 
 func (app *App) Init() tea.Cmd {
@@ -118,6 +118,9 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 	case message.NavOtherMsg:
 		cmd = message.HandleNavCmd(app.navi, []string{app.list.SelectedEntry().Name()}, msg.Path)
+		cmds = append(cmds, cmd)
+	case message.InternalCopyMsg:
+		cmd = app.setInternalClipboard()
 		cmds = append(cmds, cmd)
 	case tea.KeyMsg:
 		if key.Matches(msg, keymap.Default.ToggleHelp) {
@@ -204,4 +207,16 @@ func (app *App) manageSizes(height, width int) {
 	app.entryInfo.SetHeight(app.flexBox.GetHeight())
 	app.help.Width = width
 	app.toolbar.SetWidth(width)
+}
+
+// setInternalClipboard sets the internal clipboard to the selected entries
+func (app *App) setInternalClipboard() tea.Cmd {
+	selected := app.list.SelectedEntries()
+	clipboard := make([]string, 0, len(selected))
+	dir := app.navi.CurrentPath()
+	for name := range selected {
+		clipboard = append(clipboard, filepath.Join(dir, name))
+	}
+	app.internalClipboard = clipboard
+	return message.SendMessage("Copied!")
 }

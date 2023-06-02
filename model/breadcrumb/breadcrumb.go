@@ -80,11 +80,6 @@ func (breadcrumb *Breadcrumb) updateView() {
 	parts := make([]string, 0, len(pathParts))
 	for i, part := range pathParts {
 
-		// this was in the old implementation. Is this only for root?
-		if part == "" {
-			continue
-		}
-
 		partRendered := theme.PathStyle.Render(part)
 		if i != 0 {
 			partRendered = partRendered + separator
@@ -92,7 +87,7 @@ func (breadcrumb *Breadcrumb) updateView() {
 
 		partWidth := lipgloss.Width(partRendered)
 		totalLength += partWidth
-		if totalLength > breadcrumb.width+2 { // +2 for left margin
+		if totalLength+12 > breadcrumb.width { // +12 seems to be a magic number
 			break
 		}
 		parts = append(parts, partRendered)

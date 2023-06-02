@@ -13,16 +13,7 @@ import (
 	"github.com/nore-dev/fman/nav"
 )
 
-type UpdateEntriesMsg struct {
-	Parent bool
-}
-
-type ClearKeyMsg struct {
-}
-
-type PathMsg struct {
-	Path string
-}
+type ClearKeyMsg struct{}
 
 type EntryMsg struct {
 	Entry entry.Entry
@@ -34,6 +25,14 @@ type NewMessageMsg struct {
 
 type UpdateDialogMsg struct {
 	Dialog dialog.Dialog
+}
+
+type InternalCopyMsg struct{}
+
+func InternalClipboardCmd() tea.Cmd {
+	return func() tea.Msg {
+		return InternalCopyMsg{}
+	}
 }
 
 type ToggleShowHiddenMsg struct{}
@@ -97,12 +96,6 @@ func NavOtherCmd(path string) tea.Cmd {
 		return NavOtherMsg{
 			Path: path,
 		}
-	}
-}
-
-func ChangePath(path string) tea.Cmd {
-	return func() tea.Msg {
-		return PathMsg{Path: path}
 	}
 }
 

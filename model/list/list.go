@@ -56,7 +56,7 @@ func New(theme theme.Theme) List {
 }
 
 func (list *List) Init() tea.Cmd {
-	return list.clearLastKey()
+	return nil
 }
 
 func (list *List) SelectedEntry() entry.Entry {
@@ -64,6 +64,16 @@ func (list *List) SelectedEntry() entry.Entry {
 		return entry.Entry{}
 	}
 	return list.entries[list.selected_index]
+}
+
+// TODO: Change this when reimplementing the list
+func (list *List) SelectedEntries() map[string]struct{} {
+	if len(list.entries) == 0 {
+		return nil
+	}
+	return map[string]struct{}{
+		list.SelectedEntry().Name(): {},
+	}
 }
 
 func (list *List) SetWidth(width int) {
