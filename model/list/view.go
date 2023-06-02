@@ -28,7 +28,6 @@ func (list *List) View() string {
 	contents[2].WriteByte('\n')
 
 	startIndex := max(0, list.selected_index-list.maxEntryToShow)
-
 	stopIndex := startIndex + list.maxEntryToShow + (list.height * 1 / 4)
 
 	if stopIndex > len(list.entries) {
@@ -50,15 +49,14 @@ func (list *List) View() string {
 		}
 
 		content[0].WriteRune(' ')
+		// content[0].WriteString(name)
 		content[0].WriteString(strings.ReplaceAll(name, "-", "‐"))
 		content[1].WriteString(entry.SizeStr)
 		content[2].WriteString(entry.ModifyTime)
 
 		var style lipgloss.Style
 		for i := 0; i < cellsLength; i++ {
-
 			offset := 0
-
 			if index == list.selected_index {
 				style = theme.SelectedItemStyle
 			} else if index%2 == 0 {
@@ -81,7 +79,7 @@ func (list *List) View() string {
 			// Colors
 			if index == list.selected_index {
 				style = style.Foreground(list.Theme().SelectedItemFgColor)
-			} else if entry.Name()[0] == '.' {
+			} else if entry.IsHidden {
 				style = style.Foreground(list.Theme().HiddenFileColor)
 
 				if entry.IsDir() {

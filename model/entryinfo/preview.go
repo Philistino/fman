@@ -46,6 +46,8 @@ func getPreviewCmd(ctx context.Context, path string, height int, offset int, rea
 			if readDelay >= 0 {
 				time.Sleep(time.Millisecond * time.Duration(readDelay))
 			}
+
+			// return early if context is cancelled
 			if ctx.Err() != nil {
 				errc <- ctx.Err()
 			}
@@ -55,6 +57,11 @@ func getPreviewCmd(ctx context.Context, path string, height int, offset int, rea
 				return
 			}
 			defer f.Close()
+
+			// return early if context is cancelled
+			if ctx.Err() != nil {
+				errc <- ctx.Err()
+			}
 			preview, endReached, err := handlePreviewFunc(ctx, f, path, height, offset)
 			p := previewReadyMsg{
 				Preview:    preview,
@@ -114,6 +121,9 @@ func getFilePreview(ctx context.Context, reader io.Reader, height int, offset in
 	if err := scanner.Err(); err != nil {
 		return "", eofReached, err
 	}
+
+	// text := norm.NFC.String(strBuilder.String())
+	// return text, eofReached, nil
 	return strBuilder.String(), eofReached, nil
 }
 

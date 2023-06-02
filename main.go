@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -13,6 +14,7 @@ import (
 	zone "github.com/lrstanley/bubblezone"
 	"github.com/muesli/termenv"
 	"github.com/nore-dev/fman/cfg"
+	"github.com/nore-dev/fman/nav"
 
 	"github.com/nore-dev/fman/keymap"
 	"github.com/nore-dev/fman/message"
@@ -27,6 +29,10 @@ import (
 	"github.com/nore-dev/fman/theme"
 )
 
+// The issue is the state isn't coming back from nav for new navigations
+
+// This is the main model for the app. It does two jobs, acts like a message bus for the different
+// components of the app, and composes the different UI components together.
 type App struct {
 	buttonBar buttonbar.ButtonBar
 	list      list.List
@@ -43,6 +49,8 @@ type App struct {
 	help     help.Model
 	showHelp bool
 	config   cfg.Cfg
+
+	navigator *nav.Nav
 }
 
 func (app *App) Init() tea.Cmd {
@@ -56,8 +64,45 @@ func (app *App) UpdatePath() tea.Cmd {
 	}
 }
 
+func (app *App) manageSizes(height, width int) {
+	app.width = width
+	app.height = height
+	app.flexBox.SetHeight(height - lipgloss.Height(app.toolbar.View()) - lipgloss.Height(app.toolbar.View()) - lipgloss.Height(app.buttonBar.View()))
+	app.flexBox.SetWidth(width)
+	app.flexBox.ForceRecalculate()
+	app.list.SetWidth(app.flexBox.Row(0).Cell(0).GetWidth())
+	app.list.SetHeight(app.flexBox.GetHeight())
+	app.entryInfo.SetWidth(app.flexBox.Row(0).Cell(1).GetWidth())
+	app.entryInfo.SetHeight(app.flexBox.GetHeight())
+	app.help.Width = width
+	app.toolbar.SetWidth(width)
+}
+
 func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	var cmds []tea.Cmd
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		app.manageSizes(msg.Height, msg.Width)
+	case message.UpdateDialogMsg:
+		app.dialog.SetDialog(&msg.Dialog)
+		return app, nil
+	case message.NavBackMsg:
+		cmd = message.HandleBackCmd(app.navigator, []string{app.list.SelectedEntry().Name()})
+		cmds = append(cmds, cmd)
+	case message.NavFwdMsg:
+		cmd = message.HandleFwdCmd(app.navigator, []string{app.list.SelectedEntry().Name()})
+		cmds = append(cmds, cmd)
+	case message.NavUpMsg:
+		cmd = message.HandleNavCmd(app.navigator, []string{app.list.SelectedEntry().Name()}, filepath.Dir(app.navigator.CurrentPath()))
+		cmds = append(cmds, cmd)
+	case message.NavHomeMsg:
+		cmd = message.HandleNavCmd(app.navigator, []string{app.list.SelectedEntry().Name()}, "~")
+		cmds = append(cmds, cmd)
+	case message.NavDownMsg:
+		name := app.list.SelectedEntry().Name()
+		cmd = message.HandleNavCmd(app.navigator, []string{name}, filepath.Join(app.navigator.CurrentPath(), name))
+		cmds = append(cmds, cmd)
 	case tea.KeyMsg:
 		if key.Matches(msg, keymap.Default.ToggleHelp) {
 			app.showHelp = !app.showHelp
@@ -66,28 +111,6 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			return app, tea.Quit
 		}
-	case tea.WindowSizeMsg:
-		app.flexBox.SetHeight(msg.Height - lipgloss.Height(app.toolbar.View()) - lipgloss.Height(app.toolbar.View()) - lipgloss.Height(app.buttonBar.View()))
-		app.flexBox.SetWidth(msg.Width)
-
-		app.width = msg.Width
-		app.height = msg.Height
-
-		app.flexBox.ForceRecalculate()
-
-		app.list.SetWidth(app.flexBox.Row(0).Cell(0).GetWidth())
-		app.list.SetHeight(app.flexBox.GetHeight())
-
-		app.entryInfo.SetWidth(app.flexBox.Row(0).Cell(1).GetWidth())
-		app.entryInfo.SetHeight(app.flexBox.GetHeight())
-
-		app.help.Width = msg.Width
-
-		app.toolbar.SetWidth(msg.Width)
-
-	case message.UpdateDialogMsg:
-		app.dialog.SetDialog(&msg.Dialog)
-		return app, nil
 	}
 
 	var listCmd, toolbarCmd, entryCmd, infobarCmd, buttonBarCmd tea.Cmd
@@ -98,7 +121,9 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	app.infobar, infobarCmd = app.infobar.Update(msg)
 	app.buttonBar, buttonBarCmd = app.buttonBar.Update(msg)
 
-	return app, tea.Batch(listCmd, toolbarCmd, entryCmd, infobarCmd, buttonBarCmd)
+	cmds = append(cmds, listCmd, toolbarCmd, entryCmd, infobarCmd, buttonBarCmd)
+
+	return app, tea.Batch(cmds...)
 }
 
 func (app *App) View() string {
@@ -155,16 +180,22 @@ func main() {
 	zone.NewGlobal()
 	defer zone.Close()
 
-	cfg, err := cfg.LoadConfig() // TODO: show error somewhere
+	cfg, err := cfg.LoadConfig()
 	if err != nil {
 		log.Println(err)
 	}
+	absolutePath, _ := filepath.Abs(cfg.Path)
+	navi, err := nav.NewNav(absolutePath, !*cfg.NoHidden, *cfg.DirsMixed)
+	if err != nil {
+		fmt.Printf("Error reading path: %s, %s", cfg.Path, err)
+	}
+
 	selectedTheme := theme.GetActiveTheme(cfg.Theme)
 	theme.SetIcons(cfg.Icons)
 	theme.SetTheme(selectedTheme)
 
-	listX := list.New(&selectedTheme, *cfg.DirsMixed, !*cfg.NoHidden)
-	entryX := entryinfo.New(&selectedTheme, listX.SelectedEntry(), *cfg.PreviewDelay)
+	listX := list.New(&selectedTheme, navi.Entries())
+	entryX := entryinfo.New(&selectedTheme, listX.SelectedEntry(), *cfg.PreviewDelay) // TODO be able to start the app without having a selected entry
 
 	app := App{
 		buttonBar: buttonbar.New(&selectedTheme),
@@ -175,6 +206,7 @@ func main() {
 		dialog:    dialog.New(),
 		flexBox:   stickers.NewFlexBox(0, 0),
 		config:    cfg,
+		navigator: navi,
 	}
 
 	app.help.FullSeparator = "   "

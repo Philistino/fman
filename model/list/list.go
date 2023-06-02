@@ -3,8 +3,6 @@ package list
 import (
 	"bufio"
 	"os"
-	"path/filepath"
-	"runtime"
 	"time"
 	"unicode/utf8"
 
@@ -16,11 +14,6 @@ import (
 
 type List struct {
 	entries []entry.Entry
-
-	showHidden bool
-	dirsMixed  bool
-
-	path string
 
 	width  int
 	height int
@@ -41,70 +34,14 @@ type List struct {
 	lastDirectory string
 }
 
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-
-	return b
-}
-
-func truncateText(str string, max int) string {
-	// "hello world" -> "hello wo..."
-
-	if len(str) > max {
-		return str[:max-3] + "..."
-	}
-
-	return str
-}
-
-func isFileReadable(path string) bool {
-	file, err := os.Open(path)
-
-	if err != nil {
-		return false
-	}
-
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-
-	scanner.Scan()
-	return utf8.ValidString(scanner.Text())
-}
-
-func detectOpenCommand() string {
-	switch runtime.GOOS {
-	case "linux":
-		return "xdg-open"
-	case "darwin":
-		return "open"
-	}
-
-	return "start"
-}
-
-func New(theme *theme.Theme, dirsMixed bool, showHidden bool) List {
-	path, err := filepath.Abs(".")
-	if err != nil {
-		panic(err)
-	}
-
-	entries, err := entry.GetEntries(path, showHidden, dirsMixed)
-	if err != nil {
-		panic(err)
-	}
+func New(theme *theme.Theme, entries []entry.Entry) List {
 
 	list := List{
-		path:          path,
 		entries:       entries,
 		truncateLimit: 100,
 		flexBox:       stickers.NewFlexBox(0, 0),
 		clickDelay:    0.5,
 		theme:         theme,
-		showHidden:    showHidden,
-		dirsMixed:     dirsMixed,
 	}
 
 	rows := []*stickers.FlexBoxRow{
@@ -157,4 +94,37 @@ func (list *List) SetHeight(height int) {
 
 func (list *List) IsEmpty() bool {
 	return len(list.entries) == 0
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+
+	return b
+}
+
+func truncateText(str string, max int) string {
+	// "hello world" -> "hello wo..."
+
+	if len(str) > max {
+		return str[:max-3] + "..."
+	}
+
+	return str
+}
+
+func isFileReadable(path string) bool {
+	file, err := os.Open(path)
+
+	if err != nil {
+		return false
+	}
+
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	scanner.Scan()
+	return utf8.ValidString(scanner.Text())
 }

@@ -35,17 +35,13 @@ func (toolbar *Toolbar) Update(msg tea.Msg) (*Toolbar, tea.Cmd) {
 			return toolbar, nil
 		}
 		if zone.Get("forward").InBounds(msg) {
-			return toolbar, func() tea.Msg {
-				return message.UpdateEntriesMsg{}
-			}
+			return toolbar, message.NavFwdCmd()
 		}
 		if zone.Get("back").InBounds(msg) {
-			return toolbar, func() tea.Msg {
-				return message.UpdateEntriesMsg{Parent: true}
-			}
+			return toolbar, message.NavBackCmd()
 		}
-		if zone.Get("history").InBounds(msg) && toolbar.previousPath != "" {
-			return toolbar, message.ChangePath(toolbar.previousPath)
+		if zone.Get("up").InBounds(msg) && toolbar.previousPath != "" {
+			return toolbar, message.NavUpCmd()
 		}
 	}
 	var pathCmd tea.Cmd
@@ -57,7 +53,7 @@ func (toolbar *Toolbar) View() string {
 	view := lipgloss.JoinHorizontal(lipgloss.Left,
 		zone.Mark("back", theme.ButtonStyle.Render(string(theme.GetActiveIconTheme().LeftArrowIcon))),
 		zone.Mark("forward", theme.ButtonStyle.Render(string(theme.GetActiveIconTheme().RightArrowIcon))),
-		zone.Mark("history", theme.ButtonStyle.Render(string(theme.GetActiveIconTheme().UpArrowIcon))),
+		zone.Mark("up", theme.ButtonStyle.Render(string(theme.GetActiveIconTheme().UpArrowIcon))),
 	)
 	return lipgloss.JoinHorizontal(lipgloss.Center, view, toolbar.breadcrumb.View())
 }

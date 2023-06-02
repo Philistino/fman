@@ -42,7 +42,7 @@ func (breadcrumb *Breadcrumb) Update(msg tea.Msg) (*Breadcrumb, tea.Cmd) {
 		// Mouse Support
 		for i := 0; i < len(pathParts); i++ {
 			if zone.Get(strconv.Itoa(i)).InBounds(msg) {
-				newPath := filepath.Join(pathParts[:i+1]...)
+				newPath := filepath.Join(pathParts[:i+1]...) // TODO: this is a bit hacky. Should set the breadcrumb on directory change
 				breadcrumb.path = newPath
 				return breadcrumb, message.ChangePath(breadcrumb.path)
 			}

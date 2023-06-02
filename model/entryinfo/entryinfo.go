@@ -8,7 +8,6 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/reflow/truncate"
 	"github.com/muesli/termenv"
 	"github.com/nore-dev/fman/entry"
 	"github.com/nore-dev/fman/keymap"
@@ -141,45 +140,9 @@ func (entryInfo *EntryInfo) Update(msg tea.Msg) (EntryInfo, tea.Cmd) {
 }
 
 func (entryInfo *EntryInfo) getFileInfo() string {
-
 	str := strings.Builder{}
+	str.WriteString(termenv.String(strings.Repeat("-", entryInfo.width-margin)).Foreground(termenv.RGBColor(entryInfo.theme.InfobarBgColor)).String())
 	str.WriteByte('\n')
-	name := termenv.String(entryInfo.entry.Name()).Bold().Underline().String()
-	str.WriteString(truncate.StringWithTail(name, uint(entryInfo.width-margin-1), "..."))
-	str.WriteByte('\n')
-	typeStr := entryInfo.entry.Type
-
-	if typeStr == "" {
-		typeStr = "Unknown type"
-	}
-
-	if entryInfo.entry.IsDir() {
-		typeStr = "Folder"
-	}
-
-	{
-		padding := 1
-		style := lipgloss.NewStyle().
-			Padding(0, padding).
-			Width(lipgloss.Width(typeStr) + 2*padding + 2).
-			Foreground(entryInfo.theme.BackgroundColor)
-
-		icon := theme.GetActiveIconTheme().FileIcon
-
-		if entryInfo.entry.IsDir() {
-			style.Background(entryInfo.theme.FolderColor)
-			icon = theme.GetActiveIconTheme().FolderIcon
-		} else {
-			style.Background(entryInfo.theme.HiddenFileColor)
-		}
-
-		str.WriteString(truncate.StringWithTail(style.Render(string(icon)+" "+typeStr), uint(entryInfo.width-margin), ".."))
-		str.WriteByte('\n')
-
-		str.WriteString(termenv.String(strings.Repeat("-", entryInfo.width-margin)).Foreground(termenv.RGBColor(entryInfo.theme.InfobarBgColor)).String())
-		str.WriteByte('\n')
-	}
-
 	str.WriteString(termenv.String("Modified ").Italic().String())
 	str.WriteString(entryInfo.entry.ModifyTime)
 	return str.String()
