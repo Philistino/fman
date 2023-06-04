@@ -24,7 +24,7 @@ type List struct {
 	truncateLimit  int
 
 	lastClickedTime time.Time
-	clickDelay      float64
+	clickDelay      time.Duration
 
 	theme theme.Theme
 
@@ -32,14 +32,22 @@ type List struct {
 	focused          bool
 }
 
-func New(theme theme.Theme) List {
+func New(theme theme.Theme, doubleClickDelay int) List {
 
 	list := List{
-		truncateLimit: 100,
-		flexBox:       stickers.NewFlexBox(0, 0),
-		clickDelay:    0.5,
-		theme:         theme,
-		focused:       true,
+		entries:          []entry.Entry{},
+		width:            0,
+		height:           0,
+		cursorIdx:        0,
+		selected:         map[int]struct{}{},
+		flexBox:          stickers.NewFlexBox(0, 0),
+		maxEntryToShow:   0,
+		truncateLimit:    100,
+		lastClickedTime:  time.Time{},
+		clickDelay:       time.Duration(time.Millisecond * time.Duration(doubleClickDelay)),
+		theme:            theme,
+		lastKeyCharacter: 0,
+		focused:          true,
 	}
 
 	rows := []*stickers.FlexBoxRow{

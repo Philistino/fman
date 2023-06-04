@@ -8,8 +8,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	zone "github.com/lrstanley/bubblezone"
 	"github.com/nore-dev/fman/entry"
-	"github.com/nore-dev/fman/keymap"
 	"github.com/nore-dev/fman/message"
+	"github.com/nore-dev/fman/model/keys"
 )
 
 func (list *List) clearLastKey() tea.Cmd {
@@ -82,7 +82,7 @@ func (list *List) handleMouseClick(msg tea.MouseMsg) tea.Cmd {
 
 	// Double click
 	time := time.Now()
-	if time.Sub(list.lastClickedTime).Seconds() < list.clickDelay && list.SelectedEntry().IsDir() {
+	if time.Sub(list.lastClickedTime) < list.clickDelay && list.SelectedEntry().IsDir() {
 		return message.NavDownCmd(list.SelectedEntry().Name())
 	}
 	list.lastClickedTime = time
@@ -117,7 +117,7 @@ func (list *List) Update(msg tea.Msg) (List, tea.Cmd) {
 		switch {
 
 		// Move this elsewhere TODO!!!
-		// case key.Matches(msg, keymap.Default.OpenFile): // Open file with default application
+		// case key.Matches(msg, keys.Map.OpenFile): // Open file with default application
 		// 	path := getFullPath(list.SelectedEntry(), list.path)
 		// 	// If the file can be readable open the default editor for editing
 		// 	if !list.SelectedEntry().IsDir() && isFileReadable(path) {
@@ -128,37 +128,37 @@ func (list *List) Update(msg tea.Msg) (List, tea.Cmd) {
 		// 	return *list, nil
 
 		// Move this elsewhere TODO!!!
-		// case key.Matches(msg, keymap.Default.CopyToClipboard): // Copy path to the clipboard
+		// case key.Matches(msg, keys.Map.CopyToClipboard): // Copy path to the clipboard
 		// 	path := getFullPath(list.SelectedEntry(), list.path)
 		// 	clipboard.WriteAll(path)
 		// 	return *list, message.SendMessage("Copied!")
 
-		case key.Matches(msg, keymap.Default.GoToTop): // Move to the beginning of the list
+		case key.Matches(msg, keys.Map.GoToTop): // Move to the beginning of the list
 			list.cursorIdx = 0
-		case key.Matches(msg, keymap.Default.GoToBottom): // Move to the end of the list
+		case key.Matches(msg, keys.Map.GoToBottom): // Move to the end of the list
 			list.cursorIdx = len(list.entries) - 1
-		case key.Matches(msg, keymap.Default.MoveCursorUp): // Select entry above
+		case key.Matches(msg, keys.Map.MoveCursorUp): // Select entry above
 			list.cursorIdx -= 1
 			list.restrictIndex()
 			return *list, message.UpdateEntry(list.SelectedEntry())
-		case key.Matches(msg, keymap.Default.MoveCursorDown): // Select entry below
+		case key.Matches(msg, keys.Map.MoveCursorDown): // Select entry below
 			list.cursorIdx += 1
 			list.restrictIndex()
 			return *list, message.UpdateEntry(list.SelectedEntry())
-		case key.Matches(msg, keymap.Default.GoToParentDirectory): // Get entries from parent directory
+		case key.Matches(msg, keys.Map.GoToParentDirectory): // Get entries from parent directory
 			return *list, message.NavUpCmd()
-		case key.Matches(msg, keymap.Default.GoToSelectedDirectory): // If the selected entry is a directory. Get entries under that directory
+		case key.Matches(msg, keys.Map.GoToSelectedDirectory): // If the selected entry is a directory. Get entries under that directory
 			if !list.SelectedEntry().IsDir() {
 				return *list, nil
 			}
 			return *list, message.NavDownCmd(list.SelectedEntry().Name())
-		case key.Matches(msg, keymap.Default.GoBack):
+		case key.Matches(msg, keys.Map.GoBack):
 			return *list, message.NavBackCmd()
-		case key.Matches(msg, keymap.Default.GoForward):
+		case key.Matches(msg, keys.Map.GoForward):
 			return *list, message.NavFwdCmd()
-		case key.Matches(msg, keymap.Default.GoToHomeDirectory): // Move to the home directory
+		case key.Matches(msg, keys.Map.GoToHomeDirectory): // Move to the home directory
 			return *list, message.NavHomeCmd()
-		case key.Matches(msg, keymap.Default.ShowHiddenEntries): // Show hidden files
+		case key.Matches(msg, keys.Map.ShowHiddenEntries): // Show hidden files
 			return *list, message.ToggleShowHiddenCmd()
 		}
 

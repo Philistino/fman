@@ -11,17 +11,17 @@ import (
 
 const (
 	// Config Metadata
-	XdgConfigDir       = "/.config/"
 	FmanConfigDir      = "/.config/fman/"
 	FmanConfigFileName = "config.toml"
 
 	// Config Defaults
-	DefaultTheme     = "dracula"
-	DefaultIcons     = "nerdfont"
-	DefaultDelay     = 200
-	DefaultPath      = "."
-	DefaultDirsMixed = false
-	DefaultNoHidden  = false
+	DefaultTheme            = "dracula"
+	DefaultIcons            = "nerdfont"
+	DefaultDelay            = 200
+	DefaultPath             = "."
+	DefaultDirsMixed        = false
+	DefaultNoHidden         = false
+	DefaultDoubleClickDelay = 500
 )
 
 // These pointers are a janky way to get Nonetype values so we can know
@@ -30,12 +30,13 @@ const (
 
 // Cfg holds the configuration details for a session
 type Cfg struct {
-	Path         string `arg:"positional" help:"path to open. Defaults to current directory"`
-	Icons        string `default:"" help:"icon set to use. Options are: nerdfont, emoji, none. Defaults to emoji"`
-	Theme        string `default:"" help:"color theme to use. Defaults to dracula. Options are: brogrammer, catppuccin-frappe, catppuccin-latte, catppuccin-macchiato, catppuccin-mocha, dracula, everblush, gruvbox, nord"`
-	DirsMixed    *bool  `arg:"--dirs-mixed" help:"do not sort files from directories. Defaults to false"`
-	NoHidden     *bool  `arg:"--no-hidden" help:"do not show hidden files. Defaults to false"`
-	PreviewDelay *int   `arg:"--preview-delay" placeholder:"DELAY" help:"delay in milliseconds before opening a file for previewing. This is meant to reduce io. Defaults to 250"`
+	Path             string `arg:"positional" help:"path to open. Defaults to current directory"`
+	Icons            string `default:"" help:"icon set to use. Options are: nerdfont, emoji, none. Defaults to emoji"`
+	Theme            string `default:"" help:"color theme to use. Defaults to dracula. Options are: brogrammer, catppuccin-frappe, catppuccin-latte, catppuccin-macchiato, catppuccin-mocha, dracula, everblush, gruvbox, nord"`
+	DirsMixed        *bool  `arg:"--dirs-mixed" help:"do not sort files from directories. Defaults to false"`
+	NoHidden         *bool  `arg:"--no-hidden" help:"do not show hidden files. Defaults to false"`
+	PreviewDelay     *int   `arg:"--preview-delay" placeholder:"DELAY" help:"delay in milliseconds before opening a file for previewing. This is meant to reduce io. Defaults to 250"`
+	DoubleClickDelay *int   `arg:"--double-click-delay" placeholder:"DELAY" help:"delay in milliseconds to register a second click as a double click. This is included for people with limited mobility. Defaults to 500"`
 	// colorScheme theme.Theme // TODO: fetch colorscheme and icon map from theme and pin to config
 }
 
@@ -98,6 +99,9 @@ func mergeConfigs(cmdCfg Cfg, fileCfg Cfg) Cfg {
 	if cmdCfg.PreviewDelay == nil {
 		cmdCfg.PreviewDelay = fileCfg.PreviewDelay
 	}
+	if cmdCfg.DoubleClickDelay == nil {
+		cmdCfg.DoubleClickDelay = fileCfg.DoubleClickDelay
+	}
 
 	return cmdCfg
 }
@@ -125,6 +129,10 @@ func setDefaults(cfg Cfg) Cfg {
 	if cfg.PreviewDelay == nil {
 		cfg.PreviewDelay = new(int)
 		*cfg.PreviewDelay = DefaultDelay
+	}
+	if cfg.DoubleClickDelay == nil {
+		cfg.DoubleClickDelay = new(int)
+		*cfg.DoubleClickDelay = DefaultDoubleClickDelay
 	}
 	return cfg
 }
