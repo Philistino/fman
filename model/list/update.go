@@ -19,10 +19,10 @@ func (list *List) clearLastKey() tea.Cmd {
 }
 
 func (list *List) restrictIndex() {
-	if list.selected_index < 0 {
-		list.selected_index = len(list.entries) - 1
-	} else if list.selected_index >= len(list.entries) {
-		list.selected_index = 0
+	if list.cursorIdx < 0 {
+		list.cursorIdx = len(list.entries) - 1
+	} else if list.cursorIdx >= len(list.entries) {
+		list.cursorIdx = 0
 	}
 }
 
@@ -38,21 +38,27 @@ func (list *List) handlePathChange(newDir message.DirChangedMsg) tea.Cmd {
 	if newDir.Error() != nil {
 		return message.SendMessage(newDir.Error().Error())
 	}
+	list.selected = make(map[int]struct{})
 	list.entries = newDir.Entries()
 	selected := newDir.Selected()
 	matched := false
 	for i, entry := range list.entries {
-		// TODO: should this be for directories only?
-		// TODO: need to set the cursor in case of multi selects
+		// set the cursor
+		if entry.Name() == newDir.Cursor() {
+			list.cursorIdx = i
+			list.selected[i] = struct{}{}
+			matched = true
+			continue
+		}
+		// set the selected entries
 		_, ok := selected[entry.Name()]
 		if !ok {
 			continue
 		}
-		list.selected_index = i
-		matched = true
+		list.selected[i] = struct{}{}
 	}
 	if !matched {
-		list.selected_index = 0
+		list.cursorIdx = 0
 	}
 
 	list.restrictIndex()
@@ -72,7 +78,7 @@ func (list *List) handleMouseClick(msg tea.MouseMsg) tea.Cmd {
 	if (y < offset || y > len(list.entries)+offset-1) || x > list.width {
 		return nil
 	}
-	list.selected_index = y + max(0, list.selected_index-list.maxEntryToShow) - offset
+	list.cursorIdx = y + max(0, list.cursorIdx-list.maxEntryToShow) - offset
 
 	// Double click
 	time := time.Now()
@@ -128,15 +134,15 @@ func (list *List) Update(msg tea.Msg) (List, tea.Cmd) {
 		// 	return *list, message.SendMessage("Copied!")
 
 		case key.Matches(msg, keymap.Default.GoToTop): // Move to the beginning of the list
-			list.selected_index = 0
+			list.cursorIdx = 0
 		case key.Matches(msg, keymap.Default.GoToBottom): // Move to the end of the list
-			list.selected_index = len(list.entries) - 1
+			list.cursorIdx = len(list.entries) - 1
 		case key.Matches(msg, keymap.Default.MoveCursorUp): // Select entry above
-			list.selected_index -= 1
+			list.cursorIdx -= 1
 			list.restrictIndex()
 			return *list, message.UpdateEntry(list.SelectedEntry())
 		case key.Matches(msg, keymap.Default.MoveCursorDown): // Select entry below
-			list.selected_index += 1
+			list.cursorIdx += 1
 			list.restrictIndex()
 			return *list, message.UpdateEntry(list.SelectedEntry())
 		case key.Matches(msg, keymap.Default.GoToParentDirectory): // Get entries from parent directory

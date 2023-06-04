@@ -27,7 +27,7 @@ func (list *List) View() string {
 	contents[2].WriteString(termenv.String(" Modify Time").Italic().String())
 	contents[2].WriteByte('\n')
 
-	startIndex := max(0, list.selected_index-list.maxEntryToShow)
+	startIndex := max(0, list.cursorIdx-list.maxEntryToShow)
 	stopIndex := startIndex + list.maxEntryToShow + (list.height * 1 / 4)
 
 	if stopIndex > len(list.entries) {
@@ -57,7 +57,7 @@ func (list *List) View() string {
 		var style lipgloss.Style
 		for i := 0; i < cellsLength; i++ {
 			offset := 0
-			if index == list.selected_index {
+			if index == list.cursorIdx {
 				style = theme.SelectedItemStyle
 			} else if index%2 == 0 {
 				style = theme.EvenItemStyle
@@ -77,7 +77,7 @@ func (list *List) View() string {
 			}
 
 			// Colors
-			if index == list.selected_index {
+			if index == list.cursorIdx {
 				style = style.Foreground(list.theme.SelectedItemFgColor)
 			} else if entry.IsHidden {
 				style = style.Foreground(list.theme.HiddenFileColor)
@@ -91,7 +91,7 @@ func (list *List) View() string {
 				style = style.Foreground(list.theme.TextColor)
 			}
 
-			if i != 0 && index != list.selected_index {
+			if i != 0 && index != list.cursorIdx {
 				style = style.Foreground(list.theme.TextColor)
 			}
 

@@ -17,8 +17,12 @@ type Infobar struct {
 	width           int
 	progressWidth   int
 	message         string
-	messageDuration int
+	defaultDuration time.Duration // the default duration to display a message
+	minDuration     time.Duration // the minimum gap to display the default message between messages
+	startTime       time.Time
+	messageIdx      int // Used to track messages
 	storageInfo     storage.StorageInfo
+	stack           ArrayStack[string]
 }
 
 type TickMsg time.Time
@@ -32,41 +36,85 @@ func New() Infobar {
 	}
 	return Infobar{
 		progressWidth:   20,
-		messageDuration: 2,
+		defaultDuration: time.Second * 2,
+		minDuration:     time.Millisecond * 500,
 		message:         DEFAULT_MESSAGE,
 		storageInfo:     info,
+		startTime:       time.Now(),
 	}
 }
 
-func (infobar Infobar) Init() tea.Cmd {
-	return infobar.clearMessage()
+func (infobar *Infobar) Init() tea.Cmd {
+	return nil
 }
 
-func (infobar Infobar) Message() string {
+func (infobar *Infobar) Message() string {
 	return infobar.message
 }
 
-func (infobar Infobar) clearMessage() tea.Cmd {
-	duration := time.Second * time.Duration(infobar.messageDuration)
-
-	return tea.Tick(duration, func(t time.Time) tea.Msg {
-		return TickMsg(t)
-	})
+type clearMessageMsg struct {
+	idx int
 }
 
-func (infobar Infobar) Update(msg tea.Msg) (Infobar, tea.Cmd) {
+func (infobar *Infobar) clearMessage(idx int, t time.Duration) tea.Cmd {
+	return func() tea.Msg {
+		// It's ok to sleep here without a context. In bubbletea this will
+		// not block quitting the program.
+		time.Sleep(t)
+		return clearMessageMsg{idx: idx}
+	}
+}
+
+func (infobar *Infobar) Update(msg tea.Msg) (Infobar, tea.Cmd) {
+	var cmd tea.Cmd
 	switch msg := msg.(type) {
-	case TickMsg:
-		// Clear message
-		infobar.message = DEFAULT_MESSAGE
-		return infobar, infobar.clearMessage()
 	case message.NewMessageMsg:
-		// Set new message
-		infobar.message = msg.Message
+		cmd = infobar.handleNewMessage(msg)
+	case clearMessageMsg:
+		if infobar.messageIdx != msg.idx {
+			return *infobar, nil
+		}
+		if !infobar.stack.IsEmpty() {
+			noti, err := infobar.stack.Pop()
+			if err != nil {
+				log.Println("An error occurred while popping a notification from the stack", err.Error())
+			}
+			infobar.startTime = time.Now()
+			infobar.message = *noti
+			infobar.messageIdx++
+			cmd = infobar.clearMessage(infobar.messageIdx, infobar.defaultDuration)
+		}
+		infobar.message = DEFAULT_MESSAGE
+		infobar.startTime = time.Now()
+		infobar.messageIdx++
 	case tea.WindowSizeMsg:
 		infobar.width = msg.Width
 	}
-	return infobar, nil
+	return *infobar, cmd
+}
+
+func (i *Infobar) handleNewMessage(msg message.NewMessageMsg) tea.Cmd {
+	if time.Since(i.startTime) < i.minDuration {
+		// the current message was not displayed long enough so push the new message to the stack
+		// and clear the current message after the minGapDuration has passed
+		i.stack.Push(msg.Message)
+		return i.clearMessage(i.messageIdx, i.minDuration-time.Since(i.startTime))
+	}
+
+	if i.message == msg.Message {
+		// set the current message to the default message for the minduration so it is seen between messages
+		// and push the new message to the stack to be displayed after the minDuration for the default message has passed
+		i.stack.Push(msg.Message)
+		i.startTime = time.Now()
+		i.message = DEFAULT_MESSAGE
+		i.messageIdx++
+		return i.clearMessage(i.messageIdx, i.minDuration)
+	}
+
+	i.message = msg.Message
+	i.startTime = time.Now()
+	i.messageIdx++
+	return i.clearMessage(i.messageIdx, i.defaultDuration)
 }
 
 func renderProgress(width int, usedSpace uint64, totalSpace uint64) string {
@@ -75,7 +123,7 @@ func renderProgress(width int, usedSpace uint64, totalSpace uint64) string {
 	return theme.ProgressStyle.Width(width).Render(usedStr)
 }
 
-func (infobar Infobar) View() string {
+func (infobar *Infobar) View() string {
 	info := infobar.storageInfo
 	logo := theme.LogoStyle.Render(string(theme.GetActiveIconTheme().GopherIcon) + "FMAN")
 	progress := renderProgress(infobar.progressWidth, info.AvailableSpace, info.TotalSpace)
