@@ -128,17 +128,17 @@ func detachedCommand(name string, arg ...string) *exec.Cmd {
 	return cmd
 }
 
-func shellCommand(s string, args []string) *exec.Cmd {
-	if len(gOpts.ifs) != 0 {
-		s = fmt.Sprintf("IFS='%s'; %s", gOpts.ifs, s)
-	}
+// func shellCommand(s string, args []string) *exec.Cmd {
+// 	if len(gOpts.ifs) != 0 {
+// 		s = fmt.Sprintf("IFS='%s'; %s", gOpts.ifs, s)
+// 	}
 
-	args = append([]string{gOpts.shellflag, s, "--"}, args...)
+// 	args = append([]string{gOpts.shellflag, s, "--"}, args...)
 
-	args = append(gOpts.shellopts, args...)
+// 	args = append(gOpts.shellopts, args...)
 
-	return exec.Command(gOpts.shell, args...)
-}
+// 	return exec.Command(gOpts.shell, args...)
+// }
 
 func shellSetPG(cmd *exec.Cmd) {
 	cmd.SysProcAttr = &unix.SysProcAttr{Setpgid: true}
@@ -156,15 +156,15 @@ func shellKill(cmd *exec.Cmd) error {
 	return cmd.Process.Kill()
 }
 
-func setDefaults() {
-	gOpts.cmds["open"] = &execExpr{"&", `$OPENER "$f"`}
-	gOpts.keys["e"] = &execExpr{"$", `$EDITOR "$f"`}
-	gOpts.keys["i"] = &execExpr{"$", `$PAGER "$f"`}
-	gOpts.keys["w"] = &execExpr{"$", "$SHELL"}
+// func setDefaults() {
+// 	gOpts.cmds["open"] = &execExpr{"&", `$OPENER "$f"`}
+// 	gOpts.keys["e"] = &execExpr{"$", `$EDITOR "$f"`}
+// 	gOpts.keys["i"] = &execExpr{"$", `$PAGER "$f"`}
+// 	gOpts.keys["w"] = &execExpr{"$", "$SHELL"}
 
-	gOpts.cmds["doc"] = &execExpr{"$", `"$lf" -doc | $PAGER`}
-	gOpts.keys["<f-1>"] = &callExpr{"doc", nil, 1}
-}
+// 	gOpts.cmds["doc"] = &execExpr{"$", `"$lf" -doc | $PAGER`}
+// 	gOpts.keys["<f-1>"] = &callExpr{"doc", nil, 1}
+// }
 
 func setUserUmask() {
 	unix.Umask(0077)
@@ -174,8 +174,23 @@ func isExecutable(f os.FileInfo) bool {
 	return f.Mode()&0111 != 0
 }
 
+// func isHidden(f os.FileInfo, path string, hiddenfiles []string) bool {
+// 	hidden := false
+// 	for _, pattern := range hiddenfiles {
+// 		matched := matchPattern(strings.TrimPrefix(pattern, "!"), f.Name(), path)
+// 		if strings.HasPrefix(pattern, "!") && matched {
+// 			hidden = false
+// 		} else if matched {
+// 			hidden = true
+// 		}
+// 	}
+// 	return hidden
+// }
+
 func isHidden(f os.FileInfo, path string, hiddenfiles []string) bool {
 	hidden := false
+	defaultHidden := []string{"^."}
+	hiddenfiles = append(hiddenfiles, defaultHidden...)
 	for _, pattern := range hiddenfiles {
 		matched := matchPattern(strings.TrimPrefix(pattern, "!"), f.Name(), path)
 		if strings.HasPrefix(pattern, "!") && matched {
@@ -216,17 +231,17 @@ func errCrossDevice(err error) bool {
 	return err.(*os.LinkError).Err.(unix.Errno) == unix.EXDEV
 }
 
-func exportFiles(f string, fs []string, pwd string) {
-	envFile := f
-	envFiles := strings.Join(fs, gOpts.filesep)
+// func exportFiles(f string, fs []string, pwd string) {
+// 	envFile := f
+// 	envFiles := strings.Join(fs, gOpts.filesep)
 
-	os.Setenv("f", envFile)
-	os.Setenv("fs", envFiles)
-	os.Setenv("PWD", pwd)
+// 	os.Setenv("f", envFile)
+// 	os.Setenv("fs", envFiles)
+// 	os.Setenv("PWD", pwd)
 
-	if len(fs) == 0 {
-		os.Setenv("fx", envFile)
-	} else {
-		os.Setenv("fx", envFiles)
-	}
-}
+// 	if len(fs) == 0 {
+// 		os.Setenv("fx", envFile)
+// 	} else {
+// 		os.Setenv("fx", envFiles)
+// 	}
+// }
