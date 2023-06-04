@@ -1,4 +1,4 @@
-package buttonbar
+package model
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
@@ -8,7 +8,7 @@ import (
 	"github.com/nore-dev/fman/theme"
 )
 
-// have to activate and deactivate buttons based on state
+// fileBtns handle the file manipulation buttons in the toolbar
 
 // Buttons:
 // 	- cut activate when item select
@@ -21,17 +21,17 @@ import (
 // 	- compress activate when item select
 //	- extract activate when compressed item select
 
-type ButtonBar struct {
-	id                string
-	width             int
-	fileSelected      bool
-	clipBoardFull     bool
-	selectedIsArchive bool
-	focused           bool
+type fileBtns struct {
+	id            string
+	width         int
+	fileSelected  bool
+	clipBoardFull bool
+	focused       bool
+	// selectedIsArchive bool
 }
 
-func New() ButtonBar {
-	return ButtonBar{
+func newFileBtns() fileBtns {
+	return fileBtns{
 		id:            "buttonbar",
 		fileSelected:  false,
 		clipBoardFull: false,
@@ -39,11 +39,11 @@ func New() ButtonBar {
 	}
 }
 
-func (m ButtonBar) Init() tea.Cmd {
+func (m fileBtns) Init() tea.Cmd {
 	return nil
 }
 
-func (m ButtonBar) Update(msg tea.Msg) (ButtonBar, tea.Cmd) {
+func (m fileBtns) Update(msg tea.Msg) (fileBtns, tea.Cmd) {
 	if !m.focused {
 		return m, nil
 	}
@@ -84,7 +84,7 @@ func (m ButtonBar) Update(msg tea.Msg) (ButtonBar, tea.Cmd) {
 	return m, cmd
 }
 
-func (m ButtonBar) View() string {
+func (m fileBtns) View() string {
 	sectionWrapper := lipgloss.NewStyle().
 		Padding(0, 1, 1, 1)
 

@@ -8,26 +8,25 @@ Todo:
     Preview - move file reading out of ui
     Preview - could use a struct and keep file handle open. Read for the new line positions, then seek between them on scroll?
     Preview - Track whether a file was read or not, if it was, set delay to zero for following read
+    Preview - Use this space for notifications when they arise?
 
     FS operations - mkdir/mkfile/delete/etc. 
     FS operations - Dialog to confirm Changes
     FS operations - Dialog to show progress. I could show progress in the preview pane instead of the preview
 
-    List - getting 1 frame of empty dir before being updated with entries -- I think this has been fixed
     List - do not circle back when reaching top or bottom
     List - add sort methods for each column
     List - click column header to sort (add arrow icon and reverse on second click)
     List - freeze list on navs and show spinner if taking more than 100 milliseconds
-    List - cursor can be set more proactively
-        Should history only track the cursor, not selected?
-        Should chdirs one up and one down return the prior state of that dir despite not truly being a back or fwd?
-            Get the back nav state, if the path matches the new dir, take selected but but do not commit a back to the history  
+
     List - Multi-select filesystem objects
     List - Emit msgs on selection changes
         If multi-selecting, what to do with preview? Show preview for cursor or none?
 
     ButtonBar - Add a toggle hidden button - how to track this in history? It's a reload, so just don't record it in history
     
+    Separate button sets into separate components and compose them in App
+
     All buttons - activate or deactivate based on selection/"clipboard" state 
 
     Infobar - move away from tea.Tick, which is not a fixed duration
@@ -43,8 +42,9 @@ Todo:
     Clean up theme/icon configuration and globals
         Icon sets and themes should be enums
     Return early if starting directory DNE or not reachable
-    Clean filepaths from cli/config file
-    Toggle-able themes
+    Clean filepaths that are read from cli/config file
+    Live toggle-able themes
+    Configurable double-click interval for people with disabilities
 
     Change filesystem calls from os to fs at least for reading. Could use afero, std lib, hackpadfs? 
     Caching filesystem reads
@@ -58,7 +58,8 @@ Todo:
             Toggle bookmark pane visibility
 
     Ruled out for now:
-        List navigation - Use nerd-font icons based on file type - default to emojis. gorunewidth does not calculate many glyph's widths accurately which disruptes accurate ui rendering 
+        List - Use nerd-font icons based on file type - default to emojis.
+            gorunewidth does not calculate many glyph's widths accurately which disruptes accurate ui rendering 
 
 Finished:
     Sort directories and files separately
@@ -80,3 +81,9 @@ Finished:
         Fixed by starting with a reload (which is slightly hacky. See comment in App.Init())
     Move ui model out of main package
     Toggle activattion on Back/Fwd/Up buttons
+    Breadcrumb - show root directory
+    List - getting 1 frame of empty dir before being updated with entries
+    List - cursor can be set more proactively
+        Should history only track the cursor, not selected? Decided to track cursor and paths visited separately
+        Should chdirs one up and one down return the prior state of that dir despite not truly being a back or fwd? No.
+

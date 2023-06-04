@@ -1,4 +1,4 @@
-package breadcrumb
+package model
 
 import (
 	"strings"
@@ -55,7 +55,7 @@ func TestUpdateView(t *testing.T) {
 	defer zone.Close()
 	for _, tc := range testcases {
 		t.Run(tc.desc, func(t *testing.T) {
-			b := New()
+			b := newBrdCrumb()
 			b.SetWidth(1000)
 			b.updateView(tc.path)
 			if len(b.viewParts) != tc.wantLen {

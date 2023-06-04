@@ -1,34 +1,30 @@
-package toolbar
+package model
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	zone "github.com/lrstanley/bubblezone"
 	"github.com/nore-dev/fman/message"
-	"github.com/nore-dev/fman/model/breadcrumb"
 	"github.com/nore-dev/fman/theme"
 )
 
-// TODO: active statuses, up should be active if not at root
+// navBtns handle the back/forward/up navigation buttons in the toolbar
 
-type Toolbar struct {
-	breadcrumb *breadcrumb.Breadcrumb
+type navBtns struct {
 	backActive bool
 	fwdActive  bool
 	upActive   bool
 }
 
-func New() *Toolbar {
-	return &Toolbar{
-		breadcrumb: breadcrumb.New(),
-	}
+func newNavBtns() *navBtns {
+	return &navBtns{}
 }
 
-func (toolbar *Toolbar) Init() tea.Cmd {
+func (toolbar *navBtns) Init() tea.Cmd {
 	return nil
 }
 
-func (toolbar *Toolbar) Update(msg tea.Msg) (*Toolbar, tea.Cmd) {
+func (toolbar *navBtns) Update(msg tea.Msg) (*navBtns, tea.Cmd) {
 	switch msg := msg.(type) {
 	case message.DirChangedMsg:
 		toolbar.backActive = msg.BackActive()
@@ -48,12 +44,10 @@ func (toolbar *Toolbar) Update(msg tea.Msg) (*Toolbar, tea.Cmd) {
 			return toolbar, message.NavUpCmd()
 		}
 	}
-	var pathCmd tea.Cmd
-	toolbar.breadcrumb, pathCmd = toolbar.breadcrumb.Update(msg)
-	return toolbar, pathCmd
+	return toolbar, nil
 }
 
-func (toolbar *Toolbar) View() string {
+func (toolbar *navBtns) View() string {
 
 	var backBtn, fwdBtn, upBtn string
 
@@ -77,14 +71,13 @@ func (toolbar *Toolbar) View() string {
 		upBtn = zone.Mark("up", theme.InactiveButtonStyle.Render(string(icons.UpArrowIcon)))
 	}
 
-	view := lipgloss.JoinHorizontal(lipgloss.Left,
+	return lipgloss.JoinHorizontal(lipgloss.Left,
 		backBtn,
 		fwdBtn,
 		upBtn,
 	)
-	return lipgloss.JoinHorizontal(lipgloss.Center, view, toolbar.breadcrumb.View())
 }
 
-func (toolbar *Toolbar) SetWidth(width int) {
-	toolbar.breadcrumb.SetWidth(width - lipgloss.Width(theme.ButtonStyle.Render(string(theme.GetActiveIconTheme().LeftArrowIcon))))
-}
+// func (toolbar *navBtns) SetWidth(width int) {
+// 	toolbar.breadcrumb.SetWidth(width - lipgloss.Width(theme.ButtonStyle.Render(string(theme.GetActiveIconTheme().LeftArrowIcon))))
+// }

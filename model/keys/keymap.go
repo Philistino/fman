@@ -1,6 +1,8 @@
-package keymap
+package keys
 
 import "github.com/charmbracelet/bubbles/key"
+
+// Moved this in here temporarily. Should be moved to /model when all components are in the same package
 
 type KeyMap struct {
 	MoveCursorUp          key.Binding
@@ -20,7 +22,7 @@ type KeyMap struct {
 	ToggleHelp            key.Binding
 }
 
-var Default = KeyMap{
+var Map = KeyMap{
 	MoveCursorUp: key.NewBinding(
 		key.WithKeys("w", "up"),
 		key.WithHelp("w/↑", "Move cursor up"),

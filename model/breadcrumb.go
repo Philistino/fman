@@ -1,4 +1,4 @@
-package breadcrumb
+package model
 
 import (
 	"path/filepath"
@@ -17,21 +17,21 @@ const pathSeparator = "/" // use forward slash throughout the app
 
 var winRootRgx = regexp.MustCompile(`^[A-Za-z]:/?$`) // matches windows root paths like C:/ or D:
 
-type Breadcrumb struct {
+type breadCrumb struct {
 	path      string
 	width     int
 	viewParts []string
 }
 
-func New() *Breadcrumb {
-	return &Breadcrumb{}
+func newBrdCrumb() *breadCrumb {
+	return &breadCrumb{}
 }
 
-func (breadcrumb *Breadcrumb) Init() tea.Cmd {
+func (breadcrumb *breadCrumb) Init() tea.Cmd {
 	return nil
 }
 
-func (breadcrumb *Breadcrumb) Update(msg tea.Msg) (*Breadcrumb, tea.Cmd) {
+func (breadcrumb *breadCrumb) Update(msg tea.Msg) (*breadCrumb, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case message.DirChangedMsg:
@@ -46,7 +46,7 @@ func (breadcrumb *Breadcrumb) Update(msg tea.Msg) (*Breadcrumb, tea.Cmd) {
 	return breadcrumb, cmd
 }
 
-func (breadcrumb *Breadcrumb) View() string {
+func (breadcrumb *breadCrumb) View() string {
 	parts := make([]string, 0, len(breadcrumb.viewParts))
 	for i, part := range breadcrumb.viewParts {
 		parts = append(parts, zone.Mark(strconv.Itoa(i), part))
@@ -54,7 +54,7 @@ func (breadcrumb *Breadcrumb) View() string {
 	return lipgloss.NewStyle().MarginLeft(2).Render(strings.Join(parts, ""))
 }
 
-func (breadcrumb *Breadcrumb) handleMouseMsg(msg tea.MouseMsg) tea.Cmd {
+func (breadcrumb *breadCrumb) handleMouseMsg(msg tea.MouseMsg) tea.Cmd {
 	if msg.Type != tea.MouseLeft {
 		return nil
 	}
@@ -73,7 +73,7 @@ func (breadcrumb *Breadcrumb) handleMouseMsg(msg tea.MouseMsg) tea.Cmd {
 // and updates the view attribute. This could probably be optimized a bit
 // but it's only called once per directory change instead of on every
 // call to View()
-func (breadcrumb *Breadcrumb) updateView(path string) {
+func (breadcrumb *breadCrumb) updateView(path string) {
 
 	// if the path is a root path, just return the root rendered
 	if winRootRgx.MatchString(path) {
@@ -127,7 +127,7 @@ func (breadcrumb *Breadcrumb) updateView(path string) {
 // The width is not managed at the Breadcrumb model level because
 // the breadcrumb shares the same row with other renderables and the relative
 // widths should be managed above the level of this model
-func (b *Breadcrumb) SetWidth(width int) {
+func (b *breadCrumb) SetWidth(width int) {
 	b.width = width
 	b.updateView(b.path)
 }

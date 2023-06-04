@@ -10,8 +10,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
 	"github.com/nore-dev/fman/entry"
-	"github.com/nore-dev/fman/keymap"
 	"github.com/nore-dev/fman/message"
+	"github.com/nore-dev/fman/model/keys"
 	"github.com/nore-dev/fman/theme"
 )
 
@@ -116,14 +116,14 @@ func (entryInfo *EntryInfo) Update(msg tea.Msg) (EntryInfo, tea.Cmd) {
 		entryInfo.path = msg.Path()
 		entryInfo.eofReached = false
 	case tea.KeyMsg:
-		if key.Matches(msg, keymap.Default.ScrollPreviewDown) {
+		if key.Matches(msg, keys.Map.ScrollPreviewDown) {
 			if entryInfo.eofReached {
 				break
 			}
 			entryInfo.previewOffset++
 			cmd = entryInfo.getPreview(false)
 		}
-		if key.Matches(msg, keymap.Default.ScrollPreviewUp) {
+		if key.Matches(msg, keys.Map.ScrollPreviewUp) {
 			if entryInfo.previewOffset < 1 {
 				break
 			}

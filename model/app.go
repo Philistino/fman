@@ -10,14 +10,12 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	zone "github.com/lrstanley/bubblezone"
 	"github.com/nore-dev/fman/cfg"
-	"github.com/nore-dev/fman/keymap"
 	"github.com/nore-dev/fman/message"
-	"github.com/nore-dev/fman/model/buttonbar"
 	"github.com/nore-dev/fman/model/dialog"
 	"github.com/nore-dev/fman/model/entryinfo"
 	"github.com/nore-dev/fman/model/infobar"
+	"github.com/nore-dev/fman/model/keys"
 	"github.com/nore-dev/fman/model/list"
-	"github.com/nore-dev/fman/model/toolbar"
 	"github.com/nore-dev/fman/nav"
 	"github.com/nore-dev/fman/theme"
 )
@@ -25,12 +23,13 @@ import (
 // This is the main model for the app. It does two jobs, acts like a message bus for the different
 // components of the app, and composes the different UI components together.
 type App struct {
-	buttonBar buttonbar.ButtonBar
-	list      list.List
-	entryInfo entryinfo.EntryInfo
-	toolbar   *toolbar.Toolbar
-	infobar   infobar.Infobar
-	dialog    dialog.Model
+	fileBtns   fileBtns
+	list       list.List
+	entryInfo  entryinfo.EntryInfo
+	navBtns    *navBtns
+	infobar    infobar.Infobar
+	dialog     dialog.Model
+	breadcrumb *breadCrumb
 
 	width  int
 	height int
@@ -65,16 +64,17 @@ func NewApp(cfg cfg.Cfg, selectedTheme theme.Theme) *App {
 	absPath, _ := filepath.Abs(cfg.Path)
 	absPath = filepath.ToSlash(absPath)
 	app := App{
-		buttonBar: buttonbar.New(),
-		list:      list.New(selectedTheme),
-		entryInfo: entryinfo.New(selectedTheme, *cfg.PreviewDelay),
-		toolbar:   toolbar.New(),
-		infobar:   infobar.New(),
-		dialog:    dialog.New(),
-		flexBox:   stickers.NewFlexBox(0, 0),
-		config:    cfg,
-		navi:      nav.NewNav(!*cfg.NoHidden, *cfg.DirsMixed, absPath),
-		theme:     selectedTheme,
+		fileBtns:   newFileBtns(),
+		list:       list.New(selectedTheme, *cfg.DoubleClickDelay),
+		entryInfo:  entryinfo.New(selectedTheme, *cfg.PreviewDelay),
+		navBtns:    newNavBtns(),
+		infobar:    infobar.New(),
+		dialog:     dialog.New(),
+		flexBox:    stickers.NewFlexBox(0, 0),
+		navi:       nav.NewNav(!*cfg.NoHidden, *cfg.DirsMixed, absPath),
+		breadcrumb: newBrdCrumb(),
+		theme:      selectedTheme,
+		config:     cfg,
 	}
 	app.help.FullSeparator = "   "
 	app.help.ShowAll = true
@@ -127,7 +127,7 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd = app.paste()
 		cmds = append(cmds, cmd)
 	case tea.KeyMsg:
-		if key.Matches(msg, keymap.Default.ToggleHelp) {
+		if key.Matches(msg, keys.Map.ToggleHelp) {
 			// TODO Freeze components if showing help
 			app.showHelp = !app.showHelp
 		}
@@ -137,15 +137,16 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	var listCmd, toolbarCmd, entryCmd, infobarCmd, buttonBarCmd tea.Cmd
+	var listCmd, toolbarCmd, entryCmd, infobarCmd, buttonBarCmd, breadCrmbCmd tea.Cmd
 
 	app.list, listCmd = app.list.Update(msg)
-	app.toolbar, toolbarCmd = app.toolbar.Update(msg)
+	app.navBtns, toolbarCmd = app.navBtns.Update(msg)
 	app.entryInfo, entryCmd = app.entryInfo.Update(msg)
 	app.infobar, infobarCmd = app.infobar.Update(msg)
-	app.buttonBar, buttonBarCmd = app.buttonBar.Update(msg)
+	app.fileBtns, buttonBarCmd = app.fileBtns.Update(msg)
+	app.breadcrumb, breadCrmbCmd = app.breadcrumb.Update(msg)
 
-	cmds = append(cmds, listCmd, toolbarCmd, entryCmd, infobarCmd, buttonBarCmd)
+	cmds = append(cmds, listCmd, toolbarCmd, entryCmd, infobarCmd, buttonBarCmd, breadCrmbCmd)
 
 	return app, tea.Batch(cmds...)
 }
@@ -167,7 +168,7 @@ func (app *App) View() string {
 	case app.list.IsEmpty():
 		view = app.renderFull(theme.EmptyFolderStyle.Render("This folder is empty"))
 	case app.showHelp:
-		view = app.renderFull(theme.EmptyFolderStyle.Render(app.help.View(keymap.Default)))
+		view = app.renderFull(theme.EmptyFolderStyle.Render(app.help.View(keys.Map)))
 	default:
 		app.flexBox.ForceRecalculate()
 		row := app.flexBox.Row(0)
@@ -178,10 +179,12 @@ func (app *App) View() string {
 		view = zone.Mark("list", app.flexBox.Render())
 	}
 
+	secondRow := lipgloss.JoinHorizontal(lipgloss.Center, app.navBtns.View(), app.breadcrumb.View())
+
 	return zone.Scan(lipgloss.JoinVertical(
 		lipgloss.Top,
-		app.buttonBar.View(),
-		app.toolbar.View(),
+		app.fileBtns.View(),
+		secondRow,
 		view,
 		app.infobar.View(),
 	))
@@ -202,7 +205,7 @@ func (app *App) renderFull(str string) string {
 func (app *App) manageSizes(height, width int) {
 	app.width = width
 	app.height = height
-	app.flexBox.SetHeight(height - lipgloss.Height(app.toolbar.View()) - lipgloss.Height(app.toolbar.View()) - lipgloss.Height(app.buttonBar.View()))
+	app.flexBox.SetHeight(height - lipgloss.Height(app.navBtns.View()) - lipgloss.Height(app.navBtns.View()) - lipgloss.Height(app.fileBtns.View()))
 	app.flexBox.SetWidth(width)
 	app.flexBox.ForceRecalculate()
 	app.list.SetWidth(app.flexBox.Row(0).Cell(0).GetWidth())
@@ -210,7 +213,7 @@ func (app *App) manageSizes(height, width int) {
 	app.entryInfo.SetWidth(app.flexBox.Row(0).Cell(1).GetWidth())
 	app.entryInfo.SetHeight(app.flexBox.GetHeight())
 	app.help.Width = width
-	app.toolbar.SetWidth(width)
+	app.breadcrumb.SetWidth(width - lipgloss.Width(app.navBtns.View()))
 }
 
 // setInternalClipboard sets the internal clipboard to the selected entries
