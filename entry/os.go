@@ -174,18 +174,18 @@ func isExecutable(f os.FileInfo) bool {
 	return f.Mode()&0111 != 0
 }
 
-// func isHidden(f os.FileInfo, path string, hiddenfiles []string) bool {
-// 	hidden := false
-// 	for _, pattern := range hiddenfiles {
-// 		matched := matchPattern(strings.TrimPrefix(pattern, "!"), f.Name(), path)
-// 		if strings.HasPrefix(pattern, "!") && matched {
-// 			hidden = false
-// 		} else if matched {
-// 			hidden = true
-// 		}
-// 	}
-// 	return hidden
-// }
+func isHidden(f os.FileInfo, path string, hiddenfiles []string) bool {
+	hidden := false
+	for _, pattern := range hiddenfiles {
+		matched := matchPattern(strings.TrimPrefix(pattern, "!"), f.Name(), path)
+		if strings.HasPrefix(pattern, "!") && matched {
+			hidden = false
+		} else if matched {
+			hidden = true
+		}
+	}
+	return hidden
+}
 
 func isHidden(f os.FileInfo, path string, hiddenfiles []string) bool {
 	hidden := false
@@ -229,6 +229,22 @@ func linkCount(f os.FileInfo) string {
 
 func errCrossDevice(err error) bool {
 	return err.(*os.LinkError).Err.(unix.Errno) == unix.EXDEV
+}
+
+//lint:ignore U1000 This function is not used on Windows
+func matchPattern(pattern, name, path string) bool {
+	s := name
+
+	pattern = replaceTilde(pattern)
+
+	if filepath.IsAbs(pattern) {
+		s = filepath.Join(path, name)
+	}
+
+	// pattern errors are checked when 'hiddenfiles' option is set
+	matched, _ := filepath.Match(pattern, s)
+
+	return matched
 }
 
 // func exportFiles(f string, fs []string, pwd string) {
