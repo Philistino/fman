@@ -3,6 +3,8 @@ package breadcrumb
 import (
 	"strings"
 	"testing"
+
+	zone "github.com/lrstanley/bubblezone"
 )
 
 func TestUpdateView(t *testing.T) {
@@ -49,6 +51,8 @@ func TestUpdateView(t *testing.T) {
 			wantLen:      1,
 		},
 	}
+	zone.NewGlobal()
+	defer zone.Close()
 	for _, tc := range testcases {
 		t.Run(tc.desc, func(t *testing.T) {
 			b := New()
@@ -57,17 +61,12 @@ func TestUpdateView(t *testing.T) {
 			if len(b.viewParts) != tc.wantLen {
 				t.Errorf("TestUpdateView failed for testcase '%s': want len %d, got %d", tc.desc, tc.wantLen, len(b.viewParts))
 			}
-			for _, want := range tc.wantContains {
-				found := false
-				for _, v := range b.viewParts {
-					if !strings.Contains(v, want) {
-						continue
-					}
-					found = true
-					break
-				}
-				if !found {
+			for i, want := range tc.wantContains {
+				if !strings.Contains(b.viewParts[i], want) {
 					t.Errorf("TestUpdateView failed for testcase '%s': %s not found", tc.desc, want)
+				}
+				if !strings.Contains(b.View(), want) {
+					t.Errorf("TestUpdateView failed for testcase '%s': %s not found in View()", tc.desc, want)
 				}
 			}
 		})

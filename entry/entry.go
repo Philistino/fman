@@ -97,7 +97,8 @@ func GetEntries(path string, showHidden bool, dirsMixed bool) ([]Entry, error) {
 			continue
 		}
 
-		fullPath := filepath.Join(newPath, file.Name())
+		fullPath := newPath + "/" + file.Name()
+
 		hidden := isHidden(info, newPath, []string{})
 		if err != nil || (hidden && !showHidden) {
 			continue

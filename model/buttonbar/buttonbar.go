@@ -1,8 +1,6 @@
 package buttonbar
 
 import (
-	"log"
-
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	zone "github.com/lrstanley/bubblezone"
@@ -66,19 +64,19 @@ func (m ButtonBar) Update(msg tea.Msg) (ButtonBar, tea.Cmd) {
 		}
 		switch {
 		case zone.Get(m.id + "new file").InBounds(msg):
-			log.Println("Clicked new file!")
+			cmd = message.NewFileCmd()
 		case zone.Get(m.id + "new folder").InBounds(msg):
-			log.Println("Clicked new folder!")
+			cmd = message.MkDirCmd()
 		case zone.Get(m.id+"cut").InBounds(msg) && m.fileSelected:
-			log.Println("Clicked cut!")
+			cmd = message.CutCmd()
 		case zone.Get(m.id+"copy").InBounds(msg) && m.fileSelected:
-			cmd = message.InternalClipboardCmd()
+			cmd = message.InternalCopyCmd()
 		case zone.Get(m.id+"paste").InBounds(msg) && m.clipBoardFull:
-			log.Println("Clicked paste!")
+			cmd = message.InternalPasteCmd()
 		case zone.Get(m.id+"rename").InBounds(msg) && m.fileSelected:
-			log.Println("Clicked rename!")
+			cmd = message.RenameCmd()
 		case zone.Get(m.id+"delete").InBounds(msg) && m.fileSelected:
-			log.Println("Clicked delete!")
+			cmd = message.DeleteCmd()
 			// case zone.Get(m.id + "compress").InBounds(msg):
 			// case zone.Get(m.id + "extract").InBounds(msg):
 		}
