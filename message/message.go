@@ -27,11 +27,84 @@ type UpdateDialogMsg struct {
 	Dialog dialog.Dialog
 }
 
+// InternalCopyMsg is used to communicate to the main program
+// that a "clipboard" copy operation is requested.
 type InternalCopyMsg struct{}
 
-func InternalClipboardCmd() tea.Cmd {
+// InternalCopyCmd is used to create a command that will
+// communicate to the main program that a "clipboard" copy
+// operation is requested.
+func InternalCopyCmd() tea.Cmd {
 	return func() tea.Msg {
 		return InternalCopyMsg{}
+	}
+}
+
+// CutMsg is used to communicate to the main program
+// that a "clipboard" cut operation is requested.
+type CutMsg struct{}
+
+// CutCmd is used to create a command that will
+// communicate to the main program that a "clipboard" cut
+// operation is requested.
+func CutCmd() tea.Cmd {
+	return func() tea.Msg {
+		return CutMsg{}
+	}
+}
+
+// RenameMsg is used to communicate to the main program
+// that a rename operation is requested.
+type RenameMsg struct{}
+
+// RenameCmd is used to create a command that will
+// communicate to the main program that a rename
+// operation is requested.
+func RenameCmd() tea.Cmd {
+	return func() tea.Msg {
+		return RenameMsg{}
+	}
+}
+
+// NewFileMsg is used to communicate to the main program
+// that a new file operation is requested.
+type NewFileMsg struct{}
+
+// NewFileCmd is used to create a command that will
+// communicate to the main program that a new file
+// operation is requested.
+func NewFileCmd() tea.Cmd {
+	return func() tea.Msg {
+		return NewFileMsg{}
+	}
+}
+
+// DeleteMsg is used to communicate to the main program
+// that a delete operation is requested.
+type DeleteMsg struct{}
+
+// DeleteCmd is used to create a command that will
+// communicate to the main program that a delete
+// operation is requested.
+func DeleteCmd() tea.Cmd {
+	return func() tea.Msg {
+		return DeleteMsg{}
+	}
+}
+
+type InternalPasteMsg struct{}
+
+func InternalPasteCmd() tea.Cmd {
+	return func() tea.Msg {
+		return InternalPasteMsg{}
+	}
+}
+
+type MkDirMsg struct{}
+
+func MkDirCmd() tea.Cmd {
+	return func() tea.Msg {
+		return MkDirMsg{}
 	}
 }
 
@@ -127,11 +200,12 @@ func handleNav(state nav.DirState) tea.Msg {
 
 // HandleFwdCmd fetches the forward state of the nav and returns a message to
 // broadcast the new state
-func HandleFwdCmd(navi *nav.Nav, currentSelected []string) tea.Cmd {
+func HandleFwdCmd(navi *nav.Nav, currentSelected []string, cursor string) tea.Cmd {
 	return func() tea.Msg {
 		return handleNav(
 			navi.Forward(
 				currentSelected,
+				cursor,
 			),
 		)
 	}
@@ -139,11 +213,12 @@ func HandleFwdCmd(navi *nav.Nav, currentSelected []string) tea.Cmd {
 
 // HandleBackCmd fetches the last state of the nav and returns a message to
 // broadcast the new state
-func HandleBackCmd(navi *nav.Nav, currentSelected []string) tea.Cmd {
+func HandleBackCmd(navi *nav.Nav, currentSelected []string, cursor string) tea.Cmd {
 	return func() tea.Msg {
 		return handleNav(
 			navi.Back(
 				currentSelected,
+				cursor,
 			),
 		)
 	}
@@ -151,11 +226,12 @@ func HandleBackCmd(navi *nav.Nav, currentSelected []string) tea.Cmd {
 
 // HandleNavCmd fetches a new state of the nav and returns a message to
 // broadcast the new state
-func HandleNavCmd(navi *nav.Nav, currentSelected []string, path string) tea.Cmd {
+func HandleNavCmd(navi *nav.Nav, currentSelected []string, path string, cursor string) tea.Cmd {
 	return func() tea.Msg {
 		return handleNav(
 			navi.Go(
 				path,
+				cursor,
 				currentSelected,
 			),
 		)
@@ -164,11 +240,12 @@ func HandleNavCmd(navi *nav.Nav, currentSelected []string, path string) tea.Cmd 
 
 // HandleReloadCmd reloads the current directory and returns a message to
 // broadcast the returned state state
-func HandleReloadCmd(navi *nav.Nav, currentSelected []string) tea.Cmd {
+func HandleReloadCmd(navi *nav.Nav, currentSelected []string, cursor string) tea.Cmd {
 	return func() tea.Msg {
 		return handleNav(
 			navi.Reload(
 				currentSelected,
+				cursor,
 			),
 		)
 	}

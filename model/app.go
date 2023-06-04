@@ -54,7 +54,7 @@ func (app *App) Init() tea.Cmd {
 	// I am calling Reload here because it does not record the current state in the history
 	// and there is no current state to leave behind. This is a little bit of a bandaid
 	// over the history implementation not having a setter for initial state
-	cmd := message.HandleReloadCmd(app.navi, []string{""})
+	cmd := message.HandleReloadCmd(app.navi, []string{""}, "")
 	msg := cmd() // get the initial DirChangedMsg
 	return func() tea.Msg {
 		return msg
@@ -63,6 +63,7 @@ func (app *App) Init() tea.Cmd {
 
 func NewApp(cfg cfg.Cfg, selectedTheme theme.Theme) *App {
 	absPath, _ := filepath.Abs(cfg.Path)
+	absPath = filepath.ToSlash(absPath)
 	app := App{
 		buttonBar: buttonbar.New(),
 		list:      list.New(selectedTheme),
@@ -101,26 +102,29 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		app.dialog.SetDialog(&msg.Dialog)
 		return app, nil
 	case message.NavBackMsg:
-		cmd = message.HandleBackCmd(app.navi, []string{app.list.SelectedEntry().Name()})
+		cmd = message.HandleBackCmd(app.navi, []string{app.list.SelectedEntry().Name()}, app.list.CursorName())
 		cmds = append(cmds, cmd)
 	case message.NavFwdMsg:
-		cmd = message.HandleFwdCmd(app.navi, []string{app.list.SelectedEntry().Name()})
+		cmd = message.HandleFwdCmd(app.navi, []string{app.list.SelectedEntry().Name()}, app.list.CursorName())
 		cmds = append(cmds, cmd)
 	case message.NavUpMsg:
-		cmd = message.HandleNavCmd(app.navi, []string{app.list.SelectedEntry().Name()}, filepath.Dir(app.navi.CurrentPath()))
+		cmd = message.HandleNavCmd(app.navi, []string{app.list.SelectedEntry().Name()}, filepath.Dir(app.navi.CurrentPath()), app.list.CursorName())
 		cmds = append(cmds, cmd)
 	case message.NavHomeMsg:
-		cmd = message.HandleNavCmd(app.navi, []string{app.list.SelectedEntry().Name()}, "~")
+		cmd = message.HandleNavCmd(app.navi, []string{app.list.SelectedEntry().Name()}, "~", app.list.CursorName())
 		cmds = append(cmds, cmd)
 	case message.NavDownMsg:
 		name := app.list.SelectedEntry().Name()
-		cmd = message.HandleNavCmd(app.navi, []string{name}, filepath.Join(app.navi.CurrentPath(), name))
+		cmd = message.HandleNavCmd(app.navi, []string{name}, filepath.Join(app.navi.CurrentPath(), name), app.list.CursorName())
 		cmds = append(cmds, cmd)
 	case message.NavOtherMsg:
-		cmd = message.HandleNavCmd(app.navi, []string{app.list.SelectedEntry().Name()}, msg.Path)
+		cmd = message.HandleNavCmd(app.navi, []string{app.list.SelectedEntry().Name()}, msg.Path, app.list.CursorName())
 		cmds = append(cmds, cmd)
 	case message.InternalCopyMsg:
 		cmd = app.setInternalClipboard()
+		cmds = append(cmds, cmd)
+	case message.InternalPasteMsg:
+		cmd = app.paste()
 		cmds = append(cmds, cmd)
 	case tea.KeyMsg:
 		if key.Matches(msg, keymap.Default.ToggleHelp) {
@@ -219,4 +223,9 @@ func (app *App) setInternalClipboard() tea.Cmd {
 	}
 	app.internalClipboard = clipboard
 	return message.SendMessage("Copied!")
+}
+
+// TODO: make this real
+func (app *App) paste() tea.Cmd {
+	return message.SendMessage("Paste!")
 }

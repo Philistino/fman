@@ -15,8 +15,10 @@ type List struct {
 	width  int
 	height int
 
-	selected_index int
-	flexBox        *stickers.FlexBox
+	cursorIdx int
+	selected  map[int]struct{}
+
+	flexBox *stickers.FlexBox
 
 	maxEntryToShow int
 	truncateLimit  int
@@ -63,7 +65,7 @@ func (list *List) SelectedEntry() entry.Entry {
 	if len(list.entries) == 0 {
 		return entry.Entry{}
 	}
-	return list.entries[list.selected_index]
+	return list.entries[list.cursorIdx]
 }
 
 // TODO: Change this when reimplementing the list
@@ -74,6 +76,10 @@ func (list *List) SelectedEntries() map[string]struct{} {
 	return map[string]struct{}{
 		list.SelectedEntry().Name(): {},
 	}
+}
+
+func (list *List) CursorName() string {
+	return list.SelectedEntry().Name()
 }
 
 func (list *List) SetWidth(width int) {
