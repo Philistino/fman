@@ -2,6 +2,7 @@ package breadcrumb
 
 import (
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -11,6 +12,10 @@ import (
 	"github.com/nore-dev/fman/message"
 	"github.com/nore-dev/fman/theme"
 )
+
+const pathSeparator = "/" // use forward slash throughout the app
+
+var winRootRgx = regexp.MustCompile(`^[A-Za-z]:/?$`) // matches windows root paths like C:/ or D:
 
 type Breadcrumb struct {
 	path      string
@@ -33,8 +38,8 @@ func (breadcrumb *Breadcrumb) Update(msg tea.Msg) (*Breadcrumb, tea.Cmd) {
 		if msg.Error() != nil {
 			return breadcrumb, nil
 		}
-		breadcrumb.path = msg.Path()
-		breadcrumb.updateView()
+		breadcrumb.path = filepath.ToSlash(msg.Path()) // standardize path separators elsewhere in the app
+		breadcrumb.updateView(breadcrumb.path)
 	case tea.MouseMsg:
 		cmd = breadcrumb.handleMouseMsg(msg)
 	}
@@ -53,7 +58,7 @@ func (breadcrumb *Breadcrumb) handleMouseMsg(msg tea.MouseMsg) tea.Cmd {
 	if msg.Type != tea.MouseLeft {
 		return nil
 	}
-	pathParts := strings.SplitAfter(breadcrumb.path, string(filepath.Separator))
+	pathParts := strings.SplitAfter(breadcrumb.path, pathSeparator) // TODO: does split after work here on unix?
 	for i := 0; i < len(pathParts); i++ {
 		if !zone.Get(strconv.Itoa(i)).InBounds(msg) {
 			continue
@@ -68,8 +73,24 @@ func (breadcrumb *Breadcrumb) handleMouseMsg(msg tea.MouseMsg) tea.Cmd {
 // and updates the view attribute. This could probably be optimized a bit
 // but it's only called once per directory change instead of on every
 // call to View()
-func (breadcrumb *Breadcrumb) updateView() {
-	pathParts := strings.Split(breadcrumb.path, string(filepath.Separator))
+func (breadcrumb *Breadcrumb) updateView(path string) {
+
+	// if the path is a root path, just return the root rendered
+	if winRootRgx.MatchString(path) {
+		breadcrumb.viewParts = []string{theme.PathStyle.Render(strings.Replace(path, "/", "", 1))}
+		return
+	}
+	if path == pathSeparator {
+		breadcrumb.viewParts = []string{theme.PathStyle.Render(path)}
+		return
+	}
+
+	pathParts := strings.Split(path, pathSeparator)
+
+	if strings.HasPrefix(path, pathSeparator) {
+		pathParts = append([]string{pathSeparator}, pathParts...)
+	}
+
 	separator := theme.ArrowStyle.Render(string(theme.GetActiveIconTheme().BreadcrumbArrowIcon))
 
 	// reverse the parts so we prioritize directories closer to the current
@@ -79,6 +100,10 @@ func (breadcrumb *Breadcrumb) updateView() {
 	totalLength := 0
 	parts := make([]string, 0, len(pathParts))
 	for i, part := range pathParts {
+
+		if part == "" {
+			continue
+		}
 
 		partRendered := theme.PathStyle.Render(part)
 		if i != 0 {
@@ -104,7 +129,7 @@ func (breadcrumb *Breadcrumb) updateView() {
 // widths should be managed above the level of this model
 func (b *Breadcrumb) SetWidth(width int) {
 	b.width = width
-	b.updateView()
+	b.updateView(b.path)
 }
 
 func reverse[S ~[]E, E any](s S) {
