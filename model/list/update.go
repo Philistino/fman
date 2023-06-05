@@ -82,11 +82,14 @@ func (list *List) handleMouseClick(msg tea.MouseMsg) tea.Cmd {
 
 	// Double click
 	time := time.Now()
-	if time.Sub(list.lastClickedTime) < list.clickDelay && list.SelectedEntry().IsDir() {
+	if time.Sub(list.lastClickedTime) < list.clickDelay && list.SelectedEntry().IsDir() && list.cursorIdx == list.lastClickedIdx {
+		list.lastClickedIdx = -1 // reset the last clicked index
 		return message.NavDownCmd(list.SelectedEntry().Name())
 	}
 	list.lastClickedTime = time
-	// Update entry info model
+	list.lastClickedIdx = list.cursorIdx
+
+	// Send message to update the preview pane
 	return message.UpdateEntry(list.SelectedEntry())
 }
 

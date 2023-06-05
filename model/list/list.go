@@ -6,7 +6,7 @@ import (
 	"github.com/76creates/stickers"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/nore-dev/fman/entry"
-	"github.com/nore-dev/fman/theme"
+	"github.com/nore-dev/fman/theme/colors"
 )
 
 type List struct {
@@ -24,15 +24,16 @@ type List struct {
 	truncateLimit  int
 
 	lastClickedTime time.Time
+	lastClickedIdx  int // list index of the last clicked item. Must be reset to -1 when the list is updated
 	clickDelay      time.Duration
 
-	theme theme.Theme
+	theme colors.Theme
 
 	lastKeyCharacter byte
 	focused          bool
 }
 
-func New(theme theme.Theme, doubleClickDelay int) List {
+func New(theme colors.Theme, doubleClickDelay int) List {
 
 	list := List{
 		entries:          []entry.Entry{},
@@ -44,6 +45,7 @@ func New(theme theme.Theme, doubleClickDelay int) List {
 		maxEntryToShow:   0,
 		truncateLimit:    100,
 		lastClickedTime:  time.Time{},
+		lastClickedIdx:   -1,
 		clickDelay:       time.Duration(time.Millisecond * time.Duration(doubleClickDelay)),
 		theme:            theme,
 		lastKeyCharacter: 0,
