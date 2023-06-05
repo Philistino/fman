@@ -8,21 +8,21 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dustin/go-humanize"
-	"github.com/nore-dev/fman/message"
+	"github.com/nore-dev/fman/model/message"
 	"github.com/nore-dev/fman/storage"
 	"github.com/nore-dev/fman/theme"
 )
 
 type Infobar struct {
-	width           int
-	progressWidth   int
-	message         string
-	defaultDuration time.Duration // the default duration to display a message
-	minDuration     time.Duration // the minimum gap to display the default message between messages
-	startTime       time.Time
-	messageIdx      int // Used to track messages
-	storageInfo     storage.StorageInfo
-	stack           ArrayStack[string]
+	width           int                 // the width of the infobar, which should be the window width
+	progressWidth   int                 // the width of the progress bar
+	message         string              // the current message
+	defaultDuration time.Duration       // the default duration to display a message
+	minDuration     time.Duration       // the minimum gap to display the default message between messages
+	startTime       time.Time           // the time the current message was displayed
+	messageIdx      int                 // Used to track messages for clearing when multiple messages are to be displayed in a short time
+	storageInfo     storage.StorageInfo // the disk storage info
+	stack           Stack[string]       // a stack of messages to display
 }
 
 type TickMsg time.Time
@@ -68,7 +68,7 @@ func (infobar *Infobar) clearMessage(idx int, t time.Duration) tea.Cmd {
 func (infobar *Infobar) Update(msg tea.Msg) (Infobar, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
-	case message.NewMessageMsg:
+	case message.NewNotificationMsg:
 		cmd = infobar.handleNewMessage(msg)
 	case clearMessageMsg:
 		if infobar.messageIdx != msg.idx {
@@ -93,7 +93,7 @@ func (infobar *Infobar) Update(msg tea.Msg) (Infobar, tea.Cmd) {
 	return *infobar, cmd
 }
 
-func (i *Infobar) handleNewMessage(msg message.NewMessageMsg) tea.Cmd {
+func (i *Infobar) handleNewMessage(msg message.NewNotificationMsg) tea.Cmd {
 	if time.Since(i.startTime) < i.minDuration {
 		// the current message was not displayed long enough so push the new message to the stack
 		// and clear the current message after the minGapDuration has passed

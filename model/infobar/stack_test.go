@@ -6,7 +6,7 @@ import (
 )
 
 func TestArrayStack_Push(t *testing.T) {
-	stack := NewArrayStack[int]()
+	stack := NewStack[int]()
 	stack.Push(1)
 	stack.Push(2)
 	stack.Push(3)
@@ -25,7 +25,7 @@ func TestArrayStack_Push(t *testing.T) {
 
 func TestArrayStack_Pop(t *testing.T) {
 
-	stack := NewArrayStack[int]()
+	stack := NewStack[int]()
 	_, err := stack.Pop()
 	if err == nil {
 		t.Errorf("Failed TestArrayStack_Pop error: expected %v, got %v", "empty stack", err)
@@ -51,7 +51,7 @@ func TestArrayStack_Pop(t *testing.T) {
 }
 
 func TestArrayStack_Peak(t *testing.T) {
-	stack := NewArrayStack[int]()
+	stack := NewStack[int]()
 	_, err := stack.Peak()
 	if err == nil {
 		t.Errorf("Failed TestArrayStack_Peak error: expected %v, got %v", "empty stack", err)
@@ -77,7 +77,7 @@ func TestArrayStack_Peak(t *testing.T) {
 }
 
 func TestArrayStack_Clear(t *testing.T) {
-	stack := NewArrayStack[int]()
+	stack := NewStack[int]()
 	if !stack.IsEmpty() {
 		t.Errorf("Failed TestArrayStack_Clear IsEmpty: expected %v, got %v", true, stack.IsEmpty())
 	}

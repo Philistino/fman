@@ -10,8 +10,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
 	"github.com/nore-dev/fman/entry"
-	"github.com/nore-dev/fman/message"
 	"github.com/nore-dev/fman/model/keys"
+	"github.com/nore-dev/fman/model/message"
 	"github.com/nore-dev/fman/theme"
 	"github.com/nore-dev/fman/theme/colors"
 )
@@ -138,7 +138,7 @@ func (entryInfo *EntryInfo) Update(msg tea.Msg) (EntryInfo, tea.Cmd) {
 			entryInfo.eofReached = false
 			cmd = entryInfo.getPreview(false)
 		}
-	case message.EntryMsg:
+	case message.NewEntryMsg:
 		cmd = entryInfo.setNewEntry(msg.Entry)
 	case previewReadyMsg:
 		entryInfo.handlePreviewMsg(msg)

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/nore-dev/fman/entry"
-	"github.com/nore-dev/fman/history"
+	"github.com/nore-dev/fman/nav/history"
 )
 
 // on startup, create a filesystem, read the cwd and display it. Walk the filetree up to root while

@@ -26,7 +26,7 @@ const (
 
 // These pointers are a janky way to get Nonetype values so we can know
 // if the user passed an argument or not either via the cli or config file, and then prioritise the config file or cli.
-// This approach will get a unruly if we have a lot of arguments because we will have to add args in a few places
+// This approach may get unruly if we have a lot of arguments because we will have to add args in a few places
 
 // Cfg holds the configuration details for a session
 type Cfg struct {

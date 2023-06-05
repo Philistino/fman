@@ -68,8 +68,8 @@ var Map = KeyMap{
 		key.WithHelp("enter", "Open file"),
 	),
 	ShowHiddenEntries: key.NewBinding(
-		key.WithKeys("m"),
-		key.WithHelp("m", "Show hidden entries"),
+		key.WithKeys("."),
+		key.WithHelp(".", "Show hidden"),
 	),
 	ScrollPreviewDown: key.NewBinding(
 		key.WithKeys("shift+down"),

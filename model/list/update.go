@@ -8,8 +8,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	zone "github.com/lrstanley/bubblezone"
 	"github.com/nore-dev/fman/entry"
-	"github.com/nore-dev/fman/message"
 	"github.com/nore-dev/fman/model/keys"
+	"github.com/nore-dev/fman/model/message"
 )
 
 func (list *List) clearLastKey() tea.Cmd {
@@ -36,7 +36,7 @@ func getFullPath(entry entry.Entry, path string) string {
 
 func (list *List) handlePathChange(newDir message.DirChangedMsg) tea.Cmd {
 	if newDir.Error() != nil {
-		return message.SendMessage(newDir.Error().Error())
+		return message.NewNotificationCmd(newDir.Error().Error())
 	}
 	list.selected = make(map[int]struct{})
 	list.entries = newDir.Entries()
@@ -66,7 +66,7 @@ func (list *List) handlePathChange(newDir message.DirChangedMsg) tea.Cmd {
 	if len(list.entries) == 0 {
 		return nil
 	}
-	return message.UpdateEntry(list.SelectedEntry())
+	return message.NewEntryCmd(list.SelectedEntry())
 }
 
 func (list *List) handleMouseClick(msg tea.MouseMsg) tea.Cmd {
@@ -90,7 +90,7 @@ func (list *List) handleMouseClick(msg tea.MouseMsg) tea.Cmd {
 	list.lastClickedIdx = list.cursorIdx
 
 	// Send message to update the preview pane
-	return message.UpdateEntry(list.SelectedEntry())
+	return message.NewEntryCmd(list.SelectedEntry())
 }
 
 func (list *List) resizeList() {
@@ -143,11 +143,11 @@ func (list *List) Update(msg tea.Msg) (List, tea.Cmd) {
 		case key.Matches(msg, keys.Map.MoveCursorUp): // Select entry above
 			list.cursorIdx -= 1
 			list.restrictIndex()
-			return *list, message.UpdateEntry(list.SelectedEntry())
+			return *list, message.NewEntryCmd(list.SelectedEntry())
 		case key.Matches(msg, keys.Map.MoveCursorDown): // Select entry below
 			list.cursorIdx += 1
 			list.restrictIndex()
-			return *list, message.UpdateEntry(list.SelectedEntry())
+			return *list, message.NewEntryCmd(list.SelectedEntry())
 		case key.Matches(msg, keys.Map.GoToParentDirectory): // Get entries from parent directory
 			return *list, message.NavUpCmd()
 		case key.Matches(msg, keys.Map.GoToSelectedDirectory): // If the selected entry is a directory. Get entries under that directory

@@ -2,6 +2,11 @@ k6 uses a thin wrapper over afero so they can later move away from it:
 https://github.com/grafana/k6/tree/master/lib/fsext
 
 Todo:
+    Breadcrump - need to handle clicks leaf -> root. There is a bug that misallocates clicks when the breadcrump is truncated
+        Mostly fixed - add tests
+    breadcrumb - still and issue reading clicks when truncated, with a long path, and clicking second to last dir
+
+
     Preview - toggle preview pane visibility
     Preview - render markdown preview with glamour
     Preview - could preview directories
@@ -9,6 +14,7 @@ Todo:
     Preview - could use a struct and keep file handle open. Read for the new line positions, then seek between them on scroll?
     Preview - Track whether a file was read or not, if it was, set delay to zero for following read
     Preview - Use this space for notifications when they arise?
+    Preview - UI hangs on "Loading preview..." for empty files 
 
     FS operations - mkdir/mkfile/delete/etc. 
     FS operations - Dialog to confirm Changes
@@ -18,14 +24,14 @@ Todo:
     List - add sort methods for each column
     List - click column header to sort (add arrow icon and reverse on second click)
     List - freeze list on navs and show spinner if taking more than 100 milliseconds
-
+        Message to signal start of changing directory
     List - Multi-select filesystem objects
     List - Emit msgs on selection changes
         If multi-selecting, what to do with preview? Show preview for cursor or none?
 
+    Help - shift full help from wide to long based on terminal width and make it scrollable
+
     ButtonBar - Add a toggle hidden button - how to track this in history? It's a reload, so just don't record it in history
-    
-    Separate button sets into separate components and compose them in App
 
     All buttons - activate or deactivate based on selection/"clipboard" state 
 
@@ -33,6 +39,8 @@ Todo:
     Infobar - need to track state of messages. If a new message comes in before the last one is cleared, clear the old message for a moment and add the new message
         make sure the old clear duration is ignored when it comes 
 
+    Should I put all keys in one model or handle different key messages based on domain?
+        The issue is navigation key presses could go on the nav buttons, file list, or global
     Implement real navigation history - Done but need to write some tests
     Put long error messages in a pop-up box at bottom and shorten other views. Can freeze list?
     Pull navigation state out of UI
@@ -86,4 +94,6 @@ Finished:
     List - cursor can be set more proactively
         Should history only track the cursor, not selected? Decided to track cursor and paths visited separately
         Should chdirs one up and one down return the prior state of that dir despite not truly being a back or fwd? No.
+    List - double click should only be relevant if clicked on the same item
+    Separate button sets into separate components and compose them in App
 

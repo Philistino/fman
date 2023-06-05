@@ -15,12 +15,26 @@ import (
 
 type ClearKeyMsg struct{}
 
-type EntryMsg struct {
+type NewEntryMsg struct {
 	Entry entry.Entry
 }
 
-type NewMessageMsg struct {
+func NewEntryCmd(newEntry entry.Entry) tea.Cmd {
+	return func() tea.Msg {
+		return NewEntryMsg{Entry: newEntry}
+	}
+}
+
+type NewNotificationMsg struct {
 	Message string
+}
+
+// NewNotificationCmd is used to create a command that will
+// display a notification.
+func NewNotificationCmd(message string) tea.Cmd {
+	return func() tea.Msg {
+		return NewNotificationMsg{message}
+	}
 }
 
 type UpdateDialogMsg struct {
@@ -100,48 +114,78 @@ func InternalPasteCmd() tea.Cmd {
 	}
 }
 
+// MkDirMsg is used to communicate to the main program
+// that a new directory operation is requested.
 type MkDirMsg struct{}
 
+// MkDirCmd is used to create a command that will
+// communicate to the main program that a new directory
+// operation is requested.
 func MkDirCmd() tea.Cmd {
 	return func() tea.Msg {
 		return MkDirMsg{}
 	}
 }
 
+// ToggleShowHiddenMsg is used to communicate to the main program
+// that a toggle show hidden operation is requested.
 type ToggleShowHiddenMsg struct{}
 
+// ToggleShowHiddenCmd is used to create a command that will
+// communicate to the main program that a toggle show hidden
+// operation is requested.
 func ToggleShowHiddenCmd() tea.Cmd {
 	return func() tea.Msg {
 		return ToggleShowHiddenMsg{}
 	}
 }
 
+// NavBackMsg is used to communicate to the main program
+// that a navigation back operation is requested.
 type NavBackMsg struct{}
 
+// NavBackCmd is used to create a command that will
+// communicate to the main program that a navigation back
+// operation is requested.
 func NavBackCmd() tea.Cmd {
 	return func() tea.Msg {
 		return NavBackMsg{}
 	}
 }
 
+// NavFwdMsg is used to communicate to the main program
+// that a navigation forward operation is requested.
 type NavFwdMsg struct{}
 
+// NavFwdCmd is used to create a command that will
+// communicate to the main program that a navigation forward
+// operation is requested.
 func NavFwdCmd() tea.Cmd {
 	return func() tea.Msg {
 		return NavFwdMsg{}
 	}
 }
 
+// NavUpMsg is used to communicate to the main program
+// that a navigation to parent directory operation is requested.
 type NavUpMsg struct{}
 
+// NavUpCmd is used to create a command that will
+// communicate to the main program that a navigation to the parent directory
+// operation is requested.
 func NavUpCmd() tea.Cmd {
 	return func() tea.Msg {
 		return NavUpMsg{}
 	}
 }
 
+// NavHomeMsg is used to communicate to the main program
+// that a navigation to the home directory operation is requested.
 type NavHomeMsg struct{}
 
+// NavHomeCmd is used to create a command that will
+// communicate to the main program that a navigation to the home directory
+// operation is requested.
 func NavHomeCmd() tea.Cmd {
 	return func() tea.Msg {
 		return NavHomeMsg{}
@@ -172,24 +216,13 @@ func NavOtherCmd(path string) tea.Cmd {
 	}
 }
 
-func UpdateEntry(newEntry entry.Entry) tea.Cmd {
-	return func() tea.Msg {
-		return EntryMsg{Entry: newEntry}
-	}
-}
-
-func SendMessage(message string) tea.Cmd {
-	return func() tea.Msg {
-		return NewMessageMsg{message}
-	}
-}
-
 func UpdateDialog(dialog *dialog.Dialog) tea.Cmd {
 	return func() tea.Msg {
 		return UpdateDialogMsg{Dialog: *dialog}
 	}
 }
 
+// DirChangedMsg is used to communicate that the CWD has changed
 type DirChangedMsg struct {
 	nav.DirState
 }
@@ -270,7 +303,7 @@ func openEditor(path string) tea.Cmd {
 		cmd.Start()
 
 		return tea.Batch(
-			SendMessage(err.Error()),
+			NewNotificationCmd(err.Error()),
 			tea.EnableMouseCellMotion,
 		)
 	})

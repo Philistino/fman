@@ -10,12 +10,12 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	zone "github.com/lrstanley/bubblezone"
 	"github.com/nore-dev/fman/cfg"
-	"github.com/nore-dev/fman/message"
 	"github.com/nore-dev/fman/model/dialog"
 	"github.com/nore-dev/fman/model/entryinfo"
 	"github.com/nore-dev/fman/model/infobar"
 	"github.com/nore-dev/fman/model/keys"
 	"github.com/nore-dev/fman/model/list"
+	"github.com/nore-dev/fman/model/message"
 	"github.com/nore-dev/fman/nav"
 	"github.com/nore-dev/fman/theme"
 	"github.com/nore-dev/fman/theme/colors"
@@ -226,10 +226,10 @@ func (app *App) setInternalClipboard() tea.Cmd {
 		clipboard = append(clipboard, filepath.Join(dir, name))
 	}
 	app.internalClipboard = clipboard
-	return message.SendMessage("Copied!")
+	return message.NewNotificationCmd("Copied!")
 }
 
 // TODO: make this real
 func (app *App) paste() tea.Cmd {
-	return message.SendMessage("Paste!")
+	return message.NewNotificationCmd("Paste!")
 }

@@ -1,58 +1,51 @@
-// Copyright 2021 dudaodong@gmail.com. All rights reserved.
-// Use of this source code is governed by MIT license
-
-// Package datastructure contains some data structure. Stack structure contains ArrayStack and LinkedStack.
 package infobar
 
 import "errors"
 
-// ArrayStack implements stack with slice
-type ArrayStack[T any] struct {
-	data   []T
-	length int
+// Stack implements stack with slice
+type Stack[T any] struct {
+	data []T
 }
 
-// NewArrayStack return a empty ArrayStack pointer
-func NewArrayStack[T any]() *ArrayStack[T] {
-	return &ArrayStack[T]{data: []T{}, length: 0}
+// NewStack returns a pointer to an empty Stack
+func NewStack[T any]() *Stack[T] {
+	return &Stack[T]{data: []T{}}
 }
 
-// Data return stack data
-func (s *ArrayStack[T]) Data() []T {
+// Data returns the stack
+func (s *Stack[T]) Data() []T {
 	return s.data
 }
 
-// Size return length of stack data
-func (s *ArrayStack[T]) Size() int {
-	return s.length
+// Size returns the length of the stack
+func (s *Stack[T]) Size() int {
+	return len(s.data)
 }
 
 // IsEmpty checks if stack is empty or not
-func (s *ArrayStack[T]) IsEmpty() bool {
-	return s.length == 0
+func (s *Stack[T]) IsEmpty() bool {
+	return len(s.data) == 0
 }
 
 // Push element into stack
-func (s *ArrayStack[T]) Push(value T) {
+func (s *Stack[T]) Push(value T) {
 	s.data = append([]T{value}, s.data...)
-	s.length++
 }
 
 // Pop delete the top element of stack then return it, if stack is empty, return nil and error
-func (s *ArrayStack[T]) Pop() (*T, error) {
+func (s *Stack[T]) Pop() (*T, error) {
 	if s.IsEmpty() {
 		return nil, errors.New("stack is empty")
 	}
 
 	topItem := s.data[0]
 	s.data = s.data[1:]
-	s.length--
 
 	return &topItem, nil
 }
 
 // Peak return the top element of stack
-func (s *ArrayStack[T]) Peak() (*T, error) {
+func (s *Stack[T]) Peak() (*T, error) {
 	if s.IsEmpty() {
 		return nil, errors.New("stack is empty")
 	}
@@ -60,7 +53,6 @@ func (s *ArrayStack[T]) Peak() (*T, error) {
 }
 
 // Clear the stack data
-func (s *ArrayStack[T]) Clear() {
+func (s *Stack[T]) Clear() {
 	s.data = []T{}
-	s.length = 0
 }

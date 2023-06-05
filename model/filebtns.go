@@ -4,22 +4,22 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	zone "github.com/lrstanley/bubblezone"
-	"github.com/nore-dev/fman/message"
+	"github.com/nore-dev/fman/model/message"
 	"github.com/nore-dev/fman/theme"
 )
 
 // fileBtns handle the file manipulation buttons in the toolbar
 
 // Buttons:
-// 	- cut activate when item select
-//	- copy activate when item select
-//	- paste activate when item in clipboard
-//	- rename activate when item select
-// 	- delete activate when item select
-//	- new file always active
-//	- new folder always active
-// 	- compress activate when item select
-//	- extract activate when compressed item select
+// 	- cut activate when item is selected
+//	- copy activate when item is selected
+//	- paste activate when item in clipboard. TODO: make inactive on folder that cannot be read
+//	- rename activate when item is selected
+// 	- delete activate when item is selected
+//	- new file always active. TODO: make inactive on folder that cannot be read
+//	- new folder always active. TODO: make inactive on folder that cannot be read
+// 	- compress activate when item is selected. TODO
+//	- extract activate when compressed item is selected. TODO
 
 type fileBtns struct {
 	id            string
@@ -52,7 +52,7 @@ func (m fileBtns) Update(msg tea.Msg) (fileBtns, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
-	case message.EntryMsg:
+	case message.NewEntryMsg:
 		m.fileSelected = true
 	case message.DirChangedMsg:
 		m.fileSelected = false

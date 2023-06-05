@@ -63,10 +63,10 @@ brew install fman/tap/fman
 |      `c`      | Copy selected entry path to the clipboard |
 |   `shift+g`   |        Move to the end of the list        |
 |      `g`      |     Move to the beginning of the list     |
-|      `m`      |        Toggle showing hidden Files        |
-|    `~, .`     |        Move to the home directory         |
-|  `shift+down`  |            Scroll preview down            |
-|   `shift+up`   |             Scroll preview up             |
+|      `.`      |        Toggle showing hidden Files        |
+|      `~`      |        Move to the home directory         |
+|  `shift+down` |            Scroll preview down            |
+|   `shift+up`  |             Scroll preview up             |
 |      `?`      |                Toggle help                |
 
 ## :computer: CLI options
