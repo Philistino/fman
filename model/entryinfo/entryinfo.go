@@ -13,6 +13,7 @@ import (
 	"github.com/nore-dev/fman/message"
 	"github.com/nore-dev/fman/model/keys"
 	"github.com/nore-dev/fman/theme"
+	"github.com/nore-dev/fman/theme/colors"
 )
 
 type EntryInfo struct {
@@ -27,7 +28,7 @@ type EntryInfo struct {
 	previewHeight int
 	previewOffset int
 
-	theme         theme.Theme
+	theme         colors.Theme
 	eofReached    bool // is set to true when the end of the file is reached in the preview
 	previewCancel context.CancelFunc
 
@@ -40,7 +41,7 @@ var previewStyle = lipgloss.NewStyle()
 
 // previewDelay is how long to wait on a file before reading it to create a preview.
 // This is meant to avoid unnecessary disk io when the user is navigating quickly.
-func New(theme theme.Theme, previewDelay int) EntryInfo {
+func New(theme colors.Theme, previewDelay int) EntryInfo {
 	return EntryInfo{
 		// entry:         firstEntry,
 		previewHeight: 10,
@@ -69,6 +70,12 @@ func (entryInfo *EntryInfo) setNewEntry(entry entry.Entry) tea.Cmd {
 		entryInfo.preview = entryInfo.renderNoPreview("Directory")
 		return nil
 	}
+
+	if entry.Size() == 0 {
+		entryInfo.preview = entryInfo.renderNoPreview("Empty file")
+		return nil
+	}
+
 	// set default preview content
 	entryInfo.preview = entryInfo.renderNoPreview("Loading preview...")
 	return entryInfo.getPreview(true)
