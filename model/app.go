@@ -18,6 +18,7 @@ import (
 	"github.com/nore-dev/fman/model/list"
 	"github.com/nore-dev/fman/nav"
 	"github.com/nore-dev/fman/theme"
+	"github.com/nore-dev/fman/theme/colors"
 )
 
 // This is the main model for the app. It does two jobs, acts like a message bus for the different
@@ -41,7 +42,7 @@ type App struct {
 	config   cfg.Cfg
 
 	navi              *nav.Nav
-	theme             theme.Theme
+	theme             colors.Theme
 	internalClipboard []string // slice of paths to items in the "clipboard"
 }
 
@@ -60,7 +61,7 @@ func (app *App) Init() tea.Cmd {
 	}
 }
 
-func NewApp(cfg cfg.Cfg, selectedTheme theme.Theme) *App {
+func NewApp(cfg cfg.Cfg, selectedTheme colors.Theme) *App {
 	absPath, _ := filepath.Abs(cfg.Path)
 	absPath = filepath.ToSlash(absPath)
 	app := App{
