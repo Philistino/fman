@@ -59,14 +59,24 @@ func (breadcrumb *breadCrumb) handleMouseMsg(msg tea.MouseMsg) tea.Cmd {
 		return nil
 	}
 	pathParts := strings.SplitAfter(breadcrumb.path, pathSeparator) // TODO: does split after work here on unix?
-	for i := 0; i < len(pathParts); i++ {
+	clicked := false
+	var viewPartClicked int
+	for i := 0; i < len(breadcrumb.viewParts); i++ {
 		if !zone.Get(strconv.Itoa(i)).InBounds(msg) {
 			continue
 		}
-		clicked := filepath.Join(pathParts[:i+1]...)
-		return message.NavOtherCmd(clicked)
+		viewPartClicked = i
+		clicked = true
+		break
 	}
-	return nil
+	if !clicked {
+		return nil
+	}
+	if len(breadcrumb.viewParts) < len(pathParts) {
+		viewPartClicked = len(pathParts) - len(breadcrumb.viewParts) + viewPartClicked
+	}
+	path := filepath.Join(pathParts[:viewPartClicked+1]...)
+	return message.NavOtherCmd(path)
 }
 
 // updateView creates the renderable breadcrumb for the given path

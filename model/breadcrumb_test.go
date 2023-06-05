@@ -7,6 +7,8 @@ import (
 	zone "github.com/lrstanley/bubblezone"
 )
 
+// TODO: test truncation
+
 func TestUpdateView(t *testing.T) {
 	testcases := []struct {
 		desc         string
