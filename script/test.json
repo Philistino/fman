@@ -1,0 +1,54 @@
+{
+    "_cake_php": {
+        "fontCharacter": "\\E00E",
+        "fontColor": "#cc3e44"
+    },
+    "_clock_light": {
+        "fontCharacter": "\\E012",
+        "fontColor": "#498ba7"
+    },
+    "_clock": {
+        "fontCharacter": "\\E012",
+        "fontColor": "#519aba"
+    },
+    "_clock_1_light": {
+        "fontCharacter": "\\E012",
+        "fontColor": "#627379"
+    },
+    "_clock_1": {
+        "fontCharacter": "\\E012",
+        "fontColor": "#6d8086"
+    },
+    "_clojure_light": {
+        "fontCharacter": "\\E013",
+        "fontColor": "#7fae42"
+    },
+    "_clojure": {
+        "fontCharacter": "\\E013",
+        "fontColor": "#8dc149"
+    },
+    "_clojure_1_light": {
+        "fontCharacter": "\\E013",
+        "fontColor": "#498ba7"
+    },
+    "_clojure_1": {
+        "fontCharacter": "\\E013",
+        "fontColor": "#519aba"
+    },
+    "_code-climate_light": {
+        "fontCharacter": "\\E014",
+        "fontColor": "#7fae42"
+    },
+    "_code-climate": {
+        "fontCharacter": "\\E014",
+        "fontColor": "#8dc149"
+    },
+    "_code-search_light": {
+        "fontCharacter": "\\E015",
+        "fontColor": "#9068b0"
+    },
+    "_code-search": {
+        "fontCharacter": "\\E015",
+        "fontColor": "#a074c4"
+    }
+}

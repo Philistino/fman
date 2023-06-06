@@ -16,6 +16,8 @@ type iconSet struct {
 	TimeIcon rune
 	SizeIcon rune
 	NameIcon rune
+
+	AddItemIcon rune
 }
 
 type iconSets map[string]iconSet
@@ -32,6 +34,7 @@ var nerdFont = iconSet{
 	TimeIcon:            '\uf017',
 	SizeIcon:            '\uf200',
 	NameIcon:            '\ue612',
+	AddItemIcon:         '\uf067',
 }
 
 var emoji = iconSet{
@@ -43,6 +46,7 @@ var emoji = iconSet{
 	FileIcon:            '📄',
 	FolderIcon:          '📁',
 	SymlinkIcon:         '🔗',
+	AddItemIcon:         '+',
 }
 
 var noIcons = iconSet{
@@ -50,6 +54,7 @@ var noIcons = iconSet{
 	RightArrowIcon:      '>',
 	UpArrowIcon:         '^',
 	BreadcrumbArrowIcon: '>',
+	AddItemIcon:         '+',
 }
 
 var iconProviders = iconSets{

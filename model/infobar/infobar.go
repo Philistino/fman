@@ -5,12 +5,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Philistino/fman/model/message"
+	"github.com/Philistino/fman/storage"
+	"github.com/Philistino/fman/theme"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dustin/go-humanize"
-	"github.com/nore-dev/fman/model/message"
-	"github.com/nore-dev/fman/storage"
-	"github.com/nore-dev/fman/theme"
 )
 
 type Infobar struct {
@@ -52,7 +52,7 @@ func (infobar *Infobar) Message() string {
 	return infobar.message
 }
 
-type clearMessageMsg struct {
+type clearNotificationMsg struct {
 	idx int
 }
 
@@ -61,7 +61,7 @@ func (infobar *Infobar) clearMessage(idx int, t time.Duration) tea.Cmd {
 		// It's ok to sleep here without a context. In bubbletea this will
 		// not block quitting the program.
 		time.Sleep(t)
-		return clearMessageMsg{idx: idx}
+		return clearNotificationMsg{idx: idx}
 	}
 }
 
@@ -70,7 +70,7 @@ func (infobar *Infobar) Update(msg tea.Msg) (Infobar, tea.Cmd) {
 	switch msg := msg.(type) {
 	case message.NewNotificationMsg:
 		cmd = infobar.handleNewMessage(msg)
-	case clearMessageMsg:
+	case clearNotificationMsg:
 		if infobar.messageIdx != msg.idx {
 			return *infobar, nil
 		}

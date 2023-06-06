@@ -5,15 +5,15 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Philistino/fman/entry"
+	"github.com/Philistino/fman/model/keys"
+	"github.com/Philistino/fman/model/message"
+	"github.com/Philistino/fman/theme"
+	"github.com/Philistino/fman/theme/colors"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
-	"github.com/nore-dev/fman/entry"
-	"github.com/nore-dev/fman/model/keys"
-	"github.com/nore-dev/fman/model/message"
-	"github.com/nore-dev/fman/theme"
-	"github.com/nore-dev/fman/theme/colors"
 )
 
 type EntryInfo struct {
@@ -43,7 +43,6 @@ var previewStyle = lipgloss.NewStyle()
 // This is meant to avoid unnecessary disk io when the user is navigating quickly.
 func New(theme colors.Theme, previewDelay int) EntryInfo {
 	return EntryInfo{
-		// entry:         firstEntry,
 		previewHeight: 10,
 		theme:         theme,
 		width:         10,
@@ -73,6 +72,7 @@ func (entryInfo *EntryInfo) setNewEntry(entry entry.Entry) tea.Cmd {
 
 	if entry.Size() == 0 {
 		entryInfo.preview = entryInfo.renderNoPreview("Empty file")
+		entryInfo.eofReached = true
 		return nil
 	}
 
@@ -158,7 +158,6 @@ func (entryInfo *EntryInfo) getFileInfo() string {
 func (entryInfo *EntryInfo) View() string {
 	fileInfo := entryInfo.getFileInfo()
 	entryInfo.previewHeight = entryInfo.height - lipgloss.Height(fileInfo) - margin
-
 	return theme.EntryInfoStyle.Render(
 		lipgloss.JoinVertical(
 			lipgloss.Left,
@@ -170,10 +169,6 @@ func (entryInfo *EntryInfo) View() string {
 			fileInfo,
 		),
 	)
-}
-
-func (entryInfo *EntryInfo) Width() int {
-	return entryInfo.width
 }
 
 func (entryInfo *EntryInfo) SetWidth(width int) {

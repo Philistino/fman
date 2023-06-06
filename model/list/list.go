@@ -4,9 +4,9 @@ import (
 	"time"
 
 	"github.com/76creates/stickers"
+	"github.com/Philistino/fman/entry"
+	"github.com/Philistino/fman/theme/colors"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/nore-dev/fman/entry"
-	"github.com/nore-dev/fman/theme/colors"
 )
 
 type List struct {

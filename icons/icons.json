@@ -1,0 +1,932 @@
+[
+	{
+		"id": "tags",
+		"name": "nf-oct-tag",
+		"color": {
+			"name": "blue",
+			"darkBg": "#6A9FB5",
+			"lightBg": "#6A9FB5"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "node",
+		"name": "nf-dev-nodejs_small",
+		"color": {
+			"name": "green",
+			"darkBg": "#90A959",
+			"lightBg": "#90A959"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "babelrc",
+		"name": "nf-seti-babel",
+		"color": {
+			"name": "yellow",
+			"darkBg": "#FFD446",
+			"lightBg": "#FFCC0E"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "bashrc",
+		"name": "nf-dev-terminal",
+		"color": {
+			"name": "dark pink",
+			"darkBg": "#B6567E",
+			"lightBg": "#B6567E"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "bowerrc",
+		"name": "nf-dev-bower",
+		"color": {
+			"name": "silver",
+			"darkBg": "#716E68",
+			"lightBg": "#716E68"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "cr",
+		"name": "nf-seti-crystal",
+		"color": {
+			"name": "yellow",
+			"darkBg": "#FFD446",
+			"lightBg": "#FFCC0E"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "ecr",
+		"name": "nf-seti-crystal",
+		"color": {
+			"name": "yellow",
+			"darkBg": "#FFD446",
+			"lightBg": "#FFCC0E"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "eslintignore",
+		"name": "nf-seti-eslint",
+		"color": {
+			"name": "purple",
+			"darkBg": "#AA759F",
+			"lightBg": "#68295B"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "eslint",
+		"name": "nf-seti-eslint",
+		"color": {
+			"name": "light purple",
+			"darkBg": "#E69DD6",
+			"lightBg": "#E69DD6"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "git",
+		"name": "nf-dev-git",
+		"color": {
+			"name": "light red",
+			"darkBg": "#EB595A",
+			"lightBg": "#EB595A"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "gitattributes",
+		"name": "nf-dev-git",
+		"color": {
+			"name": "light red",
+			"darkBg": "#EB595A",
+			"lightBg": "#EB595A"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "gitignore",
+		"name": "nf-dev-git",
+		"color": {
+			"name": "light red",
+			"darkBg": "#EB595A",
+			"lightBg": "#EB595A"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "gitmodules",
+		"name": "nf-dev-git",
+		"color": {
+			"name": "light red",
+			"darkBg": "#EB595A",
+			"lightBg": "#EB595A"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "mk",
+		"name": "nf-dev-gnu",
+		"color": {
+			"name": "dark orange",
+			"darkBg": "#915B2D",
+			"lightBg": "#915B2D"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "editorconfig",
+		"name": "nf-seti-editorconfig",
+		"color": {
+			"name": "silver",
+			"darkBg": "#716E68",
+			"lightBg": "#716E68"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "pkgbuild",
+		"name": "nf-oct-package",
+		"color": {
+			"name": "dark silver",
+			"darkBg": "#838484",
+			"lightBg": "#838484"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "elc",
+		"name": "nf-oct-file_binary",
+		"color": {
+			"name": "dark silver",
+			"darkBg": "#838484",
+			"lightBg": "#838484"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "eln",
+		"name": "nf-oct-file_binary",
+		"color": {
+			"name": "dark silver",
+			"darkBg": "#838484",
+			"lightBg": "#838484"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "dat",
+		"name": "nf-fa-bar_chart",
+		"color": {
+			"name": "cyan",
+			"darkBg": "#75B5AA",
+			"lightBg": "#75B5AA"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "dmg",
+		"name": "nf-oct-tools",
+		"color": {
+			"name": "light silver",
+			"darkBg": "#B9B6AA",
+			"lightBg": "#7F7869"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "ds_store",
+		"name": "nf-fa-cogs",
+		"color": {
+			"name": "silver",
+			"darkBg": "#716E68",
+			"lightBg": "#716E68"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "scpt",
+		"name": "nf-dev-apple",
+		"color": {
+			"name": "pink",
+			"darkBg": "#F2B4B8",
+			"lightBg": "#FC505B"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "hrl",
+		"name": "nf-dev-erlang",
+		"color": {
+			"name": "dark red",
+			"darkBg": "#843031",
+			"lightBg": "#843031"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "heex",
+		"name": "nf-seti-elixir",
+		"color": {
+			"name": "light orange",
+			"darkBg": "#FFA500",
+			"lightBg": "#FFA500"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "eclass",
+		"name": "nf-linux-gentoo",
+		"color": {
+			"name": "blue",
+			"darkBg": "#6A9FB5",
+			"lightBg": "#6A9FB5"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "magik",
+		"name": "nf-fa-magic",
+		"color": {
+			"name": "blue",
+			"darkBg": "#6A9FB5",
+			"lightBg": "#6A9FB5"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "pl",
+		"name": "nf-seti-perl",
+		"color": {
+			"name": "light orange",
+			"darkBg": "#FFA500",
+			"lightBg": "#FFA500"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "pod",
+		"name": "nf-dev-perl",
+		"color": {
+			"name": "light green",
+			"darkBg": "#C6E87A",
+			"lightBg": "#3D6837"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "php",
+		"name": "nf-dev-php",
+		"color": {
+			"name": "light silver",
+			"darkBg": "#B9B6AA",
+			"lightBg": "#7F7869"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "proog",
+		"name": "nf-seti-prolog",
+		"color": {
+			"name": "light maroon",
+			"darkBg": "#CE7A4E",
+			"lightBg": "#CE7A4E"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "gem",
+		"name": "nf-dev-ruby",
+		"color": {
+			"name": "red",
+			"darkBg": "#AC4142",
+			"lightBg": "#AC4142"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "rlib",
+		"name": "nf-dev-rust",
+		"color": {
+			"name": "dark maroon",
+			"darkBg": "#72584B",
+			"lightBg": "#72584B"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "rd",
+		"name": "nf-seti-r",
+		"color": {
+			"name": "light blue",
+			"darkBg": "#8FD7F4",
+			"lightBg": "#677174"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "rdx",
+		"name": "nf-seti-r",
+		"color": {
+			"name": "light blue",
+			"darkBg": "#8FD7F4",
+			"lightBg": "#677174"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "rsx",
+		"name": "nf-seti-r",
+		"color": {
+			"name": "light blue",
+			"darkBg": "#8FD7F4",
+			"lightBg": "#677174"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "svelte",
+		"name": "nf-seti-svelte",
+		"color": {
+			"name": "red",
+			"darkBg": "#AC4142",
+			"lightBg": "#AC4142"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "cl",
+		"name": "nf-md-yin_yang",
+		"color": {
+			"name": "red",
+			"darkBg": "#AC4142",
+			"lightBg": "#AC4142"
+		},
+		"glyph": "0"
+	},
+	{
+		"id": "l",
+		"name": "nf-md-yin_yang",
+		"color": {
+			"name": "red",
+			"darkBg": "#AC4142",
+			"lightBg": "#AC4142"
+		},
+		"glyph": "0"
+	},
+	{
+		"id": "lisp",
+		"name": "nf-md-yin_yang",
+		"color": {
+			"name": "red",
+			"darkBg": "#AC4142",
+			"lightBg": "#AC4142"
+		},
+		"glyph": "0"
+	},
+	{
+		"id": "hy",
+		"name": "nf-md-yin_yang",
+		"color": {
+			"name": "red",
+			"darkBg": "#AC4142",
+			"lightBg": "#AC4142"
+		},
+		"glyph": "0"
+	},
+	{
+		"id": "el",
+		"name": "nf-custom-emacs",
+		"color": {
+			"name": "purple",
+			"darkBg": "#AA759F",
+			"lightBg": "#68295B"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "chs",
+		"name": "nf-dev-haskell",
+		"color": {
+			"name": "red",
+			"darkBg": "#AC4142",
+			"lightBg": "#AC4142"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "lhs",
+		"name": "nf-dev-haskell",
+		"color": {
+			"name": "red",
+			"darkBg": "#AC4142",
+			"lightBg": "#AC4142"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "hsc",
+		"name": "nf-dev-haskell",
+		"color": {
+			"name": "red",
+			"darkBg": "#AC4142",
+			"lightBg": "#AC4142"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "inky-haml",
+		"name": "nf-seti-haml",
+		"color": {
+			"name": "light yellow",
+			"darkBg": "#FFC16D",
+			"lightBg": "#FF9300"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "haml",
+		"name": "nf-seti-haml",
+		"color": {
+			"name": "light yellow",
+			"darkBg": "#FFC16D",
+			"lightBg": "#FF9300"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "inky-er",
+		"name": "nf-dev-html5",
+		"color": {
+			"name": "light red",
+			"darkBg": "#EB595A",
+			"lightBg": "#EB595A"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "inky-erb",
+		"name": "nf-dev-html5",
+		"color": {
+			"name": "light red",
+			"darkBg": "#EB595A",
+			"lightBg": "#EB595A"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "inky-slim",
+		"name": "nf-cod-dashboard",
+		"color": {
+			"name": "yellow",
+			"darkBg": "#FFD446",
+			"lightBg": "#FFCC0E"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "re",
+		"name": "nf-seti-reasonml",
+		"color": {
+			"name": "red alt",
+			"darkBg": "#ce5643",
+			"lightBg": "#ce5643"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "rei",
+		"name": "nf-seti-reasonml",
+		"color": {
+			"name": "dark red",
+			"darkBg": "#843031",
+			"lightBg": "#843031"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "react",
+		"name": "nf-dev-react",
+		"color": {
+			"name": "light blue",
+			"darkBg": "#8FD7F4",
+			"lightBg": "#677174"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "es",
+		"name": "nf-dev-javascript",
+		"color": {
+			"name": "yellow",
+			"darkBg": "#FFD446",
+			"lightBg": "#FFCC0E"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "njs",
+		"name": "nf-dev-nodejs_small",
+		"color": {
+			"name": "light green",
+			"darkBg": "#C6E87A",
+			"lightBg": "#3D6837"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "sbt",
+		"name": "nf-seti-sbt",
+		"color": {
+			"name": "red",
+			"darkBg": "#AC4142",
+			"lightBg": "#AC4142"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "scala",
+		"name": "nf-dev-scala",
+		"color": {
+			"name": "red",
+			"darkBg": "#AC4142",
+			"lightBg": "#AC4142"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "vams",
+		"name": "nf-fa-microchip",
+		"color": {
+			"name": "silver",
+			"darkBg": "#716E68",
+			"lightBg": "#716E68"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "sva",
+		"name": "nf-fa-microchip",
+		"color": {
+			"name": "silver",
+			"darkBg": "#716E68",
+			"lightBg": "#716E68"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "svams",
+		"name": "nf-fa-microchip",
+		"color": {
+			"name": "silver",
+			"darkBg": "#716E68",
+			"lightBg": "#716E68"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "vhdl",
+		"name": "nf-fa-microchip",
+		"color": {
+			"name": "blue",
+			"darkBg": "#6A9FB5",
+			"lightBg": "#6A9FB5"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "vhms",
+		"name": "nf-fa-microchip",
+		"color": {
+			"name": "blue",
+			"darkBg": "#6A9FB5",
+			"lightBg": "#6A9FB5"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "nims",
+		"name": "nf-seti-nim",
+		"color": {
+			"name": "yellow",
+			"darkBg": "#FFD446",
+			"lightBg": "#FFCC0E"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "glsl",
+		"name": "nf-fa-paint_brush",
+		"color": {
+			"name": "blue",
+			"darkBg": "#6A9FB5",
+			"lightBg": "#6A9FB5"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "vert",
+		"name": "nf-fa-paint_brush",
+		"color": {
+			"name": "blue",
+			"darkBg": "#6A9FB5",
+			"lightBg": "#6A9FB5"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "tesc",
+		"name": "nf-fa-paint_brush",
+		"color": {
+			"name": "purple",
+			"darkBg": "#AA759F",
+			"lightBg": "#68295B"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "tese",
+		"name": "nf-fa-paint_brush",
+		"color": {
+			"name": "dark purple",
+			"darkBg": "#694863",
+			"lightBg": "#694863"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "geom",
+		"name": "nf-fa-paint_brush",
+		"color": {
+			"name": "green",
+			"darkBg": "#90A959",
+			"lightBg": "#90A959"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "frag",
+		"name": "nf-fa-paint_brush",
+		"color": {
+			"name": "red",
+			"darkBg": "#AC4142",
+			"lightBg": "#AC4142"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "comp",
+		"name": "nf-fa-paint_brush",
+		"color": {
+			"name": "dark blue",
+			"darkBg": "#446674",
+			"lightBg": "#446674"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "cu",
+		"name": "nf-custom-c",
+		"color": {
+			"name": "green",
+			"darkBg": "#90A959",
+			"lightBg": "#90A959"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "cuh",
+		"name": "nf-fa-h_square",
+		"color": {
+			"name": "green",
+			"darkBg": "#90A959",
+			"lightBg": "#90A959"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "fsscript",
+		"name": "nf-dev-fsharp",
+		"color": {
+			"name": "blue alt",
+			"darkBg": "#2188b6",
+			"lightBg": "#2188b6"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "xpm",
+		"name": "nf-oct-file_media",
+		"color": {
+			"name": "dark green",
+			"darkBg": "#6D8143",
+			"lightBg": "#6D8143"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "wav",
+		"name": "nf-fa-music",
+		"color": {
+			"name": "dark red",
+			"darkBg": "#843031",
+			"lightBg": "#843031"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "opus",
+		"name": "nf-fa-music",
+		"color": {
+			"name": "dark red",
+			"darkBg": "#843031",
+			"lightBg": "#843031"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "au",
+		"name": "nf-fa-music",
+		"color": {
+			"name": "dark red",
+			"darkBg": "#843031",
+			"lightBg": "#843031"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "aif",
+		"name": "nf-fa-music",
+		"color": {
+			"name": "dark red",
+			"darkBg": "#843031",
+			"lightBg": "#843031"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "aifc",
+		"name": "nf-fa-music",
+		"color": {
+			"name": "dark red",
+			"darkBg": "#843031",
+			"lightBg": "#843031"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "text",
+		"name": "nf-fa-file_text",
+		"color": {
+			"name": "cyan",
+			"darkBg": "#75B5AA",
+			"lightBg": "#75B5AA"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "docm",
+		"name": "nf-seti-word",
+		"color": {
+			"name": "blue",
+			"darkBg": "#6A9FB5",
+			"lightBg": "#6A9FB5"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "texi",
+		"name": "nf-seti-tex",
+		"color": {
+			"name": "light red",
+			"darkBg": "#EB595A",
+			"lightBg": "#EB595A"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "org",
+		"name": "nf-custom-orgmode",
+		"color": {
+			"name": "light green",
+			"darkBg": "#C6E87A",
+			"lightBg": "#3D6837"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "pptsx",
+		"name": "nf-fa-file_powerpoint_o",
+		"color": {
+			"name": "orange",
+			"darkBg": "#D4843E",
+			"lightBg": "#D4843E"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "ppttx",
+		"name": "nf-fa-file_powerpoint_o",
+		"color": {
+			"name": "orange",
+			"darkBg": "#D4843E",
+			"lightBg": "#D4843E"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "knt",
+		"name": "nf-fa-file_powerpoint_o",
+		"color": {
+			"name": "cyan",
+			"darkBg": "#75B5AA",
+			"lightBg": "#75B5AA"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "xlsm",
+		"name": "nf-seti-xls",
+		"color": {
+			"name": "dark green",
+			"darkBg": "#6D8143",
+			"lightBg": "#6D8143"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "xlsb",
+		"name": "nf-seti-xls",
+		"color": {
+			"name": "dark green",
+			"darkBg": "#6D8143",
+			"lightBg": "#6D8143"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "xltx",
+		"name": "nf-seti-xls",
+		"color": {
+			"name": "dark green",
+			"darkBg": "#6D8143",
+			"lightBg": "#6D8143"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "xltm",
+		"name": "nf-seti-xls",
+		"color": {
+			"name": "dark green",
+			"darkBg": "#6D8143",
+			"lightBg": "#6D8143"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "epub",
+		"name": "nf-fa-book",
+		"color": {
+			"name": "green",
+			"darkBg": "#90A959",
+			"lightBg": "#90A959"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "ly",
+		"name": "nf-fa-music",
+		"color": {
+			"name": "green",
+			"darkBg": "#90A959",
+			"lightBg": "#90A959"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "p12",
+		"name": "nf-oct-key",
+		"color": {
+			"name": "dark orange",
+			"darkBg": "#915B2D",
+			"lightBg": "#915B2D"
+		},
+		"glyph": ""
+	},
+	{
+		"id": "cache",
+		"name": "nf-oct-database",
+		"color": {
+			"name": "green",
+			"darkBg": "#90A959",
+			"lightBg": "#90A959"
+		},
+		"glyph": ""
+	}
+]

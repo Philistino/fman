@@ -22,7 +22,7 @@
 
 package icons
 
-var iconFileName = map[string]iconInfo{
+var iconFileName = map[string]Icon{
 	".pug-lintrc":                         iconSet["pug"],
 	".pug-lintrc.js":                      iconSet["pug"],
 	".pug-lintrc.json":                    iconSet["pug"],

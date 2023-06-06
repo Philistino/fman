@@ -4,12 +4,12 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/Philistino/fman/entry"
+	"github.com/Philistino/fman/model/keys"
+	"github.com/Philistino/fman/model/message"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	zone "github.com/lrstanley/bubblezone"
-	"github.com/nore-dev/fman/entry"
-	"github.com/nore-dev/fman/model/keys"
-	"github.com/nore-dev/fman/model/message"
 )
 
 func (list *List) clearLastKey() tea.Cmd {

@@ -6,11 +6,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Philistino/fman/model/message"
+	"github.com/Philistino/fman/theme"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	zone "github.com/lrstanley/bubblezone"
-	"github.com/nore-dev/fman/model/message"
-	"github.com/nore-dev/fman/theme"
 )
 
 const pathSeparator = "/" // use forward slash throughout the app

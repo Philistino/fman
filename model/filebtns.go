@@ -1,11 +1,11 @@
 package model
 
 import (
+	"github.com/Philistino/fman/model/message"
+	"github.com/Philistino/fman/theme"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	zone "github.com/lrstanley/bubblezone"
-	"github.com/nore-dev/fman/model/message"
-	"github.com/nore-dev/fman/theme"
 )
 
 // fileBtns handle the file manipulation buttons in the toolbar
@@ -90,8 +90,8 @@ func (m fileBtns) View() string {
 
 	var newFile, newFolder, cut, copy, paste, rename, delete string
 
-	newFile = theme.ButtonStyle.Render("New File")
-	newFolder = theme.ButtonStyle.Render("New Folder")
+	newFile = theme.ButtonStyle.Render(string(theme.GetActiveIconTheme().AddItemIcon) + " File")
+	newFolder = theme.ButtonStyle.Render(string(theme.GetActiveIconTheme().AddItemIcon) + " Folder")
 
 	if m.fileSelected {
 		cut = theme.ButtonStyle.Render("Cut")

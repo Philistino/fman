@@ -22,7 +22,7 @@
 
 package icons
 
-var iconDir = map[string]iconInfo{
+var iconDir = map[string]Icon{
 	"config":         iconSet["dir-config"],
 	".config":        iconSet["dir-config"],
 	"configs":        iconSet["dir-config"],

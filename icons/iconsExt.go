@@ -22,7 +22,7 @@
 
 package icons
 
-var iconExt = map[string]iconInfo{
+var iconExt = map[string]Icon{
 	"htm":               iconSet["html"],
 	"html":              iconSet["html"],
 	"xhtml":             iconSet["html"],

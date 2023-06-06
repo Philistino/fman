@@ -4,9 +4,10 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 
-	"github.com/nore-dev/fman/entry"
-	"github.com/nore-dev/fman/nav/history"
+	"github.com/Philistino/fman/entry"
+	"github.com/Philistino/fman/nav/history"
 )
 
 // on startup, create a filesystem, read the cwd and display it. Walk the filetree up to root while
@@ -56,12 +57,8 @@ func (n *Nav) Go(path string, currCursor string, currSelected []string) DirState
 	}
 
 	var newState NavState
-	// if the new path is the parent of the current path set the cursor to the current path
-	if path == filepath.Dir(n.currentPath) {
-		newState.cursor = filepath.Base(n.currentPath)
-	} else {
-		newState.cursor = n.cursorHist[path]
-	}
+
+	newState.cursor = n.handleCursor(path)
 	newState.path = path
 
 	n.hist.Go(n.currentPath)
@@ -70,6 +67,32 @@ func (n *Nav) Go(path string, currCursor string, currSelected []string) DirState
 	n.currentPath = path
 	n.entries = entries
 	return n.newDirState(n.entries, newState, nil)
+}
+
+func (n *Nav) handleCursor(dst string) string {
+	var cursor string
+	src := n.currentPath
+
+	// if the destination is the parent of the source, set the cursor to the source
+	if dst == filepath.Dir(src) {
+		return filepath.Base(src)
+	}
+
+	// if the destination is in the history, set the cursor based on last visit
+	cursor, ok := n.cursorHist[dst]
+	if ok {
+		return cursor
+	}
+
+	// if the destination is a [great-]grandparent of the source, set the cursor
+	// to be in the tree of the source
+	if !strings.HasPrefix(src, dst) {
+		return ""
+	}
+	cursor = strings.Replace(src, dst, "", 1)
+	cursor = strings.TrimPrefix(cursor, "/")
+	cursor = strings.Split(cursor, "/")[0]
+	return cursor
 }
 
 func (n *Nav) Back(currSelected []string, currCursor string) DirState {
@@ -129,15 +152,6 @@ func (n *Nav) CurrentPath() string {
 	return n.currentPath
 }
 
-// returns map of slice to use a set
-func mapStruct[T comparable](list []T) map[T]struct{} {
-	mapped := make(map[T]struct{}, len(list))
-	for _, elem := range list {
-		mapped[elem] = struct{}{}
-	}
-	return mapped
-}
-
 func (n *Nav) Path() string {
 	return n.currentPath
 }
@@ -150,6 +164,10 @@ func (n *Nav) SetShowHidden(showHidden bool) {
 	n.showHidden = showHidden
 }
 
+func (n *Nav) ShowHidden() bool {
+	return n.showHidden
+}
+
 func (n *Nav) SetDirsMixed(dirsMixed bool) {
 	n.dirsMixed = dirsMixed
 }
@@ -158,70 +176,11 @@ func (n *Nav) getEntries(path string) ([]entry.Entry, error) {
 	return entry.GetEntries(path, n.showHidden, n.dirsMixed)
 }
 
-type NavState struct {
-	path     string
-	selected map[string]struct{}
-	cursor   string
-}
-
-// Path returns the path to the directory of the NavState
-func (n NavState) Path() string {
-	return n.path
-}
-
-// Selected returns the selected items in the directory
-func (n NavState) Selected() map[string]struct{} {
-	return n.selected
-}
-
-// Cursor returns the cursor in the directory
-func (n NavState) Cursor() string {
-	return n.cursor
-}
-
-type DirState struct {
-	NavState
-	entries    []entry.Entry
-	backActive bool
-	fwdActive  bool
-	upActive   bool
-	err        error
-}
-
-// Error returns the error or nil
-func (d DirState) Error() error {
-	return d.err
-}
-
-// Entries returns the directory entries
-func (d DirState) Entries() []entry.Entry {
-	return d.entries
-}
-
-// BackActive returns true if there is a back history
-func (d DirState) BackActive() bool {
-	return d.backActive
-}
-
-// ForwardActive returns true if there is a forward history
-func (d DirState) ForwardActive() bool {
-	return d.fwdActive
-}
-
-// UpActive returns true if the current directory is not the root
-func (d DirState) UpActive() bool {
-	return d.upActive
-}
-
-func isRoot(name string) bool { return filepath.Dir(name) == name }
-
-func (n *Nav) newDirState(entries []entry.Entry, nState NavState, err error) DirState {
-	return DirState{
-		NavState:   nState,
-		entries:    entries,
-		backActive: !n.hist.BackEmpty(),
-		fwdActive:  !n.hist.ForewardEmpty(),
-		upActive:   !isRoot(nState.Path()),
-		err:        err,
+// returns map of slice to use a set
+func mapStruct[T comparable](list []T) map[T]struct{} {
+	mapped := make(map[T]struct{}, len(list))
+	for _, elem := range list {
+		mapped[elem] = struct{}{}
 	}
+	return mapped
 }

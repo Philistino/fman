@@ -13,13 +13,9 @@ import (
 
 type Entry struct {
 	fs.FileInfo
-
-	SizeStr string
-
-	ModifyTime string
-	AccessTime string
-	ChangeTime string
-
+	SizeStr     string
+	ModifyTime  string
+	ChangeTime  string
 	Type        string
 	SymlinkName string
 	SymLinkPath string

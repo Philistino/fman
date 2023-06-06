@@ -1,11 +1,11 @@
 package model
 
 import (
+	"github.com/Philistino/fman/model/message"
+	"github.com/Philistino/fman/theme"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	zone "github.com/lrstanley/bubblezone"
-	"github.com/nore-dev/fman/model/message"
-	"github.com/nore-dev/fman/theme"
 )
 
 // navBtns handle the back/forward/up navigation buttons in the toolbar

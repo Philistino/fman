@@ -18,6 +18,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+// https://gist.github.com/rayrutjes/db9b9ea8e02255d62ce2
+
 var UnreadableErr = errors.New("unreadable content")
 var HighlightErr = errors.New("failed to highlight syntax")
 

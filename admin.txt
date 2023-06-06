@@ -2,10 +2,11 @@ k6 uses a thin wrapper over afero so they can later move away from it:
 https://github.com/grafana/k6/tree/master/lib/fsext
 
 Todo:
-    Breadcrump - need to handle clicks leaf -> root. There is a bug that misallocates clicks when the breadcrump is truncated
-        Mostly fixed - add tests
-    breadcrumb - still and issue reading clicks when truncated, with a long path, and clicking second to last dir
+    Nav - if jumping up in the tree, should the cursor be set to the grand-parent of the origin directory?
 
+    Breadcrumb - need to handle clicks leaf -> root. There is a bug that misallocates clicks when the breadcrump is truncated
+        Mostly fixed - add tests
+    breadcrumb - still an issue reading clicks when truncated, with a long path, and clicking second to last dir
 
     Preview - toggle preview pane visibility
     Preview - render markdown preview with glamour
@@ -14,7 +15,6 @@ Todo:
     Preview - could use a struct and keep file handle open. Read for the new line positions, then seek between them on scroll?
     Preview - Track whether a file was read or not, if it was, set delay to zero for following read
     Preview - Use this space for notifications when they arise?
-    Preview - UI hangs on "Loading preview..." for empty files 
 
     FS operations - mkdir/mkfile/delete/etc. 
     FS operations - Dialog to confirm Changes
@@ -35,7 +35,6 @@ Todo:
 
     All buttons - activate or deactivate based on selection/"clipboard" state 
 
-    Infobar - move away from tea.Tick, which is not a fixed duration
     Infobar - need to track state of messages. If a new message comes in before the last one is cleared, clear the old message for a moment and add the new message
         make sure the old clear duration is ignored when it comes 
 
@@ -52,7 +51,6 @@ Todo:
     Return early if starting directory DNE or not reachable
     Clean filepaths that are read from cli/config file
     Live toggle-able themes
-    Configurable double-click interval for people with disabilities
 
     Change filesystem calls from os to fs at least for reading. Could use afero, std lib, hackpadfs? 
     Caching filesystem reads
@@ -96,4 +94,7 @@ Finished:
         Should chdirs one up and one down return the prior state of that dir despite not truly being a back or fwd? No.
     List - double click should only be relevant if clicked on the same item
     Separate button sets into separate components and compose them in App
+    Configurable double-click interval for people with disabilities
+    Preview - UI hangs on "Loading preview..." for empty files 
+
 

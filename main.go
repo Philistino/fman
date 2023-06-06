@@ -4,14 +4,14 @@ import (
 	"log"
 	"os"
 
+	"github.com/Philistino/fman/cfg"
+	"github.com/Philistino/fman/model"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	zone "github.com/lrstanley/bubblezone"
 	"github.com/muesli/termenv"
-	"github.com/nore-dev/fman/cfg"
-	"github.com/nore-dev/fman/model"
 
-	"github.com/nore-dev/fman/theme"
+	"github.com/Philistino/fman/theme"
 )
 
 func main() {
@@ -29,19 +29,16 @@ func main() {
 	theme.SetIcons(cfg.Icons)
 	theme.SetTheme(selectedTheme)
 
-	// Reset background color to default and reset on quit
+	// Set background color then reset it on quit
 	bg := termenv.BackgroundColor()
-	termenv.SetBackgroundColor(termenv.RGBColor(lipgloss.Color(selectedTheme.BackgroundColor)))
-	defer func() {
-		termenv.SetBackgroundColor(bg)
-	}()
+	output := termenv.NewOutput(os.Stdout)
+	output.SetBackgroundColor(termenv.RGBColor(lipgloss.Color(selectedTheme.BackgroundColor)))
+	defer output.SetBackgroundColor(bg)
 
 	app := model.NewApp(cfg, selectedTheme)
 	p := tea.NewProgram(app, tea.WithAltScreen(), tea.WithMouseAllMotion())
-
-	if err := p.Start(); err != nil {
-		termenv.SetBackgroundColor(bg)
+	_, err = p.Run()
+	if err != nil {
 		println("An error occured: ", err.Error())
-		os.Exit(1)
 	}
 }

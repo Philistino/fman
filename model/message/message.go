@@ -7,10 +7,10 @@ import (
 	"runtime"
 	"unicode/utf8"
 
+	"github.com/Philistino/fman/entry"
+	"github.com/Philistino/fman/model/dialog"
+	"github.com/Philistino/fman/nav"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/nore-dev/fman/entry"
-	"github.com/nore-dev/fman/model/dialog"
-	"github.com/nore-dev/fman/nav"
 )
 
 type ClearKeyMsg struct{}

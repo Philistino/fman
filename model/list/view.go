@@ -1,11 +1,13 @@
 package list
 
 import (
+	"fmt"
 	"strings"
 
+	"github.com/Philistino/fman/icons"
+	"github.com/Philistino/fman/theme"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
-	"github.com/nore-dev/fman/theme"
 )
 
 func (list *List) View() string {
@@ -43,9 +45,19 @@ func (list *List) View() string {
 		if entry.SymlinkName != "" {
 			content[0].WriteRune(theme.GetActiveIconTheme().SymlinkIcon)
 		} else if entry.IsDir() {
-			content[0].WriteRune(theme.GetActiveIconTheme().FolderIcon)
+			// content[0].WriteRune(theme.GetActiveIconTheme().FolderIcon)
+			i := icons.GetIconForReal(entry, entry.IsHidden)
+			// content[0].WriteString(lipgloss.NewStyle().Margin(0, 1).Foreground(lipgloss.Color(i.GetColorHex())).Render(i.GetGlyph()))
+			// content[0].WriteString(icons.GetIcon2(entry, entry.IsHidden))
+			content[0].WriteString(fmt.Sprintf("%s%s\033[39m", i.ColorTerm(), i.Glyph()))
+
 		} else {
-			content[0].WriteRune(theme.GetActiveIconTheme().FileIcon)
+			// content[0].WriteRune(theme.GetActiveIconTheme().FileIcon)
+			// i := icons.GetIconForReal(entry, entry.IsHidden)
+			// content[0].WriteString(lipgloss.NewStyle().Margin(0, 1).Foreground(lipgloss.Color(i.GetColorHex())).Render(i.GetGlyph()))
+			content[0].WriteString(icons.GetIconTerm(entry, entry.IsHidden))
+			// content[0].WriteString(fmt.Sprintf("%s%s", i.GetColorTerm(), i.GetGlyph()))
+
 		}
 
 		content[0].WriteRune(' ')

@@ -1,8 +1,8 @@
 package theme
 
 import (
+	"github.com/Philistino/fman/theme/colors"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/nore-dev/fman/theme/colors"
 )
 
 var (
@@ -20,7 +20,7 @@ var (
 	ButtonStyle         = lipgloss.NewStyle().Padding(0, 1).Border(lipgloss.NormalBorder(), false, true)
 	InactiveButtonStyle = lipgloss.NewStyle().Padding(0, 1).
 				Border(lipgloss.NormalBorder(), false, true).
-				Foreground(lipgloss.Color("#707070"))
+				Foreground(lipgloss.Color("#707070")) // TODO: make this a theme color
 )
 
 type StyleSet struct {
@@ -54,7 +54,6 @@ func SetTheme(theme colors.Theme) {
 	InactiveButtonStyle.Background(theme.ButtonBgColor)
 
 	PathStyle.Background(theme.PathElementBgColor)
-	PathStyle.Foreground(theme.PathElementFgColor)
 	PathStyle.BorderForeground(theme.PathElementBorderFgColor)
 
 	AppStyle.Background(theme.ListBgColor)

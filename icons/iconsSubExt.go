@@ -22,7 +22,7 @@
 
 package icons
 
-var iconSubExt = map[string]iconInfo{
+var iconSubExt = map[string]Icon{
 	"routing.ts":           iconSet["routing"],
 	"routing.tsx":          iconSet["routing"],
 	"routing.js":           iconSet["routing"],

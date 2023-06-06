@@ -4,21 +4,21 @@ import (
 	"path/filepath"
 
 	"github.com/76creates/stickers"
+	"github.com/Philistino/fman/cfg"
+	"github.com/Philistino/fman/model/dialog"
+	"github.com/Philistino/fman/model/entryinfo"
+	"github.com/Philistino/fman/model/infobar"
+	"github.com/Philistino/fman/model/keys"
+	"github.com/Philistino/fman/model/list"
+	"github.com/Philistino/fman/model/message"
+	"github.com/Philistino/fman/nav"
+	"github.com/Philistino/fman/theme"
+	"github.com/Philistino/fman/theme/colors"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	zone "github.com/lrstanley/bubblezone"
-	"github.com/nore-dev/fman/cfg"
-	"github.com/nore-dev/fman/model/dialog"
-	"github.com/nore-dev/fman/model/entryinfo"
-	"github.com/nore-dev/fman/model/infobar"
-	"github.com/nore-dev/fman/model/keys"
-	"github.com/nore-dev/fman/model/list"
-	"github.com/nore-dev/fman/model/message"
-	"github.com/nore-dev/fman/nav"
-	"github.com/nore-dev/fman/theme"
-	"github.com/nore-dev/fman/theme/colors"
 )
 
 // This is the main model for the app. It does two jobs, acts like a message bus for the different
@@ -126,6 +126,10 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 	case message.InternalPasteMsg:
 		cmd = app.paste()
+		cmds = append(cmds, cmd)
+	case message.ToggleShowHiddenMsg:
+		app.navi.SetShowHidden(!app.navi.ShowHidden())
+		cmd = message.HandleReloadCmd(app.navi, []string{app.list.SelectedEntry().Name()}, app.list.CursorName())
 		cmds = append(cmds, cmd)
 	case tea.KeyMsg:
 		if key.Matches(msg, keys.Map.ToggleHelp) {

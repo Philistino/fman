@@ -1,10 +1,10 @@
 package dialog
 
 import (
+	"github.com/Philistino/fman/theme"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	zone "github.com/lrstanley/bubblezone"
-	"github.com/nore-dev/fman/theme"
 )
 
 type DialogButton struct {
