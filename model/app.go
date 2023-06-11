@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"path/filepath"
 
 	"github.com/76creates/stickers"
@@ -25,7 +26,7 @@ import (
 type App struct {
 	fileBtns   fileBtns
 	list       list.List
-	entryInfo  FilePreview
+	preview    FilePreview
 	navBtns    *navBtns
 	infobar    infobar.Infobar
 	dialog     dialog.Model
@@ -43,6 +44,7 @@ type App struct {
 	navi              *nav.Nav
 	theme             colors.Theme
 	internalClipboard []string // slice of paths to items in the "clipboard"
+	PreHandler        *nav.PreviewHandler
 }
 
 func (app *App) Init() tea.Cmd {
@@ -66,7 +68,7 @@ func NewApp(cfg cfg.Cfg, selectedTheme colors.Theme) *App {
 	app := App{
 		fileBtns:   newFileBtns(),
 		list:       list.New(selectedTheme, *cfg.DoubleClickDelay),
-		entryInfo:  NewFilePreviewer(selectedTheme, *cfg.PreviewDelay),
+		preview:    NewFilePreviewer(selectedTheme, *cfg.PreviewDelay),
 		navBtns:    newNavBtns(),
 		infobar:    infobar.New(),
 		dialog:     dialog.New(),
@@ -75,6 +77,11 @@ func NewApp(cfg cfg.Cfg, selectedTheme colors.Theme) *App {
 		breadcrumb: newBrdCrumb(),
 		theme:      selectedTheme,
 		config:     cfg,
+		PreHandler: nav.NewPreviewHandler(
+			*cfg.PreviewDelay,
+			1_000_000,
+			5,
+		),
 	}
 	app.help.FullSeparator = "   "
 	app.help.ShowAll = true
@@ -130,8 +137,9 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		app.navi.SetShowHidden(!app.navi.ShowHidden())
 		cmd = message.HandleReloadCmd(app.navi, []string{app.list.SelectedEntry().Name()}, app.list.CursorName())
 		cmds = append(cmds, cmd)
-	case message.NewEntryMsg:
-
+	case message.GetPreviewMsg:
+		cmd = app.getPreviewCmd(msg.Ctx, msg.Path)
+		cmds = append(cmds, cmd)
 	case tea.KeyMsg:
 		if key.Matches(msg, keys.Map.ToggleHelp) {
 			// TODO Freeze components if showing help
@@ -147,7 +155,7 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	app.list, listCmd = app.list.Update(msg)
 	app.navBtns, toolbarCmd = app.navBtns.Update(msg)
-	app.entryInfo, entryCmd = app.entryInfo.Update(msg)
+	app.preview, entryCmd = app.preview.Update(msg)
 	app.infobar, infobarCmd = app.infobar.Update(msg)
 	app.fileBtns, buttonBarCmd = app.fileBtns.Update(msg)
 	app.breadcrumb, breadCrmbCmd = app.breadcrumb.Update(msg)
@@ -181,7 +189,7 @@ func (app *App) View() string {
 		// Set content of list view
 		row.Cell(0).SetContent(app.list.View())
 		// Set content of entry view
-		row.Cell(1).SetContent(app.entryInfo.View())
+		row.Cell(1).SetContent(app.preview.View())
 		view = zone.Mark("list", app.flexBox.Render())
 	}
 
@@ -216,8 +224,8 @@ func (app *App) manageSizes(height, width int) {
 	app.flexBox.ForceRecalculate()
 	app.list.SetWidth(app.flexBox.Row(0).Cell(0).GetWidth())
 	app.list.SetHeight(app.flexBox.GetHeight())
-	app.entryInfo.SetWidth(app.flexBox.Row(0).Cell(1).GetWidth())
-	app.entryInfo.SetHeight(app.flexBox.GetHeight())
+	app.preview.SetWidth(app.flexBox.Row(0).Cell(1).GetWidth())
+	app.preview.SetHeight(app.flexBox.GetHeight())
 	app.help.Width = width
 	app.breadcrumb.SetWidth(width - lipgloss.Width(app.navBtns.View()))
 }
@@ -237,4 +245,15 @@ func (app *App) setInternalClipboard() tea.Cmd {
 // TODO: make this real
 func (app *App) paste() tea.Cmd {
 	return message.NewNotificationCmd("Paste!")
+}
+
+func (app *App) getPreviewCmd(ctx context.Context, path string) tea.Cmd {
+	return func() tea.Msg {
+		preview := app.PreHandler.GetPreview(ctx, path)
+		return previewReadyMsg{
+			Path:    path,
+			Preview: preview.Content,
+			Err:     preview.Err,
+		}
+	}
 }

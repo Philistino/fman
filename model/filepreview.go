@@ -1,28 +1,19 @@
 package model
 
 import (
-	"bytes"
 	"context"
 	"errors"
-	"fmt"
-	"io"
-	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/Philistino/fman/entry"
 	"github.com/Philistino/fman/model/keys"
 	"github.com/Philistino/fman/model/message"
 	"github.com/Philistino/fman/theme"
 	"github.com/Philistino/fman/theme/colors"
-	"github.com/alecthomas/chroma/formatters"
-	"github.com/alecthomas/chroma/lexers"
-	"github.com/alecthomas/chroma/styles"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
 )
@@ -83,22 +74,11 @@ func (fp *FilePreview) setNewEntry(entry entry.Entry) tea.Cmd {
 
 	// set default preview content
 	fp.viewPort.SetContent(fp.renderNoPreview("Loading preview..."))
-	return fp.getPreview(true)
-}
 
-func (fp *FilePreview) getPreview(delay bool) tea.Cmd {
 	ctx, cancel := context.WithCancel(context.Background())
 	fp.previewCancel = cancel
 
-	pDelay := 0
-	if delay {
-		pDelay = fp.previewDelay
-	}
-	return getPreviewCmd(
-		ctx,
-		fp.getFullPath(),
-		pDelay,
-	)
+	return message.GetPreviewCmd(ctx, fp.getFullPath())
 }
 
 type previewReadyMsg struct {
@@ -195,128 +175,4 @@ func (fp *FilePreview) renderNoPreview(text string) string {
 		lipgloss.WithWhitespaceChars("."),
 		lipgloss.WithWhitespaceForeground(theme.EvenItemStyle.GetBackground()),
 	)
-}
-
-// readDelay is how long in milliseconds to wait before reading the file.
-// If negative, it will not wait.
-// This is meant to avoid unnecessary disk io when the user is navigating quickly.
-func getPreviewCmd(ctx context.Context, path string, readDelay int) tea.Cmd {
-	return func() tea.Msg {
-		previewChan := make(chan previewReadyMsg)
-		errc := make(chan error, 1)
-		go func() {
-			defer close(previewChan)
-			defer close(errc)
-
-			if readDelay >= 0 {
-				time.Sleep(time.Millisecond * time.Duration(readDelay))
-			}
-
-			// return early if context is cancelled
-			if ctx.Err() != nil {
-				errc <- ctx.Err()
-			}
-			f, err := os.Open(path)
-			if err != nil {
-				errc <- err
-				return
-			}
-			defer f.Close()
-
-			// return early if context is cancelled
-			if ctx.Err() != nil {
-				errc <- ctx.Err()
-			}
-			isText := checkMimeType(f)
-			if !isText {
-				errc <- fmt.Errorf("not a text file")
-				return
-			}
-
-			preview, err := createPreview(ctx, filepath.Base(path), f)
-			p := previewReadyMsg{
-				Preview: preview,
-				Err:     err,
-				Path:    path,
-			}
-			previewChan <- p
-		}()
-		select {
-		case <-ctx.Done():
-			return previewReadyMsg{Err: ctx.Err(), Path: path}
-		case err := <-errc:
-			return previewReadyMsg{Err: err, Path: path}
-		case p := <-previewChan:
-			return p
-		}
-	}
-}
-
-func checkMimeType(seeker io.ReadSeeker) bool {
-	mime, err := entry.GetMimeType(seeker)
-	if err != nil {
-		return false
-	}
-	return strings.HasPrefix(mime, "text/")
-}
-
-func readBytes(ctx context.Context, reader io.Reader, maxBytes int) (string, error) {
-	buf := make([]byte, maxBytes)
-	nRead, err := io.ReadAtLeast(reader, buf, maxBytes)
-	if errors.Is(err, io.ErrUnexpectedEOF) || errors.Is(err, io.EOF) {
-		err = nil
-	}
-	return string(buf[:nRead]), err
-}
-
-func createPreview(ctx context.Context, fileName string, reader io.Reader) (string, error) {
-	preview, err := readBytes(ctx, reader, 1_000_000)
-	if err != nil || preview == "" {
-		return preview, err
-	}
-
-	if ctx.Err() != nil {
-		return "", ctx.Err()
-	}
-
-	if filepath.Ext(fileName) == ".md" {
-		preview, _ = renderMarkdown(preview)
-	} else {
-		preview, _ = highlightSyntax(fileName, preview)
-	}
-
-	// tabs are rendered with different widths based on terminal and font settings
-	// so we replace the tab with four spaces so we can reliably truncate each line
-	preview = strings.ReplaceAll(preview, "\t", "    ")
-	return preview, nil
-}
-
-func highlightSyntax(name string, preview string) (string, error) {
-	lexer := lexers.Match(name)
-	if lexer == nil {
-		lexer = lexers.Fallback
-	}
-	style := styles.Get("monokai")
-	formatter := formatters.Get("terminal")
-
-	iterator, err := lexer.Tokenise(nil, preview)
-	if err != nil {
-		return preview, err
-	}
-
-	var buffer bytes.Buffer
-	err = formatter.Format(&buffer, style, iterator)
-	if err != nil {
-		return preview, err
-	}
-
-	return buffer.String(), nil
-}
-
-func renderMarkdown(content string) (string, error) {
-	str, err := glamour.Render(content, "dracula")
-	if err != nil {
-		return content, err
-	}
-	return str, nil
 }

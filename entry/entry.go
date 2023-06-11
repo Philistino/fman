@@ -45,14 +45,14 @@ func (e Entry) IsDir() bool {
 	return e.FileInfo.IsDir()
 }
 
-func GetEntry(info fs.FileInfo, path string, hidden bool) (Entry, error) {
+func newEntry(info fs.FileInfo, path string, hidden bool) (Entry, error) {
 	var size string
 
 	if info.IsDir() {
 		// get count of entries under this directory
 		_entries, err := os.ReadDir(path)
 		if err != nil {
-			return Entry{}, err
+			return Entry{FileInfo: info}, err
 		}
 		lenEntries := len(_entries)
 		switch {
@@ -74,34 +74,36 @@ func GetEntry(info fs.FileInfo, path string, hidden bool) (Entry, error) {
 		ModifyTime: humanize.Time(info.ModTime()),
 		IsHidden:   hidden,
 	}, nil
-
 }
 
 func GetEntries(path string, showHidden bool, dirsMixed bool) ([]Entry, error) {
 	os.Chdir(path)
-	newPath, _ := os.Getwd()
+	cwd, _ := os.Getwd()
 
-	files, err := os.ReadDir(newPath)
+	files, err := os.ReadDir(cwd)
 	if err != nil {
 		return nil, err
 	}
 
 	entries := make([]Entry, 0, len(files))
+	errMap := make(map[string]error, len(files)) // TODO: use this
 	for _, file := range files {
 		info, err := file.Info()
 		if err != nil {
+			errMap[file.Name()] = err
 			continue
 		}
 
-		fullPath := newPath + "/" + file.Name()
+		fullPath := cwd + "/" + file.Name()
 
-		hidden := isHidden(info, newPath, []string{})
-		if err != nil || (hidden && !showHidden) {
+		hidden := isHidden(info, cwd, []string{"."})
+		if hidden && !showHidden {
 			continue
 		}
 
-		entry, err := GetEntry(info, fullPath, hidden)
+		entry, err := newEntry(info, fullPath, hidden)
 		if err != nil {
+			errMap[file.Name()] = err
 			continue
 		}
 
@@ -109,17 +111,20 @@ func GetEntries(path string, showHidden bool, dirsMixed bool) ([]Entry, error) {
 		if info.Mode()&os.ModeSymlink != 0 {
 			fullPath, err = os.Readlink(fullPath)
 			if err != nil {
+				errMap[file.Name()] = err
 				continue
 			}
 
 			symInfo, err := os.Stat(fullPath)
 			if err != nil {
-				return []Entry{}, err
+				errMap[file.Name()] = err
+				continue
 			}
 
-			entry, err = GetEntry(symInfo, fullPath, hidden)
+			entry, err = newEntry(symInfo, fullPath, hidden)
 			if err != nil {
-				return []Entry{}, err
+				errMap[file.Name()] = err
+				continue
 			}
 
 			entry.SymlinkName = info.Name()

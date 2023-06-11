@@ -28,6 +28,7 @@ func IsZipFile(filepath string) (bool, error) {
 func GetMimeType(seeker io.ReadSeeker) (string, error) {
 	// At most the first 512 bytes of data are used:
 	// https://golang.org/src/net/http/sniff.go?s=646:688#L11
+	// Without this buffer, http.DetectContentType will not correctly identify text files if they are smaller than 512 bytes
 	buff := make([]byte, 512)
 
 	_, err := seeker.Seek(0, io.SeekStart)
@@ -39,7 +40,7 @@ func GetMimeType(seeker io.ReadSeeker) (string, error) {
 	if err != nil && err != io.EOF {
 		return "", err
 	}
-
+	seeker.Seek(0, io.SeekStart)
 	// Slice to remove fill-up zero values which cause a wrong content type detection in the next step
 	buff = buff[:bytesRead]
 

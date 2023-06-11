@@ -117,7 +117,7 @@ func isExecutable(f fs.FileInfo) bool {
 	return false
 }
 
-func isHidden(f fs.FileInfo, dirPath string, hiddenfiles []string) bool {
+func isHidden(f fs.FileInfo, dirPath string, _ []string) bool {
 	ptr, err := windows.UTF16PtrFromString(filepath.Join(dirPath, f.Name()))
 	if err != nil {
 		return false

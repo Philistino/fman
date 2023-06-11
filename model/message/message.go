@@ -2,6 +2,7 @@ package message
 
 import (
 	"bufio"
+	"context"
 	"os"
 	"os/exec"
 	"runtime"
@@ -22,6 +23,17 @@ type NewEntryMsg struct {
 func NewEntryCmd(newEntry entry.Entry) tea.Cmd {
 	return func() tea.Msg {
 		return NewEntryMsg{Entry: newEntry}
+	}
+}
+
+type GetPreviewMsg struct {
+	Ctx  context.Context
+	Path string
+}
+
+func GetPreviewCmd(ctx context.Context, path string) tea.Cmd {
+	return func() tea.Msg {
+		return GetPreviewMsg{ctx, path}
 	}
 }
 

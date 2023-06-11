@@ -16,6 +16,9 @@ import (
 	"github.com/muesli/termenv"
 )
 
+// Use a viewport for a file preview. On scroll up/down, update the viewport. If viewport.AtBottom(), read more lines from the file.
+// When reading from the file, show a spinner at the bottom?
+
 type EntryInfo struct {
 	entry entry.Entry
 

@@ -7,9 +7,9 @@ import (
 )
 
 type NavState struct {
-	path     string
-	selected map[string]struct{}
-	cursor   string
+	path     string              // path to the directory
+	selected map[string]struct{} // map of selected items in the directory
+	cursor   string              // name of the item in the directory for the cursor
 }
 
 // Path returns the path to the directory of the NavState

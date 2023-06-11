@@ -12,6 +12,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/alecthomas/chroma"
 	"github.com/alecthomas/chroma/formatters"
 	"github.com/alecthomas/chroma/lexers"
 	"github.com/alecthomas/chroma/styles"
@@ -157,6 +158,32 @@ func highlightSyntax(name string, preview string) (string, error) {
 	if lexer == nil {
 		lexer = lexers.Fallback
 	}
+	style := styles.Get("monokai")
+	formatter := formatters.Get("terminal")
+
+	iterator, err := lexer.Tokenise(nil, preview)
+	if err != nil {
+		return "", err
+	}
+
+	if err = formatter.Format(&buffer, style, iterator); err != nil {
+		return "", err
+	}
+
+	return buffer.String(), nil
+}
+
+func getLexer(name string) chroma.Lexer {
+	lexer := lexers.Match(name)
+	if lexer == nil {
+		lexer = lexers.Fallback
+	}
+	return lexer
+}
+
+func highlightSyntax2(preview string, lexer chroma.Lexer) (string, error) {
+	var buffer bytes.Buffer
+
 	style := styles.Get("monokai")
 	formatter := formatters.Get("terminal")
 
