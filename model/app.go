@@ -6,7 +6,6 @@ import (
 	"github.com/76creates/stickers"
 	"github.com/Philistino/fman/cfg"
 	"github.com/Philistino/fman/model/dialog"
-	"github.com/Philistino/fman/model/entryinfo"
 	"github.com/Philistino/fman/model/infobar"
 	"github.com/Philistino/fman/model/keys"
 	"github.com/Philistino/fman/model/list"
@@ -26,7 +25,7 @@ import (
 type App struct {
 	fileBtns   fileBtns
 	list       list.List
-	entryInfo  entryinfo.EntryInfo
+	entryInfo  FilePreview
 	navBtns    *navBtns
 	infobar    infobar.Infobar
 	dialog     dialog.Model
@@ -67,7 +66,7 @@ func NewApp(cfg cfg.Cfg, selectedTheme colors.Theme) *App {
 	app := App{
 		fileBtns:   newFileBtns(),
 		list:       list.New(selectedTheme, *cfg.DoubleClickDelay),
-		entryInfo:  entryinfo.New(selectedTheme, *cfg.PreviewDelay),
+		entryInfo:  NewFilePreviewer(selectedTheme, *cfg.PreviewDelay),
 		navBtns:    newNavBtns(),
 		infobar:    infobar.New(),
 		dialog:     dialog.New(),
@@ -131,6 +130,8 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		app.navi.SetShowHidden(!app.navi.ShowHidden())
 		cmd = message.HandleReloadCmd(app.navi, []string{app.list.SelectedEntry().Name()}, app.list.CursorName())
 		cmds = append(cmds, cmd)
+	case message.NewEntryMsg:
+
 	case tea.KeyMsg:
 		if key.Matches(msg, keys.Map.ToggleHelp) {
 			// TODO Freeze components if showing help
