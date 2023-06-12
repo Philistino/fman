@@ -44,7 +44,7 @@ func TestHighlightSyntax(t *testing.T) {
 	}
 }
 
-func TestReadLines2(t *testing.T) {
+func TestReadBytes(t *testing.T) {
 	testcases := []struct {
 		name     string
 		reader   io.Reader
@@ -74,10 +74,10 @@ func TestReadLines2(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			gotStr, err := readNBytes(context.Background(), tc.reader, tc.maxBytes)
 			if err != nil {
-				t.Errorf("readLines2() error = %v", err)
+				t.Errorf("readNBytes() error = %v", err)
 			}
 			if gotStr != tc.wantStr {
-				t.Errorf("readLines2() got string = %v, want %v", gotStr, tc.wantStr)
+				t.Errorf("readNBytes() got string = %v, want %v", gotStr, tc.wantStr)
 			}
 		})
 	}

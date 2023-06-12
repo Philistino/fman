@@ -72,6 +72,21 @@ func (fp *FilePreview) setNewEntry(entry entry.Entry) tea.Cmd {
 		return nil
 	}
 
+	isText := false
+	types := []string{"application/xml", "application/json", "application/javascript", "application/x-sh", "text/"}
+	for _, t := range types {
+		text := strings.Contains(entry.MimeType, t)
+		if text {
+			isText = true
+			break
+		}
+	}
+	// if file is not immediately identifiable as text and is larger than 1MB, don't preview
+	if !isText && entry.Size() > 1_000_000 {
+		fp.viewPort.SetContent(fp.renderNoPreview("No preview available"))
+		return nil
+	}
+
 	// set default preview content
 	fp.viewPort.SetContent(fp.renderNoPreview("Loading preview..."))
 
@@ -144,7 +159,7 @@ func (fp *FilePreview) View() string {
 			lipgloss.Left,
 			previewStyle.
 				MaxHeight(fp.previewHeight).
-				Height(fp.previewHeight). // could set Width(entryInfo.width-margin) here to to wrap lines.
+				Height(fp.previewHeight).
 				MaxWidth(fp.width-margin).
 				Render(fp.viewPort.View()),
 			fileInfo,

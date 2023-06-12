@@ -6,6 +6,7 @@ import (
 	"github.com/Philistino/fman/entry"
 )
 
+// NavState represents the state of the navigation within a directory
 type NavState struct {
 	path     string              // path to the directory
 	selected map[string]struct{} // map of selected items in the directory
@@ -27,6 +28,7 @@ func (n NavState) Cursor() string {
 	return n.cursor
 }
 
+// DirState represents the state of the directory
 type DirState struct {
 	NavState
 	entries    []entry.Entry

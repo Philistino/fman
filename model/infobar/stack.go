@@ -22,7 +22,7 @@ func (s *Stack[T]) Size() int {
 	return len(s.data)
 }
 
-// IsEmpty checks if stack is empty or not
+// IsEmpty returns true if the stack is empty
 func (s *Stack[T]) IsEmpty() bool {
 	return len(s.data) == 0
 }
@@ -32,7 +32,7 @@ func (s *Stack[T]) Push(value T) {
 	s.data = append([]T{value}, s.data...)
 }
 
-// Pop delete the top element of stack then return it, if stack is empty, return nil and error
+// Pop removes the top element from stack and returns it. If the stack is empty, this returns nil and error
 func (s *Stack[T]) Pop() (*T, error) {
 	if s.IsEmpty() {
 		return nil, errors.New("stack is empty")
@@ -44,15 +44,15 @@ func (s *Stack[T]) Pop() (*T, error) {
 	return &topItem, nil
 }
 
-// Peak return the top element of stack
-func (s *Stack[T]) Peak() (*T, error) {
+// Peek returns the top element of stack without changing it's position. If stack is empty, returns nil and error
+func (s *Stack[T]) Peek() (*T, error) {
 	if s.IsEmpty() {
 		return nil, errors.New("stack is empty")
 	}
 	return &s.data[0], nil
 }
 
-// Clear the stack data
+// Clear clears all the data in the stack
 func (s *Stack[T]) Clear() {
 	s.data = []T{}
 }

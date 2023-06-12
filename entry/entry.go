@@ -16,7 +16,7 @@ type Entry struct {
 	SizeStr     string
 	ModifyTime  string
 	ChangeTime  string
-	Type        string
+	MimeType    string
 	SymlinkName string
 	SymLinkPath string
 	timeStats   times.Timespec
@@ -70,7 +70,7 @@ func newEntry(info fs.FileInfo, path string, hidden bool) (Entry, error) {
 	return Entry{
 		FileInfo:   info,
 		SizeStr:    size,
-		Type:       mime.TypeByExtension(filepath.Ext(info.Name())),
+		MimeType:   mime.TypeByExtension(filepath.Ext(info.Name())),
 		ModifyTime: humanize.Time(info.ModTime()),
 		IsHidden:   hidden,
 	}, nil

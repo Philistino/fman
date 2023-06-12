@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"path/filepath"
+	"time"
 
 	"github.com/76creates/stickers"
 	"github.com/Philistino/fman/cfg"
@@ -78,9 +79,11 @@ func NewApp(cfg cfg.Cfg, selectedTheme colors.Theme) *App {
 		theme:      selectedTheme,
 		config:     cfg,
 		PreHandler: nav.NewPreviewHandler(
+			context.Background(),
 			*cfg.PreviewDelay,
-			1_000_000,
-			5,
+			100_000, // 100 kB
+			10,
+			time.Second*time.Duration(5),
 		),
 	}
 	app.help.FullSeparator = "   "

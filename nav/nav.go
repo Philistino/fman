@@ -37,6 +37,7 @@ func NewNav(showHidden bool, dirsMixed bool, startPath string) *Nav {
 	return navi
 }
 
+// Go changes the current directory to the given path and returns a Dirstate struct. If the path is "~", the home directory is used.
 func (n *Nav) Go(path string, currCursor string, currSelected []string) DirState {
 	currState := NavState{path: n.currentPath, cursor: currCursor, selected: mapStruct(currSelected)}
 
@@ -150,14 +151,6 @@ func (n *Nav) Reload(currSelected []string, currCursor string) DirState {
 
 func (n *Nav) CurrentPath() string {
 	return n.currentPath
-}
-
-func (n *Nav) Path() string {
-	return n.currentPath
-}
-
-func (n *Nav) Entries() []entry.Entry {
-	return n.entries
 }
 
 func (n *Nav) SetShowHidden(showHidden bool) {
