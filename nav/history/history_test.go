@@ -52,7 +52,7 @@ func TestBack(t *testing.T) {
 func TestForward(t *testing.T) {
 	t.Parallel()
 	tracker := History[string]{
-		maxStackSize: 100,
+		maxStackSize: -1,
 		backStack:    []string{"/1", "/1/2", "/1/2/3"},
 		fwdStack:     []string{},
 	}
@@ -170,18 +170,18 @@ func TestAppendMax(t *testing.T) {
 			want:    []int{3, 4},
 		},
 		{
-			desc:    "error maxlen less than 1",
+			desc:    "maxlen less than 1",
 			inSlice: []int{1, 2, 3},
 			inVal:   4,
 			maxLen:  0,
-			want:    []int{1, 2, 3},
+			want:    []int{1, 2, 3, 4},
 		},
 	}
 	for _, tc := range testcases {
 		t.Run(tc.desc, func(t *testing.T) {
-			got, _ := appendMaxLen(tc.inSlice, tc.inVal, tc.maxLen)
+			got := appendMaxLen(tc.inSlice, tc.inVal, tc.maxLen)
 			if !reflect.DeepEqual(got, tc.want) {
-				t.Errorf("Invalid response for %q. Got %q, want %q", tc.inSlice, got, tc.want)
+				t.Errorf("Invalid response for %s. Got %v, want %v", tc.desc, got, tc.want)
 			}
 		})
 	}

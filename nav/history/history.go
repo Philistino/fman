@@ -2,7 +2,6 @@ package history
 
 import (
 	"errors"
-	"math"
 )
 
 // The back and forward stacks could probably be implemented by indexing a single slice
@@ -37,9 +36,6 @@ type Commit func()
 // maxStackSize is the maximum number of states to be stored in each of the back and forward stacks.
 // if maxStackSize is less than 1, the default is math.MaxInt which varies by system, but is typically an int64.
 func NewHistory[T any](maxStackSize int) History[T] {
-	if maxStackSize <= 0 {
-		maxStackSize = math.MaxInt
-	}
 	return History[T]{
 		maxStackSize: maxStackSize,
 	}
@@ -50,7 +46,7 @@ func NewHistory[T any](maxStackSize int) History[T] {
 //
 // leavingState is the state that the user is leaving from.
 func (tracker *History[T]) Go(leavingState T) {
-	tracker.backStack, _ = appendMaxLen(
+	tracker.backStack = appendMaxLen(
 		tracker.backStack,
 		leavingState,
 		tracker.maxStackSize,
@@ -73,7 +69,7 @@ func (tracker *History[T]) Back(leavingState T) (T, Commit, error) {
 			return
 		}
 		tracker.backStack = stack
-		tracker.fwdStack, _ = appendMaxLen(
+		tracker.fwdStack = appendMaxLen(
 			tracker.fwdStack,
 			leavingState,
 			tracker.maxStackSize,
@@ -98,7 +94,7 @@ func (tracker *History[T]) Foreward(leavingState T) (T, Commit, error) {
 			return
 		}
 		tracker.fwdStack = stack
-		tracker.backStack, _ = appendMaxLen(
+		tracker.backStack = appendMaxLen(
 			tracker.backStack,
 			leavingState,
 			tracker.maxStackSize,
@@ -132,13 +128,12 @@ func pop[T any](s []T) (T, []T) {
 // if the slice is larger than the maxLen, it will remove elements from the beginning
 // to allow space for the new element at the end and it will append the new element
 //
+// values of maxLen less than 1 will not bound the length of the slice
 // Note: this can delete data
-func appendMaxLen[T any](s []T, e T, maxLen int) ([]T, error) {
-	if maxLen < 1 {
-		return s, errors.New("maxLen must be greater than 0")
+func appendMaxLen[T any](s []T, e T, maxLen int) []T {
+	if maxLen < 1 || len(s) < maxLen {
+		return append(s, e)
 	}
-	if len(s) < maxLen {
-		return append(s, e), nil
-	}
-	return append(s[len(s)-maxLen+1:], e), nil
+
+	return append(s[len(s)-maxLen+1:], e)
 }
