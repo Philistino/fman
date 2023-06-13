@@ -74,15 +74,3 @@ func TestUpdateView(t *testing.T) {
 		})
 	}
 }
-
-func TestSplit(t *testing.T) {
-	zone.NewGlobal()
-	defer zone.Close()
-	// pathParts := strings.Split("C:/a/b/c", pathSeparator)
-	pathParts := strings.Split("/a/b/c", pathSeparator)
-
-	clicked := 2
-	// path := filepath.Join(pathParts[:clicked+1]...)
-	path := strings.Join(pathParts[:clicked+1], pathSeparator)
-	t.Error(path)
-}

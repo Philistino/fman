@@ -27,7 +27,7 @@ import (
 type App struct {
 	fileBtns   fileBtns
 	list       list.List
-	preview    FilePreview
+	preview    *filePreview
 	navBtns    *navBtns
 	infobar    infobar.Infobar
 	dialog     dialog.Model
@@ -81,9 +81,9 @@ func NewApp(cfg cfg.Cfg, selectedTheme colors.Theme) *App {
 		PreHandler: nav.NewPreviewHandler(
 			context.Background(),
 			*cfg.PreviewDelay,
-			100_000, // 100 kB
-			10,
-			time.Second*time.Duration(5),
+			50_000, // 50 kB
+			100,
+			time.Second*time.Duration(30),
 		),
 	}
 	app.help.FullSeparator = "   "

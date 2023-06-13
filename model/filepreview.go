@@ -2,7 +2,6 @@ package model
 
 import (
 	"context"
-	"errors"
 	"path/filepath"
 	"strings"
 
@@ -20,11 +19,9 @@ import (
 
 const margin = 2
 
-var UnreadableErr = errors.New("unreadable content")
-var HighlightErr = errors.New("failed to highlight syntax")
 var previewStyle = lipgloss.NewStyle()
 
-type FilePreview struct {
+type filePreview struct {
 	theme        colors.Theme
 	viewPort     viewport.Model // viewport for scrolling preview
 	previewDelay int            //  delay in ms before openning a file to create a preview
@@ -34,12 +31,12 @@ type FilePreview struct {
 	previewHeight int
 
 	previewCancel context.CancelFunc
-	path          string
+	dirPath       string
 	entry         entry.Entry
 }
 
-func NewFilePreviewer(theme colors.Theme, previewDelay int) FilePreview {
-	return FilePreview{
+func NewFilePreviewer(theme colors.Theme, previewDelay int) *filePreview {
+	return &filePreview{
 		height:       10,
 		width:        10,
 		theme:        theme,
@@ -48,13 +45,13 @@ func NewFilePreviewer(theme colors.Theme, previewDelay int) FilePreview {
 	}
 }
 
-func (fp *FilePreview) Init() tea.Cmd {
+func (fp *filePreview) Init() tea.Cmd {
 	return nil
 }
 
-func (fp *FilePreview) setNewEntry(entry entry.Entry) tea.Cmd {
+func (fp *filePreview) setNewEntry(entry entry.Entry) tea.Cmd {
 	fp.entry = entry
-	// handle preview context cancellation
+	// handle preview context cancellation for previous file
 	if fp.previewCancel != nil {
 		fp.previewCancel()
 		fp.previewCancel = nil
@@ -87,13 +84,11 @@ func (fp *FilePreview) setNewEntry(entry entry.Entry) tea.Cmd {
 		return nil
 	}
 
-	// set default preview content
-	fp.viewPort.SetContent(fp.renderNoPreview("Loading preview..."))
-
 	ctx, cancel := context.WithCancel(context.Background())
 	fp.previewCancel = cancel
 
-	return message.GetPreviewCmd(ctx, fp.getFullPath())
+	cmd := message.GetPreviewCmd(ctx, fp.getFullPath())
+	return tea.Batch(cmd)
 }
 
 type previewReadyMsg struct {
@@ -102,11 +97,11 @@ type previewReadyMsg struct {
 	Err     error
 }
 
-func (fp *FilePreview) Update(msg tea.Msg) (FilePreview, tea.Cmd) {
+func (fp *filePreview) Update(msg tea.Msg) (*filePreview, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case message.DirChangedMsg: // Can this can be merged with message.EntryMsg?
-		fp.path = msg.Path()
+		fp.dirPath = msg.Path()
 	case message.NewEntryMsg:
 		cmd = fp.setNewEntry(msg.Entry)
 	case previewReadyMsg:
@@ -119,30 +114,30 @@ func (fp *FilePreview) Update(msg tea.Msg) (FilePreview, tea.Cmd) {
 			fp.viewPort.LineUp(1)
 		}
 	}
-	return *fp, cmd
+	return fp, cmd
 }
 
-func (fp *FilePreview) handlePreviewMsg(msg previewReadyMsg) {
+func (fp *filePreview) handlePreviewMsg(msg previewReadyMsg) {
 	// check that the path matches so we don't set the current preview based on the previous file
 	if msg.Path != fp.getFullPath() {
 		return
 	}
 	if msg.Err != nil {
-		fp.viewPort.SetContent(fp.renderNoPreview("Failed to load preview"))
+		fp.viewPort.SetContent(fp.renderNoPreview("No preview available"))
 	}
 	if msg.Preview != "" {
 		fp.viewPort.SetContent(msg.Preview)
 	}
 }
 
-func (fp *FilePreview) getFullPath() string {
+func (fp *filePreview) getFullPath() string {
 	if fp.entry.SymLinkPath != "" {
 		return fp.entry.SymLinkPath
 	}
-	return filepath.Join(fp.path, fp.entry.Name())
+	return filepath.Join(fp.dirPath, fp.entry.Name())
 }
 
-func (fp *FilePreview) fileInfoView() string {
+func (fp *filePreview) fileInfoView() string {
 	str := strings.Builder{}
 	str.WriteString(termenv.String(strings.Repeat("-", fp.width-margin)).Foreground(termenv.RGBColor(fp.theme.InfobarBgColor)).String())
 	str.WriteByte('\n')
@@ -151,7 +146,7 @@ func (fp *FilePreview) fileInfoView() string {
 	return str.String()
 }
 
-func (fp *FilePreview) View() string {
+func (fp *filePreview) View() string {
 	fileInfo := fp.fileInfoView()
 	fp.previewHeight = fp.height - lipgloss.Height(fileInfo) - margin
 	return theme.EntryInfoStyle.Render(
@@ -167,20 +162,20 @@ func (fp *FilePreview) View() string {
 	)
 }
 
-func (fp *FilePreview) SetWidth(width int) {
+func (fp *filePreview) SetWidth(width int) {
 	fp.width = width
 }
 
-func (fp *FilePreview) Height() int {
+func (fp *filePreview) Height() int {
 	return fp.height
 }
 
-func (fp *FilePreview) SetHeight(height int) {
+func (fp *filePreview) SetHeight(height int) {
 	fp.viewPort.Height = height - lipgloss.Height(fp.fileInfoView()) - margin
 	fp.height = height
 }
 
-func (fp *FilePreview) renderNoPreview(text string) string {
+func (fp *filePreview) renderNoPreview(text string) string {
 	return lipgloss.Place(
 		fp.width-2,
 		fp.viewPort.Height,

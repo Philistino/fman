@@ -17,7 +17,7 @@ const (
 	// Config Defaults
 	DefaultTheme            = "dracula"
 	DefaultIcons            = "nerdfont"
-	DefaultDelay            = 200
+	DefaultPreviewDelay     = 200
 	DefaultPath             = "."
 	DefaultDirsMixed        = false
 	DefaultNoHidden         = false
@@ -128,7 +128,7 @@ func setDefaults(cfg Cfg) Cfg {
 	}
 	if cfg.PreviewDelay == nil {
 		cfg.PreviewDelay = new(int)
-		*cfg.PreviewDelay = DefaultDelay
+		*cfg.PreviewDelay = DefaultPreviewDelay
 	}
 	if cfg.DoubleClickDelay == nil {
 		cfg.DoubleClickDelay = new(int)

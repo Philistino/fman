@@ -2,19 +2,33 @@ k6 uses a thin wrapper over afero so they can later move away from it:
 https://github.com/grafana/k6/tree/master/lib/fsext
 
 Todo:
+
+    Make UI components accept interfaces, particularly important for Entry
+
+    Cache up to root, down three levels (if not at root?)
+        Measure read times for each device and cache if needed?
+        Check chmod on re-read for cached dirs
+        For cache pruning, count slashes in path to know relative distance to CWD
+    Pre-walk 
+
+    When reading a directory, do not return on first error, but do something with the errors
     Nav - if jumping up in the tree, should the cursor be set to the grand-parent of the origin directory?
+        Have to manage filepath.join on windows
+    Nav - read directories in new go routine with cancellable context. If a new read dir request comes in for a different directory
+        Cancel the old request and start the new one (if not caching).
+        Or just cache the read when it comes back
 
     Breadcrumb - need to handle clicks leaf -> root. There is a bug that misallocates clicks when the breadcrump is truncated
         Mostly fixed - add tests
     breadcrumb - still an issue reading clicks when truncated, with a long path, and clicking second to last dir
 
+    Preview - could delay showing the Preview Loading filler for a tenth of a second for smoother viewing?
     Preview - toggle preview pane visibility
-    Preview - render markdown preview with glamour
     Preview - could preview directories
-    Preview - move file reading out of ui
-    Preview - could use a struct and keep file handle open. Read for the new line positions, then seek between them on scroll?
     Preview - Track whether a file was read or not, if it was, set delay to zero for following read
     Preview - Use this space for notifications when they arise?
+    Preview - Create a monokai theme for glamour markdown rendering that looks like chroma rendering
+    Preview - Change behavior based on type of drive? https://stackoverflow.com/questions/62731962/get-list-of-fixed-drives 
 
     FS operations - mkdir/mkfile/delete/etc. 
     FS operations - Dialog to confirm Changes
@@ -23,11 +37,14 @@ Todo:
     List - do not circle back when reaching top or bottom
     List - add sort methods for each column
     List - click column header to sort (add arrow icon and reverse on second click)
-    List - freeze list on navs and show spinner if taking more than 100 milliseconds
+    List - freeze up/down list on navs and show spinner if taking more than 100 milliseconds
         Message to signal start of changing directory
     List - Multi-select filesystem objects
     List - Emit msgs on selection changes
         If multi-selecting, what to do with preview? Show preview for cursor or none?
+
+    Icons - clean up
+    Icons - keep all directory icons the same color
 
     Help - shift full help from wide to long based on terminal width and make it scrollable
 
@@ -62,6 +79,9 @@ Todo:
         Bookmarks
             Add bookmark functionality
             Toggle bookmark pane visibility
+    Resizes on Windows
+        procGetLargestConsoleWindowSize = k32.NewProc("GetLargestConsoleWindowSize") https://github.com/gdamore/tcell/blob/47ec3a77754f83e84481fc9cdd0bc2072cd292ba/console_win.go
+        Polling using termenv - https://github.com/charmbracelet/bubbletea/discussions/661 
 
     Ruled out for now:
         List - Use nerd-font icons based on file type - default to emojis.
@@ -96,5 +116,9 @@ Finished:
     Separate button sets into separate components and compose them in App
     Configurable double-click interval for people with disabilities
     Preview - UI hangs on "Loading preview..." for empty files 
-
+    Preview - render markdown preview with glamour
+    Preview - check mimetype, read the first X lines or bytes into memory. Track the read position
+    Preview - move file reading out of ui
+    Separate the preview cache (mapstruct) and read/write/prune operations from the fetching  
+    Preview - Don't try to read files that are of certain file extensions and/or over a certain size
 
