@@ -1,29 +1,77 @@
 package entry
 
+import (
+	"log"
+	"os"
+	"path/filepath"
+	"testing"
+)
+
+// cleanRoot returns a relative path from root to dir.
+func cleanRoot(dir string) (string, error) {
+	// if reading at root AKA ".", no cleaning required
+	if dir == "." {
+		return dir, nil
+	}
+	root := "/"
+	// on unix, VolumeName will return ""
+	if vol := filepath.VolumeName(dir); vol != "" {
+		// on windows, set root to the volume name and slash
+		root = vol + "/"
+	}
+	rel, err := filepath.Rel(root, dir)
+	if err != nil {
+		return "", err
+	}
+	rel = filepath.ToSlash(rel)
+	return rel, nil
+}
+
+// Exists returns whether the given file or directory exists
+func Exists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}
+
 // reimplement with mock
-// func TestGetEntries(t *testing.T) {
+func TestGetEntries(t *testing.T) {
 
-// 	testCases := []struct {
-// 		desc         string
-// 		path         string
-// 		expectedSize int
-// 	}{
-// 		{
-// 			desc:         "cur dir",
-// 			path:         "./",
-// 			expectedSize: 4,
-// 		},
-// 	}
+	path, err := filepath.Abs(".")
+	if err != nil {
+		t.Fatal(err)
+	}
 
-// 	for _, tC := range testCases {
-// 		t.Run(tC.desc, func(t *testing.T) {
-// 			entries, _ := GetEntries(tC.path, true, false)
-// 			if len(entries) != tC.expectedSize {
-// 				t.Errorf("expecting %d entries, got %d", tC.expectedSize, len(entries))
-// 			}
-// 		})
-// 	}
-// }
+	// path = `C:\Users\tyman\OneDrive\Desktop\explain`
+
+	path, err = cleanRoot(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path = "c:/" + path
+	log.Println(path)
+
+	fsys := os.DirFS("/")
+	entries, errMap, err := GetEntries(fsys, path, true, false)
+	for key, value := range errMap {
+		log.Println(key, value)
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range entries {
+		log.Println(e.Name(), e.IsDir())
+	}
+	if len(entries) != 18 {
+		t.Errorf("expecting %d entries, got %d", 18, len(entries))
+	}
+	t.Error()
+}
 
 // func TestSortEntries(t *testing.T) {
 // 	tt := []struct {

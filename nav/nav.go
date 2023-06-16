@@ -2,6 +2,7 @@ package nav
 
 import (
 	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -24,15 +25,18 @@ type Nav struct {
 	showHidden  bool                    // if true, show hidden files and directories
 	dirsMixed   bool                    // if true, directories are mixed in with files
 	cursorHist  map[string]string       // path -> cursor. This can grow unchecked but should not be a problem
+	fsys        fs.FS                   // filesystem
 }
 
-func NewNav(showHidden bool, dirsMixed bool, startPath string) *Nav {
+func NewNav(showHidden bool, dirsMixed bool, startPath string, fsys fs.FS) *Nav {
+
 	navi := &Nav{
 		hist:        history.NewHistory[string](5000),
 		showHidden:  showHidden,
 		dirsMixed:   dirsMixed,
 		currentPath: startPath,
 		cursorHist:  make(map[string]string),
+		fsys:        fsys,
 	}
 	return navi
 }
@@ -72,8 +76,8 @@ func (n *Nav) Go(path string, currCursor string, currSelected []string) DirState
 
 func (n *Nav) handleCursor(dst string) string {
 	var cursor string
-	src := n.currentPath
-
+	src := filepath.ToSlash(n.currentPath)
+	dst = filepath.ToSlash(dst)
 	// if the destination is the parent of the source, set the cursor to the source
 	if dst == filepath.Dir(src) {
 		return filepath.Base(src)
@@ -166,7 +170,8 @@ func (n *Nav) SetDirsMixed(dirsMixed bool) {
 }
 
 func (n *Nav) getEntries(path string) ([]entry.Entry, error) {
-	return entry.GetEntries(path, n.showHidden, n.dirsMixed)
+	entries, _, err := entry.GetEntries(n.fsys, path, n.showHidden, n.dirsMixed)
+	return entries, err
 }
 
 // returns map of slice to use a set

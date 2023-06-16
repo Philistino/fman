@@ -2,10 +2,12 @@ package entry
 
 import (
 	"io/fs"
+	"log"
 	"mime"
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/djherbis/times"
 	"github.com/dustin/go-humanize"
@@ -15,7 +17,6 @@ type Entry struct {
 	fs.FileInfo
 	SizeStr     string
 	ModifyTime  string
-	ChangeTime  string
 	MimeType    string
 	SymlinkName string
 	SymLinkPath string
@@ -45,12 +46,12 @@ func (e Entry) IsDir() bool {
 	return e.FileInfo.IsDir()
 }
 
-func newEntry(info fs.FileInfo, path string, hidden bool) (Entry, error) {
+func newEntry(fsys fs.FS, info fs.FileInfo, path string, hidden bool) (Entry, error) {
 	var size string
 
 	if info.IsDir() {
 		// get count of entries under this directory
-		_entries, err := os.ReadDir(path)
+		_entries, err := fs.ReadDir(fsys, path)
 		if err != nil {
 			return Entry{FileInfo: info}, err
 		}
@@ -68,21 +69,22 @@ func newEntry(info fs.FileInfo, path string, hidden bool) (Entry, error) {
 	}
 
 	return Entry{
-		FileInfo:   info,
-		SizeStr:    size,
-		MimeType:   mime.TypeByExtension(filepath.Ext(info.Name())),
-		ModifyTime: humanize.Time(info.ModTime()),
-		IsHidden:   hidden,
+		FileInfo:    info,
+		SizeStr:     size,
+		ModifyTime:  humanize.Time(info.ModTime()),
+		MimeType:    mime.TypeByExtension(filepath.Ext(info.Name())),
+		SymlinkName: "",
+		SymLinkPath: path,
+		timeStats:   nil,
+		IsHidden:    hidden,
 	}, nil
 }
 
-func GetEntries(path string, showHidden bool, dirsMixed bool) ([]Entry, error) {
-	os.Chdir(path)
-	cwd, _ := os.Getwd()
-
-	files, err := os.ReadDir(cwd)
+func GetEntries(fsys fs.FS, path string, showHidden bool, dirsMixed bool) ([]Entry, map[string]error, error) {
+	files, err := fs.ReadDir(fsys, path)
+	time.Sleep(time.Second * 10)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	entries := make([]Entry, 0, len(files))
@@ -94,15 +96,16 @@ func GetEntries(path string, showHidden bool, dirsMixed bool) ([]Entry, error) {
 			continue
 		}
 
-		fullPath := cwd + "/" + file.Name()
+		fullPath := path + "/" + file.Name()
 
-		hidden := isHidden(info, cwd, []string{"."})
+		hidden := isHidden(info, path, []string{"."})
 		if hidden && !showHidden {
 			continue
 		}
 
-		entry, err := newEntry(info, fullPath, hidden)
+		entry, err := newEntry(fsys, info, fullPath, hidden)
 		if err != nil {
+			log.Println("errored here ++++++++++++++++++++++++")
 			errMap[file.Name()] = err
 			continue
 		}
@@ -111,18 +114,21 @@ func GetEntries(path string, showHidden bool, dirsMixed bool) ([]Entry, error) {
 		if info.Mode()&os.ModeSymlink != 0 {
 			fullPath, err = os.Readlink(fullPath)
 			if err != nil {
+				log.Println("errored in symlink")
 				errMap[file.Name()] = err
 				continue
 			}
 
-			symInfo, err := os.Stat(fullPath)
+			symInfo, err := fs.Stat(fsys, fullPath)
 			if err != nil {
+				log.Println("errored stating symlink")
 				errMap[file.Name()] = err
 				continue
 			}
 
-			entry, err = newEntry(symInfo, fullPath, hidden)
+			entry, err = newEntry(fsys, symInfo, fullPath, hidden)
 			if err != nil {
+				log.Println("errored in newEntry")
 				errMap[file.Name()] = err
 				continue
 			}
@@ -152,5 +158,5 @@ func GetEntries(path string, showHidden bool, dirsMixed bool) ([]Entry, error) {
 		true,
 		[]string{".*"},
 	)
-	return entries, nil
+	return entries, errMap, nil
 }
