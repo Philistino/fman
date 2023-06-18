@@ -18,6 +18,7 @@ func TestWindowsInvalidFilename(t *testing.T) {
 		{`foo.d\bar.txt`, nil},
 		{`foo.d\bar .txt`, nil},
 		{`foo.d\bar. txt`, nil},
+		{"", errInvalidFilenameEmpty},
 	}
 
 	for _, tc := range cases {

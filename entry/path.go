@@ -17,6 +17,9 @@ const windowsDisallowedCharacters = (`<>:"|?*` +
 	"\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f")
 
 func WindowsInvalidFilename(name string) error {
+	if name == "" {
+		return errInvalidFilenameEmpty
+	}
 	// The path must not contain any disallowed characters.
 	if strings.ContainsAny(name, windowsDisallowedCharacters) {
 		return errInvalidFilenameWindowsReservedChar

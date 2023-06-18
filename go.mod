@@ -10,11 +10,11 @@ require (
 	github.com/charmbracelet/bubbles v0.16.1
 	github.com/charmbracelet/bubbletea v0.24.1
 	github.com/charmbracelet/lipgloss v0.7.1
-	github.com/djherbis/times v1.5.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/lrstanley/bubblezone v0.0.0-20230507010339-3326b9492591
 	github.com/mattn/go-runewidth v0.0.14
 	github.com/muesli/termenv v0.15.1
+	github.com/spf13/afero v1.9.5
 	golang.org/x/sys v0.8.0
 )
 

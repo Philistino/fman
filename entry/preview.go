@@ -27,19 +27,19 @@ type Preview struct {
 func CreatePreview(ctx context.Context, preview Preview, maxBytes int) Preview {
 	previewChan := make(chan Preview)
 	errc := make(chan error, 1)
-	go func() {
+	go func(prev Preview) {
 		defer close(previewChan)
 		defer close(errc)
 
-		stat, err := os.Stat(preview.Path)
+		stat, err := os.Stat(prev.Path)
 		if err != nil {
 			errc <- err
 			return
 		}
-		if !preview.ReadTime.IsZero() {
-			if preview.ReadTime.After(stat.ModTime()) {
-				preview.ReadTime = time.Now()
-				previewChan <- preview
+		if !prev.ReadTime.IsZero() {
+			if prev.ReadTime.After(stat.ModTime()) {
+				prev.ReadTime = time.Now()
+				previewChan <- prev
 				return
 			}
 		}
@@ -49,7 +49,7 @@ func CreatePreview(ctx context.Context, preview Preview, maxBytes int) Preview {
 			errc <- ctx.Err()
 		}
 
-		file, err := os.Open(preview.Path)
+		file, err := os.Open(prev.Path)
 		if err != nil {
 			errc <- err
 			return
@@ -61,7 +61,7 @@ func CreatePreview(ctx context.Context, preview Preview, maxBytes int) Preview {
 			errc <- ctx.Err()
 		}
 
-		mime, err := GetMimeType(file)
+		mime, err := GetMimeTypeByRead(file)
 		if err != nil {
 			errc <- err
 			return
@@ -78,15 +78,15 @@ func CreatePreview(ctx context.Context, preview Preview, maxBytes int) Preview {
 			errc <- ctx.Err()
 		}
 
-		content, err := createPreview(ctx, filepath.Base(preview.Path), file, maxBytes)
+		content, err := createPreview(ctx, filepath.Base(prev.Path), file, maxBytes)
 		p := Preview{
 			Content:  content,
 			Err:      err,
-			Path:     preview.Path,
+			Path:     prev.Path,
 			ReadTime: time.Now(),
 		}
 		previewChan <- p
-	}()
+	}(preview)
 
 	select {
 	case <-ctx.Done():

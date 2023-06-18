@@ -2,7 +2,6 @@ package model
 
 import (
 	"context"
-	"os"
 	"path/filepath"
 	"time"
 
@@ -21,6 +20,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	zone "github.com/lrstanley/bubblezone"
+	"github.com/spf13/afero"
 )
 
 // This is the main model for the app. It does two jobs, acts like a message bus for the different
@@ -64,31 +64,11 @@ func (app *App) Init() tea.Cmd {
 	}
 }
 
-// cleanRoot returns a relative path from root to dir.
-func cleanRoot(dir string) (string, error) {
-	// if reading at root AKA ".", no cleaning required
-	if dir == "." {
-		return dir, nil
-	}
-	root := "/"
-	// on unix, VolumeName will return ""
-	if vol := filepath.VolumeName(dir); vol != "" {
-		// on windows, set root to the volume name and slash
-		root = vol + "/"
-	}
-	rel, err := filepath.Rel(root, dir)
+func NewApp(cfg cfg.Cfg, selectedTheme colors.Theme, fsys afero.Fs) *App {
+	absPath, err := filepath.Abs(cfg.Path)
 	if err != nil {
-		return "", err
+		panic(err)
 	}
-	rel = filepath.ToSlash(rel)
-	return rel, nil
-}
-
-func NewApp(cfg cfg.Cfg, selectedTheme colors.Theme) *App {
-	absPath, _ := filepath.Abs(cfg.Path)
-	absPath = filepath.ToSlash(absPath)
-	absPath, _ = cleanRoot(absPath)
-	fsys := os.DirFS(".")
 	app := App{
 		fileBtns:   newFileBtns(),
 		list:       list.New(selectedTheme, *cfg.DoubleClickDelay),

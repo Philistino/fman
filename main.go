@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	zone "github.com/lrstanley/bubblezone"
 	"github.com/muesli/termenv"
+	"github.com/spf13/afero"
 
 	"github.com/Philistino/fman/theme"
 )
@@ -35,7 +36,7 @@ func main() {
 	output.SetBackgroundColor(termenv.RGBColor(lipgloss.Color(selectedTheme.BackgroundColor)))
 	defer output.SetBackgroundColor(bg)
 
-	app := model.NewApp(cfg, selectedTheme)
+	app := model.NewApp(cfg, selectedTheme, afero.NewOsFs())
 	p := tea.NewProgram(app, tea.WithAltScreen(), tea.WithMouseAllMotion())
 	_, err = p.Run()
 	if err != nil {

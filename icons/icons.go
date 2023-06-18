@@ -52,14 +52,14 @@ func (i *Icon) makeExe() {
 
 // GetIconTerm returns the icon with escape sequences for colored
 // output in the terminal.
-func GetIconTerm(info fs.FileInfo, hidden bool) string {
+func GetIconTerm(info fs.FileInfo, isHidden bool) string {
 	// The escape sequence '\033[39m' sets the foreground color back to default to default.
-	i := GetIconForReal(info, hidden)
+	i := GetIconForReal(info, isHidden)
 	return fmt.Sprintf("%s%s\033[39m", i.ColorTerm(), i.Glyph())
 }
 
 // GetIconForReal returns the icon for the given file.
-func GetIconForReal(info fs.FileInfo, hidden bool) Icon {
+func GetIconForReal(info fs.FileInfo, isHidden bool) Icon {
 	var i Icon
 	var ok bool
 	name := info.Name()
@@ -71,7 +71,7 @@ func GetIconForReal(info fs.FileInfo, hidden bool) Icon {
 		if ok {
 			break
 		}
-		if hidden {
+		if isHidden {
 			i = iconDefault["hiddendir"]
 			break
 		}
@@ -102,7 +102,7 @@ func GetIconForReal(info fs.FileInfo, hidden bool) Icon {
 			break
 		}
 
-		if hidden {
+		if isHidden {
 			i = iconDefault["hiddenfile"]
 			break
 		}

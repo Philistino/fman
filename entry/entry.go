@@ -1,16 +1,15 @@
 package entry
 
 import (
+	"errors"
 	"io/fs"
-	"log"
 	"mime"
 	"os"
 	"path/filepath"
 	"strconv"
-	"time"
 
-	"github.com/djherbis/times"
 	"github.com/dustin/go-humanize"
+	"github.com/spf13/afero"
 )
 
 type Entry struct {
@@ -20,8 +19,8 @@ type Entry struct {
 	MimeType    string
 	SymlinkName string
 	SymLinkPath string
-	timeStats   times.Timespec
 	IsHidden    bool
+	SizeInt     int64
 }
 
 // Name returns the basename of the file
@@ -46,117 +45,118 @@ func (e Entry) IsDir() bool {
 	return e.FileInfo.IsDir()
 }
 
-func newEntry(fsys fs.FS, info fs.FileInfo, path string, hidden bool) (Entry, error) {
-	var size string
+func handleSymlink(fsys afero.Fs, fullPath string, file fs.FileInfo) (string, fs.FileInfo, error) {
+	var symLinkPath string
 
-	if info.IsDir() {
-		// get count of entries under this directory
-		_entries, err := fs.ReadDir(fsys, path)
-		if err != nil {
-			return Entry{FileInfo: info}, err
-		}
-		lenEntries := len(_entries)
-		switch {
-		case lenEntries == 0:
-			size = "Empty Folder"
-		case lenEntries == 1:
-			size = "1 entry"
-		default:
-			size = strconv.Itoa(lenEntries) + " entries"
-		}
-	} else {
-		size = humanize.Bytes(uint64(info.Size()))
+	reader, ok := fsys.(afero.LinkReader) // check if filesystem supports reading symlinks
+	if !ok {
+		return symLinkPath, file, afero.ErrNoSymlink
 	}
-
-	return Entry{
-		FileInfo:    info,
-		SizeStr:     size,
-		ModifyTime:  humanize.Time(info.ModTime()),
-		MimeType:    mime.TypeByExtension(filepath.Ext(info.Name())),
-		SymlinkName: "",
-		SymLinkPath: path,
-		timeStats:   nil,
-		IsHidden:    hidden,
-	}, nil
+	symLinkPath, err := reader.ReadlinkIfPossible(fullPath)
+	if err != nil {
+		return symLinkPath, file, err
+	}
+	symInfo, err := fsys.Stat(symLinkPath)
+	if err != nil {
+		return symLinkPath, file, err
+	}
+	return symLinkPath, symInfo, nil
 }
 
-func GetEntries(fsys fs.FS, path string, showHidden bool, dirsMixed bool) ([]Entry, map[string]error, error) {
-	files, err := fs.ReadDir(fsys, path)
-	time.Sleep(time.Second * 10)
+func getSize(fsys afero.Fs, file fs.FileInfo, filePath string) (string, int64, error) {
+	if !file.IsDir() {
+		return humanize.Bytes(uint64(file.Size())), file.Size(), nil
+	}
+
+	// get count of entries under this directory
+	entries, err := afero.ReadDir(fsys, filePath)
+	if errors.Is(err, fs.ErrPermission) {
+		return "Access Denied", 0, nil
+	}
+	if err != nil {
+		return "", 0, err
+	}
+	var size string
+	lenEntries := len(entries)
+	if lenEntries == 1 {
+		size = "1 entry"
+	} else {
+		size = strconv.Itoa(lenEntries) + " entries"
+	}
+	return size, int64(lenEntries), nil
+}
+
+func createEntry(fsys afero.Fs, dirPath string, file fs.FileInfo) (Entry, error) {
+	var symLinkName string
+	var symLinkPath string
+
+	fullPath := filepath.Join(dirPath, file.Name())
+	hidden, err := isHidden(fullPath)
+	if err != nil {
+		hidden = false
+	}
+	// Handle Symlinks
+	if file.Mode()&os.ModeSymlink != 0 {
+		reader, ok := fsys.(afero.LinkReader) // check if filesystem supports reading symlinks
+		if !ok {
+			return Entry{FileInfo: file}, afero.ErrNoSymlink
+		}
+		linkedPath, err := reader.ReadlinkIfPossible(fullPath)
+		if err != nil {
+			return Entry{FileInfo: file}, err
+		}
+		symInfo, err := fsys.Stat(linkedPath)
+		if err != nil {
+			return Entry{FileInfo: file}, err
+		}
+		symLinkName = file.Name()
+		symLinkPath = linkedPath
+		file = symInfo
+		fullPath = linkedPath
+	}
+	sizeStr, sizeInt, err := getSize(fsys, file, fullPath)
+	if err != nil {
+		return Entry{FileInfo: file}, err
+	}
+	entry := Entry{
+		FileInfo:    file,
+		SizeStr:     sizeStr,
+		SizeInt:     sizeInt,
+		ModifyTime:  humanize.Time(file.ModTime()),
+		MimeType:    mime.TypeByExtension(filepath.Ext(file.Name())),
+		SymlinkName: symLinkName,
+		SymLinkPath: symLinkPath,
+		IsHidden:    hidden,
+	}
+	return entry, err
+}
+
+func GetEntries(fsys afero.Fs, dirPath string, showHidden bool, dirsMixed bool) ([]Entry, map[string]error, error) {
+	files, err := afero.ReadDir(fsys, dirPath)
 	if err != nil {
 		return nil, nil, err
 	}
-
 	entries := make([]Entry, 0, len(files))
 	errMap := make(map[string]error, len(files)) // TODO: use this
+
 	for _, file := range files {
-		info, err := file.Info()
+		entry, err := createEntry(fsys, dirPath, file)
 		if err != nil {
 			errMap[file.Name()] = err
-			continue
 		}
-
-		fullPath := path + "/" + file.Name()
-
-		hidden := isHidden(info, path, []string{"."})
-		if hidden && !showHidden {
-			continue
-		}
-
-		entry, err := newEntry(fsys, info, fullPath, hidden)
-		if err != nil {
-			log.Println("errored here ++++++++++++++++++++++++")
-			errMap[file.Name()] = err
-			continue
-		}
-
-		// Handle Symlinks
-		if info.Mode()&os.ModeSymlink != 0 {
-			fullPath, err = os.Readlink(fullPath)
-			if err != nil {
-				log.Println("errored in symlink")
-				errMap[file.Name()] = err
-				continue
-			}
-
-			symInfo, err := fs.Stat(fsys, fullPath)
-			if err != nil {
-				log.Println("errored stating symlink")
-				errMap[file.Name()] = err
-				continue
-			}
-
-			entry, err = newEntry(fsys, symInfo, fullPath, hidden)
-			if err != nil {
-				log.Println("errored in newEntry")
-				errMap[file.Name()] = err
-				continue
-			}
-
-			entry.SymlinkName = info.Name()
-			entry.SymLinkPath = fullPath
-		}
-
 		entries = append(entries, entry)
 	}
 
-	var dirsFirst sortOption
-	if dirsMixed {
-		dirsFirst = noneSort
-	} else {
-		dirsFirst = dirfirstSort
+	sortT := SortOrder{
+		method:     NaturalSort,
+		dirsFirst:  !dirsMixed,
+		dirsOnly:   false,
+		showHidden: showHidden,
+		reverse:    false,
+		ignoreDiac: true,
+		ignoreCase: true,
 	}
 
-	entries = sortE(
-		path,
-		entries,
-		sortType{
-			method: naturalSort,
-			option: dirsFirst,
-		},
-		true,
-		true,
-		[]string{".*"},
-	)
+	entries = sortEntries(dirPath, entries, sortT)
 	return entries, errMap, nil
 }

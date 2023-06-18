@@ -51,7 +51,7 @@ func TestGetMimeType(t *testing.T) {
 				t.Fatalf("os.Open(%s) = %v; want nil", tc.path, err)
 			}
 			defer f.Close()
-			got, err := GetMimeType(f)
+			got, err := GetMimeTypeByRead(f)
 			if err != nil {
 				t.Errorf("GetMimeType(%s) = %v; want nil", tc.path, err)
 			}

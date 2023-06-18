@@ -13,7 +13,8 @@ import (
 	zone "github.com/lrstanley/bubblezone"
 )
 
-const pathSeparator = "/" // use forward slash throughout the app
+// const pathSeparator = "/" // use forward slash throughout the app
+const pathSeparator = string(filepath.Separator)
 
 var winRootRgx = regexp.MustCompile(`^[A-Za-z]:/?$`) // matches windows root paths like C:/ or D:
 
@@ -38,8 +39,8 @@ func (breadcrumb *breadCrumb) Update(msg tea.Msg) (*breadCrumb, tea.Cmd) {
 		if msg.Error() != nil {
 			return breadcrumb, nil
 		}
-		breadcrumb.path = filepath.ToSlash(msg.Path()) // standardize path separators elsewhere in the app
-		breadcrumb.updateView(breadcrumb.path)
+		breadcrumb.path = msg.Path()
+		breadcrumb.updateView(msg.Path())
 	case tea.MouseMsg:
 		cmd = breadcrumb.handleMouseMsg(msg)
 	}
@@ -87,7 +88,7 @@ func (breadcrumb *breadCrumb) updateView(path string) {
 
 	// if the path is a root path, just return the root rendered
 	if winRootRgx.MatchString(path) {
-		breadcrumb.viewParts = []string{theme.PathStyle.Render(strings.Replace(path, "/", "", 1))}
+		breadcrumb.viewParts = []string{theme.PathStyle.Render(strings.Replace(path, pathSeparator, "", 1))}
 		return
 	}
 	if path == pathSeparator {

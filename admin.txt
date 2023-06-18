@@ -9,11 +9,9 @@ Todo:
         Measure read times for each device and cache if needed?
         Check chmod on re-read for cached dirs
         For cache pruning, count slashes in path to know relative distance to CWD
-    Pre-walk 
+    Pre-walk
 
     When reading a directory, do not return on first error, but do something with the errors
-    Nav - if jumping up in the tree, should the cursor be set to the grand-parent of the origin directory?
-        Have to manage filepath.join on windows
     Nav - read directories in new go routine with cancellable context. If a new read dir request comes in for a different directory
         Cancel the old request and start the new one (if not caching).
         Or just cache the read when it comes back
@@ -29,6 +27,8 @@ Todo:
     Preview - Use this space for notifications when they arise?
     Preview - Create a monokai theme for glamour markdown rendering that looks like chroma rendering
     Preview - Change behavior based on type of drive? https://stackoverflow.com/questions/62731962/get-list-of-fixed-drives 
+    Preview - Because secondary reads on a file are immediate if cached but the read time is updated Because we check modtime, the LRU 
+        is affected by "uses" that could merely be times when the file is navigated over.
 
     FS operations - mkdir/mkfile/delete/etc. 
     FS operations - Dialog to confirm Changes
@@ -69,7 +69,6 @@ Todo:
     Clean filepaths that are read from cli/config file
     Live toggle-able themes
 
-    Change filesystem calls from os to fs at least for reading. Could use afero, std lib, hackpadfs? 
     Caching filesystem reads
     Read aheads in filetree
         
@@ -121,4 +120,5 @@ Finished:
     Preview - move file reading out of ui
     Separate the preview cache (mapstruct) and read/write/prune operations from the fetching  
     Preview - Don't try to read files that are of certain file extensions and/or over a certain size
-
+    Nav - if jumping up in the tree, should the cursor be set to the grand-parent of the origin directory?
+        Have to manage filepath.join on windows

@@ -25,7 +25,8 @@ func IsZipFile(filepath string) (bool, error) {
 	return isZip, nil
 }
 
-func GetMimeType(seeker io.ReadSeeker) (string, error) {
+// GetMimeTypeByRead returns the mime type of a file by reading up to 512 bytes of its content.
+func GetMimeTypeByRead(seeker io.ReadSeeker) (string, error) {
 	// At most the first 512 bytes of data are used:
 	// https://golang.org/src/net/http/sniff.go?s=646:688#L11
 	// Without this buffer, http.DetectContentType will not correctly identify text files if they are smaller than 512 bytes

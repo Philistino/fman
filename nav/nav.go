@@ -2,13 +2,13 @@ package nav
 
 import (
 	"errors"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/Philistino/fman/entry"
 	"github.com/Philistino/fman/nav/history"
+	"github.com/spf13/afero"
 )
 
 // on startup, create a filesystem, read the cwd and display it. Walk the filetree up to root while
@@ -18,6 +18,8 @@ import (
 
 // Need to do something with symlinks
 
+const pathSeparator = string(filepath.Separator)
+
 type Nav struct {
 	hist        history.History[string] // history of paths visited. Set to record max. 5000 entries
 	currentPath string                  // current path
@@ -25,10 +27,10 @@ type Nav struct {
 	showHidden  bool                    // if true, show hidden files and directories
 	dirsMixed   bool                    // if true, directories are mixed in with files
 	cursorHist  map[string]string       // path -> cursor. This can grow unchecked but should not be a problem
-	fsys        fs.FS                   // filesystem
+	fsys        afero.Fs                // filesystem
 }
 
-func NewNav(showHidden bool, dirsMixed bool, startPath string, fsys fs.FS) *Nav {
+func NewNav(showHidden bool, dirsMixed bool, startPath string, fsys afero.Fs) *Nav {
 
 	navi := &Nav{
 		hist:        history.NewHistory[string](5000),
@@ -76,8 +78,8 @@ func (n *Nav) Go(path string, currCursor string, currSelected []string) DirState
 
 func (n *Nav) handleCursor(dst string) string {
 	var cursor string
-	src := filepath.ToSlash(n.currentPath)
-	dst = filepath.ToSlash(dst)
+	src := n.currentPath
+
 	// if the destination is the parent of the source, set the cursor to the source
 	if dst == filepath.Dir(src) {
 		return filepath.Base(src)
@@ -95,8 +97,8 @@ func (n *Nav) handleCursor(dst string) string {
 		return ""
 	}
 	cursor = strings.Replace(src, dst, "", 1)
-	cursor = strings.TrimPrefix(cursor, "/")
-	cursor = strings.Split(cursor, "/")[0]
+	cursor = strings.TrimPrefix(cursor, pathSeparator)
+	cursor = strings.Split(cursor, pathSeparator)[0]
 	return cursor
 }
 
