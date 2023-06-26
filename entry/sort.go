@@ -9,15 +9,13 @@ import (
 	"github.com/spf13/afero"
 )
 
-type SortMethod byte
+type SortMethod uint8
 
 const (
 	NaturalSort SortMethod = iota
 	NameSort
 	SizeSort
 	MtimeSort
-	// atimeSort
-	// ctimeSort
 	ExtSort
 )
 

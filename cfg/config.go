@@ -35,7 +35,7 @@ type Cfg struct {
 	Theme            string `default:"" help:"color theme to use. Defaults to dracula. Options are: brogrammer, catppuccin-frappe, catppuccin-latte, catppuccin-macchiato, catppuccin-mocha, dracula, everblush, gruvbox, nord"`
 	DirsMixed        *bool  `arg:"--dirs-mixed" help:"do not sort files from directories. Defaults to false"`
 	NoHidden         *bool  `arg:"--no-hidden" help:"do not show hidden files. Defaults to false"`
-	PreviewDelay     *int   `arg:"--preview-delay" placeholder:"DELAY" help:"delay in milliseconds before opening a file for previewing. This is meant to reduce io. Defaults to 250"`
+	PreviewDelay     *int   `arg:"--preview-delay" placeholder:"DELAY" help:"delay in milliseconds before opening a file for previewing. This is meant to reduce io. Defaults to 200"`
 	DoubleClickDelay *int   `arg:"--double-click-delay" placeholder:"DELAY" help:"delay in milliseconds to register a second click as a double click. This is included for people with limited mobility. Defaults to 500"`
 	// colorScheme theme.Theme // TODO: fetch colorscheme and icon map from theme and pin to config
 }

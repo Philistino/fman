@@ -2,8 +2,6 @@ package entry
 
 import (
 	"bytes"
-	"io"
-	"net/http"
 	"os"
 )
 
@@ -23,27 +21,4 @@ func IsZipFile(filepath string) (bool, error) {
 
 	isZip := bytes.Equal(buf, []byte("PK\x03\x04"))
 	return isZip, nil
-}
-
-// GetMimeTypeByRead returns the mime type of a file by reading up to 512 bytes of its content.
-func GetMimeTypeByRead(seeker io.ReadSeeker) (string, error) {
-	// At most the first 512 bytes of data are used:
-	// https://golang.org/src/net/http/sniff.go?s=646:688#L11
-	// Without this buffer, http.DetectContentType will not correctly identify text files if they are smaller than 512 bytes
-	buff := make([]byte, 512)
-
-	_, err := seeker.Seek(0, io.SeekStart)
-	if err != nil {
-		return "", err
-	}
-
-	bytesRead, err := seeker.Read(buff)
-	if err != nil && err != io.EOF {
-		return "", err
-	}
-	seeker.Seek(0, io.SeekStart)
-	// Slice to remove fill-up zero values which cause a wrong content type detection in the next step
-	buff = buff[:bytesRead]
-
-	return http.DetectContentType(buff), nil
 }
