@@ -5,7 +5,7 @@ package entry
 import (
 	"fmt"
 	"os"
-	"os/exec"
+	// "os/exec"
 	"os/user"
 	"path/filepath"
 	"strings"
