@@ -3,7 +3,6 @@ package model
 import (
 	"context"
 	"path/filepath"
-	"time"
 
 	"github.com/76creates/stickers"
 	"github.com/Philistino/fman/cfg"
@@ -46,7 +45,6 @@ type App struct {
 	navi              *nav.Nav
 	theme             colors.Theme
 	internalClipboard []string // slice of paths to items in the "clipboard"
-	PreHandler        *nav.PreviewHandler
 }
 
 func (app *App) Init() tea.Cmd {
@@ -59,9 +57,10 @@ func (app *App) Init() tea.Cmd {
 	// over the history implementation not having a setter for initial state
 	cmd := message.HandleReloadCmd(app.navi, []string{""}, "")
 	msg := cmd() // get the initial DirChangedMsg
-	return func() tea.Msg {
+	load := func() tea.Msg {
 		return msg
 	}
+	return tea.Batch(load, app.preview.Init())
 }
 
 func NewApp(cfg cfg.Cfg, selectedTheme colors.Theme, fsys afero.Fs) *App {
@@ -77,17 +76,10 @@ func NewApp(cfg cfg.Cfg, selectedTheme colors.Theme, fsys afero.Fs) *App {
 		infobar:    infobar.New(),
 		dialog:     dialog.New(),
 		flexBox:    stickers.NewFlexBox(0, 0),
-		navi:       nav.NewNav(!*cfg.NoHidden, *cfg.DirsMixed, absPath, fsys),
+		navi:       nav.NewNav(!*cfg.NoHidden, *cfg.DirsMixed, absPath, fsys, *cfg.PreviewDelay),
 		breadcrumb: newBrdCrumb(),
 		theme:      selectedTheme,
 		config:     cfg,
-		PreHandler: nav.NewPreviewHandler(
-			context.Background(),
-			*cfg.PreviewDelay,
-			50_000, // 50 kB
-			100,
-			time.Second*time.Duration(30),
-		),
 	}
 	app.help.FullSeparator = "   "
 	app.help.ShowAll = true
@@ -115,23 +107,23 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		app.dialog.SetDialog(&msg.Dialog)
 		return app, nil
 	case message.NavBackMsg:
-		cmd = message.HandleBackCmd(app.navi, []string{app.list.SelectedEntry().Name()}, app.list.CursorName())
+		cmd = message.HandleBackCmd(app.navi, []string{app.list.SelectedEntryName()}, app.list.CursorName())
 		cmds = append(cmds, cmd)
 	case message.NavFwdMsg:
-		cmd = message.HandleFwdCmd(app.navi, []string{app.list.SelectedEntry().Name()}, app.list.CursorName())
+		cmd = message.HandleFwdCmd(app.navi, []string{app.list.SelectedEntryName()}, app.list.CursorName())
 		cmds = append(cmds, cmd)
 	case message.NavUpMsg:
-		cmd = message.HandleNavCmd(app.navi, []string{app.list.SelectedEntry().Name()}, filepath.Dir(app.navi.CurrentPath()), app.list.CursorName())
+		cmd = message.HandleNavCmd(app.navi, []string{app.list.SelectedEntryName()}, filepath.Dir(app.navi.CurrentPath()), app.list.CursorName())
 		cmds = append(cmds, cmd)
 	case message.NavHomeMsg:
-		cmd = message.HandleNavCmd(app.navi, []string{app.list.SelectedEntry().Name()}, "~", app.list.CursorName())
+		cmd = message.HandleNavCmd(app.navi, []string{app.list.SelectedEntryName()}, "~", app.list.CursorName())
 		cmds = append(cmds, cmd)
 	case message.NavDownMsg:
-		name := app.list.SelectedEntry().Name()
+		name := app.list.SelectedEntryName()
 		cmd = message.HandleNavCmd(app.navi, []string{name}, filepath.Join(app.navi.CurrentPath(), name), app.list.CursorName())
 		cmds = append(cmds, cmd)
 	case message.NavOtherMsg:
-		cmd = message.HandleNavCmd(app.navi, []string{app.list.SelectedEntry().Name()}, msg.Path, app.list.CursorName())
+		cmd = message.HandleNavCmd(app.navi, []string{app.list.SelectedEntryName()}, msg.Path, app.list.CursorName())
 		cmds = append(cmds, cmd)
 	case message.InternalCopyMsg:
 		cmd = app.setInternalClipboard()
@@ -141,7 +133,7 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 	case message.ToggleShowHiddenMsg:
 		app.navi.SetShowHidden(!app.navi.ShowHidden())
-		cmd = message.HandleReloadCmd(app.navi, []string{app.list.SelectedEntry().Name()}, app.list.CursorName())
+		cmd = message.HandleReloadCmd(app.navi, []string{app.list.SelectedEntryName()}, app.list.CursorName())
 		cmds = append(cmds, cmd)
 	case message.GetPreviewMsg:
 		cmd = app.getPreviewCmd(msg.Ctx, msg.Path)
@@ -255,7 +247,7 @@ func (app *App) paste() tea.Cmd {
 
 func (app *App) getPreviewCmd(ctx context.Context, path string) tea.Cmd {
 	return func() tea.Msg {
-		preview := app.PreHandler.GetPreview(ctx, path)
+		preview := app.navi.GetPreview(ctx, path)
 		return previewReadyMsg{
 			Path:    path,
 			Preview: preview.Content,

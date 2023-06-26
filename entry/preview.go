@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
+	"net/http"
 	"path/filepath"
 	"strings"
 	"time"
@@ -15,6 +15,7 @@ import (
 	"github.com/alecthomas/chroma/lexers"
 	"github.com/alecthomas/chroma/styles"
 	"github.com/charmbracelet/glamour"
+	"github.com/spf13/afero"
 )
 
 type Preview struct {
@@ -24,14 +25,14 @@ type Preview struct {
 	ReadTime time.Time
 }
 
-func CreatePreview(ctx context.Context, preview Preview, maxBytes int) Preview {
+func CreatePreview(ctx context.Context, fsys afero.Fs, preview Preview, maxBytes int) Preview {
 	previewChan := make(chan Preview)
 	errc := make(chan error, 1)
 	go func(prev Preview) {
 		defer close(previewChan)
 		defer close(errc)
 
-		stat, err := os.Stat(prev.Path)
+		stat, err := fsys.Stat(prev.Path)
 		if err != nil {
 			errc <- err
 			return
@@ -49,7 +50,7 @@ func CreatePreview(ctx context.Context, preview Preview, maxBytes int) Preview {
 			errc <- ctx.Err()
 		}
 
-		file, err := os.Open(prev.Path)
+		file, err := fsys.Open(prev.Path)
 		if err != nil {
 			errc <- err
 			return
@@ -158,4 +159,27 @@ func renderMarkdown(content string) (string, error) {
 		return content, err
 	}
 	return str, nil
+}
+
+// GetMimeTypeByRead returns the mime type of a file by reading up to 512 bytes of its content.
+func GetMimeTypeByRead(seeker io.ReadSeeker) (string, error) {
+	// At most the first 512 bytes of data are used:
+	// https://golang.org/src/net/http/sniff.go?s=646:688#L11
+	// Without this buffer, http.DetectContentType will not correctly identify text files if they are smaller than 512 bytes
+	buff := make([]byte, 512)
+
+	_, err := seeker.Seek(0, io.SeekStart)
+	if err != nil {
+		return "", err
+	}
+
+	bytesRead, err := seeker.Read(buff)
+	if err != nil && err != io.EOF {
+		return "", err
+	}
+	seeker.Seek(0, io.SeekStart)
+	// Slice to remove fill-up zero values which cause a wrong content type detection in the next step
+	buff = buff[:bytesRead]
+
+	return http.DetectContentType(buff), nil
 }
