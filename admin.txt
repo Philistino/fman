@@ -20,21 +20,19 @@ Todo:
         Mostly fixed - add tests
     breadcrumb - still an issue reading clicks when truncated, with a long path, and clicking second to last dir
 
-    Preview - could delay showing the Preview Loading filler for a tenth of a second for smoother viewing?
     Preview - toggle preview pane visibility
     Preview - could preview directories
-    Preview - Track whether a file was read or not, if it was, set delay to zero for following read
     Preview - Use this space for notifications when they arise?
     Preview - Create a monokai theme for glamour markdown rendering that looks like chroma rendering
     Preview - Change behavior based on type of drive? https://stackoverflow.com/questions/62731962/get-list-of-fixed-drives 
     Preview - Because secondary reads on a file are immediate if cached but the read time is updated Because we check modtime, the LRU 
         is affected by "uses" that could merely be times when the file is navigated over.
+    Preview - Hanging on loading directory on ones that cannot be accessed.
 
     FS operations - mkdir/mkfile/delete/etc. 
     FS operations - Dialog to confirm Changes
     FS operations - Dialog to show progress. I could show progress in the preview pane instead of the preview
 
-    List - do not circle back when reaching top or bottom
     List - add sort methods for each column
     List - click column header to sort (add arrow icon and reverse on second click)
     List - freeze up/down list on navs and show spinner if taking more than 100 milliseconds
@@ -122,3 +120,6 @@ Finished:
     Preview - Don't try to read files that are of certain file extensions and/or over a certain size
     Nav - if jumping up in the tree, should the cursor be set to the grand-parent of the origin directory?
         Have to manage filepath.join on windows
+    Preview - could delay showing the Preview Loading filler for a tenth of a second for smoother viewing?
+    Preview - Track whether a file was read or not, if it was, set delay to zero for following read
+    List - do not circle back when reaching top or bottom

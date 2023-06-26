@@ -10,17 +10,16 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
-
-	"golang.org/x/sys/unix"
+	// "golang.org/x/sys/unix"
 )
 
-func isHidden(fullPath string) bool {
+func isHidden(fullPath string) (bool, error) {
 	hidden := false
 	name := filepath.Base(fullPath)
 	if strings.HasPrefix(name, ".") && !strings.HasPrefix(name, "..") {
 		hidden = true
 	}
-	return hidden
+	return hidden, nil
 }
 
 func userName(f os.FileInfo) string {
