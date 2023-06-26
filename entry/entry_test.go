@@ -30,10 +30,41 @@ func TestWithAfero(t *testing.T) {
 	if b.Name() != "c" {
 		t.Errorf("expecting %s, got %s", "c", b.Name())
 	}
-	if a.SizeStr != "1 entry" {
+	if a.SizeStr != "1 item" {
 		t.Errorf("expecting %s, got %s", "1 entry", a.SizeStr)
 	}
 	if b.SizeStr != "6 B" {
 		t.Errorf("expecting %s, got %s", "6 B", b.SizeStr)
 	}
 }
+
+// func TestModTimeChange(t *testing.T) {
+// 	file, err := os.CreateTemp("", "test")
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	defer os.Remove(file.Name())
+// 	info, err := os.Stat(file.Name())
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	preMod := info.ModTime()
+// 	log.Println(preMod)
+
+// 	_, err = file.WriteString("test")
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	file.Close()
+// 	time.Sleep(1000 * time.Millisecond)
+
+// 	otherInfo, err := os.Stat(file.Name())
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	log.Println(otherInfo.ModTime(), preMod)
+// 	if !otherInfo.ModTime().After(preMod) {
+// 		t.Errorf("expecting %s, got %s", "modified", "not modified")
+// 	}
+// 	t.Error()
+// }

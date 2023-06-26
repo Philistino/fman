@@ -44,7 +44,7 @@ func TestHandleCursor(t *testing.T) {
 	}
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			n := NewNav(true, true, "Bingo", nil)
+			n := NewNav(true, true, "Bingo", nil, 0)
 			n.currentPath = tc.srcPath
 			got := n.handleCursor(tc.dstPath)
 			if got != tc.want {
@@ -76,7 +76,7 @@ func TestHandleCursorWithHistory(t *testing.T) {
 	}
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			n := NewNav(true, true, "Bingo", nil)
+			n := NewNav(true, true, "Bingo", nil, 0)
 			n.cursorHist[tc.dstPath] = tc.want
 			n.currentPath = tc.srcPath
 			got := n.handleCursor(tc.dstPath)

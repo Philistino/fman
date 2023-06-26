@@ -1,10 +1,13 @@
 package nav
 
 import (
+	"context"
 	"errors"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/Philistino/fman/entry"
 	"github.com/Philistino/fman/nav/history"
@@ -21,16 +24,19 @@ import (
 const pathSeparator = string(filepath.Separator)
 
 type Nav struct {
-	hist        history.History[string] // history of paths visited. Set to record max. 5000 entries
-	currentPath string                  // current path
-	entries     []entry.Entry           // current entries
-	showHidden  bool                    // if true, show hidden files and directories
-	dirsMixed   bool                    // if true, directories are mixed in with files
-	cursorHist  map[string]string       // path -> cursor. This can grow unchecked but should not be a problem
-	fsys        afero.Fs                // filesystem
+	mu             sync.Mutex              // mutex for Nav
+	hist           history.History[string] // history of paths visited. Set to record max. 5000 entries
+	currentPath    string                  // current path
+	entries        []entry.Entry           // current entries
+	showHidden     bool                    // if true, show hidden files and directories
+	dirsMixed      bool                    // if true, directories are mixed in with files
+	cursorHist     map[string]string       // path -> cursor. This can grow unchecked but should not be a problem
+	fsys           afero.Fs                // filesystem
+	previewer      *PreviewHandler         // previewer
+	idleWalkCancel context.CancelFunc
 }
 
-func NewNav(showHidden bool, dirsMixed bool, startPath string, fsys afero.Fs) *Nav {
+func NewNav(showHidden bool, dirsMixed bool, startPath string, fsys afero.Fs, previewDelay int) *Nav {
 
 	navi := &Nav{
 		hist:        history.NewHistory[string](5000),
@@ -39,7 +45,15 @@ func NewNav(showHidden bool, dirsMixed bool, startPath string, fsys afero.Fs) *N
 		currentPath: startPath,
 		cursorHist:  make(map[string]string),
 		fsys:        fsys,
+		previewer: NewPreviewHandler(
+			context.Background(),
+			previewDelay,
+			50_000, // 50 kB
+			100,
+			time.Second*time.Duration(30),
+		),
 	}
+
 	return navi
 }
 
@@ -58,6 +72,10 @@ func (n *Nav) Go(path string, currCursor string, currSelected []string) DirState
 		return n.newDirState(n.entries, currState, err)
 	}
 
+	if n.idleWalkCancel != nil {
+		n.idleWalkCancel()
+	}
+
 	entries, err := n.getEntries(path)
 	if err != nil {
 		return n.newDirState(n.entries, currState, err)
@@ -67,6 +85,10 @@ func (n *Nav) Go(path string, currCursor string, currSelected []string) DirState
 
 	newState.cursor = n.handleCursor(path)
 	newState.path = path
+
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	n.idleWalk()
 
 	n.hist.Go(n.currentPath)
 
@@ -111,10 +133,20 @@ func (n *Nav) Back(currSelected []string, currCursor string) DirState {
 		}
 		return n.newDirState(n.entries, currState, err)
 	}
+
+	if n.idleWalkCancel != nil {
+		n.idleWalkCancel()
+	}
+
 	entries, err := n.getEntries(newPath)
 	if err != nil {
 		return n.newDirState(n.entries, currState, err)
 	}
+
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	n.idleWalk()
+
 	commit()
 	n.cursorHist[n.currentPath] = currCursor // save the cursor for the path we are leaving
 	n.currentPath = newPath
@@ -134,10 +166,19 @@ func (n *Nav) Forward(currSelected []string, currCursor string) DirState {
 		return n.newDirState(n.entries, currState, err)
 	}
 
+	if n.idleWalkCancel != nil {
+		n.idleWalkCancel()
+	}
+
 	entries, err := n.getEntries(newPath)
 	if err != nil {
 		return n.newDirState(n.entries, currState, err)
 	}
+
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	n.idleWalk()
+
 	commit()
 	n.cursorHist[n.currentPath] = currCursor // save the cursor for the path we are leaving
 	n.currentPath = newPath
@@ -150,9 +191,27 @@ func (n *Nav) Forward(currSelected []string, currCursor string) DirState {
 // Reload reads and returns the current directory contents
 func (n *Nav) Reload(currSelected []string, currCursor string) DirState {
 	state := NavState{path: n.currentPath, cursor: currCursor, selected: mapStruct(currSelected)}
+
+	if n.idleWalkCancel != nil {
+		n.idleWalkCancel()
+	}
+
 	entries, err := n.getEntries(n.currentPath)
+
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	n.idleWalk()
+
 	n.entries = entries
 	return n.newDirState(entries, state, err)
+}
+
+// idleWalk walks the current directory in the background so they are cached by the os
+func (n *Nav) idleWalk() {
+	ctx, cancel := context.WithCancel(context.Background())
+	n.idleWalkCancel = cancel
+	go entry.WalkDown(ctx, n.fsys, n.currentPath, 3, 8, false)
+	go entry.WalkUp(ctx, n.fsys, n.currentPath, 3, 3, false)
 }
 
 func (n *Nav) CurrentPath() string {
@@ -183,4 +242,8 @@ func mapStruct[T comparable](list []T) map[T]struct{} {
 		mapped[elem] = struct{}{}
 	}
 	return mapped
+}
+
+func (n *Nav) GetPreview(ctx context.Context, path string) entry.Preview {
+	return n.previewer.GetPreview(ctx, n.fsys, path)
 }

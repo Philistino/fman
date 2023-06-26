@@ -7,42 +7,38 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/dustin/go-humanize"
 	"github.com/spf13/afero"
+	"golang.org/x/sync/errgroup"
 )
 
+type Dir struct {
+	Path    string
+	Entries []Entry
+	ModTime time.Time
+	SortO   SortOrder
+}
+
+func (d *Dir) Sort(method SortMethod, reverse bool) {
+	d.SortO.method = method
+	if reverse {
+		d.SortO.reverse = !d.SortO.reverse
+	}
+	sortEntries(d.Path, d.Entries, d.SortO)
+}
+
+// Entry represents a file or directory
 type Entry struct {
-	fs.FileInfo
-	SizeStr     string
-	ModifyTime  string
-	MimeType    string
-	SymlinkName string
-	SymLinkPath string
-	IsHidden    bool
-	SizeInt     int64
-}
-
-// Name returns the basename of the file
-//
-// this method is provided because the ui creates
-// zeroed Entry structs in one place (which it really shouldn't)
-func (e Entry) Name() string {
-	if e.FileInfo == nil {
-		return ""
-	}
-	return e.FileInfo.Name()
-}
-
-// IsDir returns whether the file is a directory
-//
-// this method is provided because the ui creates
-// zeroed Entry structs in one place (which it really shouldn't)
-func (e Entry) IsDir() bool {
-	if e.FileInfo == nil {
-		return false
-	}
-	return e.FileInfo.IsDir()
+	fs.FileInfo        // file info
+	SizeStr     string // human readable size string
+	ModifyTime  string // last modified time
+	MimeType    string // expected mime type from file extension
+	SymlinkName string // name of the symlink
+	SymLinkPath string // path of the symlink
+	IsHidden    bool   // whether the file is hidden
+	SizeInt     int64  // either size in bytes or count of entries in directory
 }
 
 func handleSymlink(fsys afero.Fs, fullPath string, file fs.FileInfo) (string, fs.FileInfo, error) {
@@ -79,9 +75,9 @@ func getSize(fsys afero.Fs, file fs.FileInfo, filePath string) (string, int64, e
 	var size string
 	lenEntries := len(entries)
 	if lenEntries == 1 {
-		size = "1 entry"
+		size = "1 item"
 	} else {
-		size = strconv.Itoa(lenEntries) + " entries"
+		size = strconv.Itoa(lenEntries) + " items"
 	}
 	return size, int64(lenEntries), nil
 }
@@ -136,16 +132,25 @@ func GetEntries(fsys afero.Fs, dirPath string, showHidden bool, dirsMixed bool) 
 	if err != nil {
 		return nil, nil, err
 	}
-	entries := make([]Entry, 0, len(files))
+	entries := make([]Entry, len(files))
+	errorS := make([]error, len(files))
 	errMap := make(map[string]error, len(files)) // TODO: use this
 
-	for _, file := range files {
-		entry, err := createEntry(fsys, dirPath, file)
-		if err != nil {
-			errMap[file.Name()] = err
-		}
-		entries = append(entries, entry)
+	group := errgroup.Group{}
+	group.SetLimit(10)
+	for i, file := range files {
+		i := i
+		file := file
+		group.Go(func() error {
+			entries[i], errorS[i] = createEntry(fsys, dirPath, file)
+			return nil
+		})
+		// TODO Do something with errors
+		// if err != nil {
+		// 	errMap[file.Name()] = err
+		// }
 	}
+	group.Wait()
 
 	sortT := SortOrder{
 		method:     NaturalSort,
@@ -159,4 +164,50 @@ func GetEntries(fsys afero.Fs, dirPath string, showHidden bool, dirsMixed bool) 
 
 	entries = sortEntries(dirPath, entries, sortT)
 	return entries, errMap, nil
+}
+
+// Check For Changes in Directory
+func CheckForChanges(fsys afero.Fs, dir Dir) (Dir, map[string]error, error) {
+	dirInfo, err := fsys.Stat(dir.Path)
+	if err != nil {
+		return Dir{}, nil, err
+	}
+	if !dirInfo.IsDir() {
+		return Dir{}, nil, errors.New("not a directory")
+	}
+	if dirInfo.ModTime() != dir.ModTime {
+		entries, errMap, err := GetEntries(fsys, dir.Path, dir.SortO.showHidden, !dir.SortO.dirsOnly)
+		dir = Dir{
+			Path:    dir.Path,
+			ModTime: dirInfo.ModTime(),
+			Entries: entries,
+			SortO:   dir.SortO,
+		}
+		return dir, errMap, err
+	}
+
+	returnEntries := make([]Entry, 0, len(dir.Entries))
+	errMap := make(map[string]error, len(dir.Entries))
+	for _, entry := range dir.Entries {
+		fullPath := filepath.Join(dir.Path, entry.Name())
+		file, err := fsys.Stat(fullPath)
+		if errors.Is(err, fs.ErrNotExist) {
+			continue
+		}
+		if err != nil {
+			errMap[entry.Name()] = err
+			continue
+		}
+		if entry.ModTime() != file.ModTime() {
+			entry, err := createEntry(fsys, dir.Path, file)
+			if err != nil {
+				errMap[file.Name()] = err
+			}
+			returnEntries = append(returnEntries, entry)
+			continue
+		}
+		returnEntries = append(returnEntries, entry)
+	}
+	dir.Entries = returnEntries
+	return dir, errMap, nil
 }

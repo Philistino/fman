@@ -6,6 +6,7 @@ import (
 
 	"github.com/Philistino/fman/entry"
 	"github.com/Philistino/fman/nav/cache"
+	"github.com/spf13/afero"
 )
 
 type PreviewHandler struct {
@@ -37,10 +38,10 @@ func NewPreviewHandler(ctx context.Context, previewDelay int, maxBytes int, cach
 	}
 }
 
-func (ph *PreviewHandler) GetPreview(ctx context.Context, path string) entry.Preview {
+func (ph *PreviewHandler) GetPreview(ctx context.Context, fsys afero.Fs, path string) entry.Preview {
 	preview, ok := ph.cache.Get(path)
 	if ok {
-		preview = entry.CreatePreview(ctx, preview, ph.maxBytes)
+		preview = entry.CreatePreview(ctx, fsys, preview, ph.maxBytes)
 		ph.cache.Set(path, preview)
 		return preview
 	}
@@ -55,7 +56,7 @@ func (ph *PreviewHandler) GetPreview(ctx context.Context, path string) entry.Pre
 	}
 
 	preview.Path = path
-	preview = entry.CreatePreview(ctx, preview, ph.maxBytes)
+	preview = entry.CreatePreview(ctx, fsys, preview, ph.maxBytes)
 	ph.cache.Set(path, preview)
 	return preview
 }
