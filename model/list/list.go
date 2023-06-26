@@ -71,11 +71,20 @@ func (list *List) Init() tea.Cmd {
 	return nil
 }
 
+// THIS CAN CAUSE A PANIC IF THE LIST IS EMPTY
+// The zero value of an entry is has a nil pointer for fs.FileInfo
 func (list *List) SelectedEntry() entry.Entry {
 	if len(list.entries) == 0 {
 		return entry.Entry{}
 	}
 	return list.entries[list.cursorIdx]
+}
+
+func (list *List) SelectedEntryName() string {
+	if len(list.entries) == 0 {
+		return ""
+	}
+	return list.entries[list.cursorIdx].Name()
 }
 
 // TODO: Change this when reimplementing the list
@@ -89,7 +98,7 @@ func (list *List) SelectedEntries() map[string]struct{} {
 }
 
 func (list *List) CursorName() string {
-	return list.SelectedEntry().Name()
+	return list.SelectedEntryName()
 }
 
 func (list *List) SetWidth(width int) {

@@ -45,23 +45,14 @@ func (list *List) View() string {
 		if entry.SymlinkName != "" {
 			content[0].WriteRune(theme.GetActiveIconTheme().SymlinkIcon)
 		} else if entry.IsDir() {
-			// content[0].WriteRune(theme.GetActiveIconTheme().FolderIcon)
 			i := icons.GetIconForReal(entry, entry.IsHidden)
-			// content[0].WriteString(lipgloss.NewStyle().Margin(0, 1).Foreground(lipgloss.Color(i.GetColorHex())).Render(i.GetGlyph()))
-			// content[0].WriteString(icons.GetIcon2(entry, entry.IsHidden))
 			content[0].WriteString(fmt.Sprintf("%s%s\033[39m", i.ColorTerm(), i.Glyph()))
 
 		} else {
-			// content[0].WriteRune(theme.GetActiveIconTheme().FileIcon)
-			// i := icons.GetIconForReal(entry, entry.IsHidden)
-			// content[0].WriteString(lipgloss.NewStyle().Margin(0, 1).Foreground(lipgloss.Color(i.GetColorHex())).Render(i.GetGlyph()))
 			content[0].WriteString(icons.GetIconTerm(entry, entry.IsHidden))
-			// content[0].WriteString(fmt.Sprintf("%s%s", i.GetColorTerm(), i.GetGlyph()))
-
 		}
 
 		content[0].WriteRune(' ')
-		// content[0].WriteString(name)
 		content[0].WriteString(strings.ReplaceAll(name, "-", "‐"))
 		content[1].WriteString(entry.SizeStr)
 		content[2].WriteString(entry.ModifyTime)

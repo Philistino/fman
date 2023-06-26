@@ -141,20 +141,37 @@ func (list *List) Update(msg tea.Msg) (List, tea.Cmd) {
 		case key.Matches(msg, keys.Map.GoToBottom): // Move to the end of the list
 			list.cursorIdx = len(list.entries) - 1
 		case key.Matches(msg, keys.Map.MoveCursorUp): // Select entry above
-			list.cursorIdx -= 1
+			if len(list.entries) == 0 {
+				return *list, nil
+			}
+			if list.cursorIdx == 0 {
+				return *list, nil
+			}
+			list.cursorIdx--
 			list.restrictIndex()
 			return *list, message.NewEntryCmd(list.SelectedEntry())
 		case key.Matches(msg, keys.Map.MoveCursorDown): // Select entry below
+			if len(list.entries) == 0 {
+				return *list, nil
+			}
+			if list.cursorIdx == len(list.entries)-1 {
+				return *list, nil
+			}
 			list.cursorIdx += 1
 			list.restrictIndex()
 			return *list, message.NewEntryCmd(list.SelectedEntry())
 		case key.Matches(msg, keys.Map.GoToParentDirectory): // Get entries from parent directory
 			return *list, message.NavUpCmd()
 		case key.Matches(msg, keys.Map.GoToSelectedDirectory): // If the selected entry is a directory. Get entries under that directory
+			if len(list.entries) == 0 {
+				return *list, nil
+			}
 			if !list.SelectedEntry().IsDir() {
 				return *list, nil
 			}
 			return *list, message.NavDownCmd(list.SelectedEntry().Name())
+
+		// TODO: Move this elsewhere
 		case key.Matches(msg, keys.Map.GoBack):
 			return *list, message.NavBackCmd()
 		case key.Matches(msg, keys.Map.GoForward):
@@ -164,7 +181,6 @@ func (list *List) Update(msg tea.Msg) (List, tea.Cmd) {
 		case key.Matches(msg, keys.Map.ShowHiddenEntries): // Show hidden files
 			return *list, message.ToggleShowHiddenCmd()
 		}
-
 	}
 	list.restrictIndex()
 	return *list, nil
