@@ -72,9 +72,9 @@ func (n *Nav) Go(path string, currCursor string, currSelected []string) DirState
 		return n.newDirState(n.entries, currState, err)
 	}
 
-	if n.idleWalkCancel != nil {
-		n.idleWalkCancel()
-	}
+	// if n.idleWalkCancel != nil {
+	// 	n.idleWalkCancel()
+	// }
 
 	entries, err := n.getEntries(path)
 	if err != nil {
@@ -134,9 +134,9 @@ func (n *Nav) Back(currSelected []string, currCursor string) DirState {
 		return n.newDirState(n.entries, currState, err)
 	}
 
-	if n.idleWalkCancel != nil {
-		n.idleWalkCancel()
-	}
+	// if n.idleWalkCancel != nil {
+	// 	n.idleWalkCancel()
+	// }
 
 	entries, err := n.getEntries(newPath)
 	if err != nil {
@@ -166,9 +166,9 @@ func (n *Nav) Forward(currSelected []string, currCursor string) DirState {
 		return n.newDirState(n.entries, currState, err)
 	}
 
-	if n.idleWalkCancel != nil {
-		n.idleWalkCancel()
-	}
+	// if n.idleWalkCancel != nil {
+	// 	n.idleWalkCancel()
+	// }
 
 	entries, err := n.getEntries(newPath)
 	if err != nil {
@@ -192,9 +192,9 @@ func (n *Nav) Forward(currSelected []string, currCursor string) DirState {
 func (n *Nav) Reload(currSelected []string, currCursor string) DirState {
 	state := NavState{path: n.currentPath, cursor: currCursor, selected: mapStruct(currSelected)}
 
-	if n.idleWalkCancel != nil {
-		n.idleWalkCancel()
-	}
+	// if n.idleWalkCancel != nil {
+	// 	n.idleWalkCancel()
+	// }
 
 	entries, err := n.getEntries(n.currentPath)
 
