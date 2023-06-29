@@ -86,6 +86,21 @@ func walkDown(
 			return ctx.Err()
 		}
 
+		// if there is an error, send it to the walkErrors channel and move on
+		if err != nil {
+			if walkErrors != nil {
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				case walkErrors <- err:
+				}
+			}
+			if !info.IsDir() {
+				return fs.SkipDir
+			}
+			return nil
+		}
+
 		maxDepthReached := maxDepth > 0 && strings.Count(path, Separator) == maxDepth
 
 		if !info.IsDir() || maxDepthReached || root == path {
