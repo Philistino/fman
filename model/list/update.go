@@ -83,6 +83,13 @@ func (list *List) handleMouseClick(msg tea.MouseMsg) tea.Cmd {
 	// Double click
 	time := time.Now()
 	if time.Sub(list.lastClickedTime) < list.clickDelay && list.SelectedEntry().IsDir() && list.cursorIdx == list.lastClickedIdx {
+
+		// If the user doesn't have permission to access the directory, return a notification
+		if list.SelectedEntry().SizeStr == "Access Denied" {
+			return message.NewNotificationCmd("Access Denied")
+		}
+
+		// Send message to update the preview pane
 		list.lastClickedIdx = -1 // reset the last clicked index
 		return message.NavDownCmd(list.SelectedEntry().Name())
 	}
@@ -168,6 +175,9 @@ func (list *List) Update(msg tea.Msg) (List, tea.Cmd) {
 			}
 			if !list.SelectedEntry().IsDir() {
 				return *list, nil
+			}
+			if list.SelectedEntry().SizeStr == "Access Denied" {
+				return *list, message.NewNotificationCmd("Access Denied")
 			}
 			return *list, message.NavDownCmd(list.SelectedEntry().Name())
 
