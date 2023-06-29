@@ -95,9 +95,6 @@ func walkDown(
 				case walkErrors <- err:
 				}
 			}
-			if !info.IsDir() {
-				return fs.SkipDir
-			}
 			return nil
 		}
 
