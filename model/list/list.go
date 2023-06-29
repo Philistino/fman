@@ -103,10 +103,12 @@ func (list *List) CursorName() string {
 
 func (list *List) SetWidth(width int) {
 	list.width = width
+	list.flexBox.SetWidth(width)
 }
 
 func (list *List) SetHeight(height int) {
 	list.height = height
+	list.flexBox.SetHeight(height)
 }
 
 func (list *List) IsEmpty() bool {
@@ -119,16 +121,6 @@ func max(a, b int) int {
 	}
 
 	return b
-}
-
-func truncateText(str string, max int) string {
-	// "hello world" -> "hello wo..."
-
-	if len(str) > max {
-		return str[:max-3] + "..."
-	}
-
-	return str
 }
 
 // Focused returns the focus state of the table.

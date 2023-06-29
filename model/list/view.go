@@ -7,6 +7,7 @@ import (
 	"github.com/Philistino/fman/icons"
 	"github.com/Philistino/fman/theme"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/mattn/go-runewidth"
 	"github.com/muesli/termenv"
 )
 
@@ -29,6 +30,13 @@ func (list *List) View() string {
 	contents[2].WriteString(termenv.String(" Modify Time").Italic().String())
 	contents[2].WriteByte('\n')
 
+	if len(list.entries) == 0 {
+		for i := 0; i < cellsLength; i++ {
+			list.flexBox.Row(0).Cell(i).SetContent(contents[i].String())
+		}
+		return lipgloss.JoinHorizontal(lipgloss.Center, list.flexBox.Render(), lipgloss.Place(list.flexBox.GetWidth(), 1, lipgloss.Center, lipgloss.Center, "This directory is empty"))
+	}
+
 	startIndex := max(0, list.cursorIdx-list.maxEntryToShow)
 	stopIndex := startIndex + list.maxEntryToShow + (list.height * 1 / 4)
 
@@ -40,7 +48,7 @@ func (list *List) View() string {
 		entry := list.entries[index]
 		content := make([]strings.Builder, cellsLength)
 
-		name := truncateText(entry.Name(), list.truncateLimit-2)
+		name := runewidth.Truncate(entry.Name(), list.truncateLimit-2, "...")
 
 		if entry.SymlinkName != "" {
 			content[0].WriteRune(theme.GetActiveIconTheme().SymlinkIcon)
@@ -107,5 +115,5 @@ func (list *List) View() string {
 		list.flexBox.Row(0).Cell(i).SetContent(contents[i].String())
 	}
 
-	return list.flexBox.Render()
+	return lipgloss.NewStyle().Margin(1, 0).Render(list.flexBox.Render())
 }

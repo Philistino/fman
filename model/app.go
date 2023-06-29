@@ -4,7 +4,6 @@ import (
 	"context"
 	"path/filepath"
 
-	"github.com/76creates/stickers"
 	"github.com/Philistino/fman/cfg"
 	"github.com/Philistino/fman/model/dialog"
 	"github.com/Philistino/fman/model/infobar"
@@ -35,8 +34,6 @@ type App struct {
 
 	width  int
 	height int
-
-	flexBox *stickers.FlexBox
 
 	help     help.Model
 	showHelp bool
@@ -75,7 +72,6 @@ func NewApp(cfg cfg.Cfg, selectedTheme colors.Theme, fsys afero.Fs) *App {
 		navBtns:    newNavBtns(),
 		infobar:    infobar.New(),
 		dialog:     dialog.New(),
-		flexBox:    stickers.NewFlexBox(0, 0),
 		navi:       nav.NewNav(!*cfg.NoHidden, *cfg.DirsMixed, absPath, fsys, *cfg.PreviewDelay),
 		breadcrumb: newBrdCrumb(),
 		theme:      selectedTheme,
@@ -83,16 +79,6 @@ func NewApp(cfg cfg.Cfg, selectedTheme colors.Theme, fsys afero.Fs) *App {
 	}
 	app.help.FullSeparator = "   "
 	app.help.ShowAll = true
-
-	rows := []*stickers.FlexBoxRow{
-		app.flexBox.NewRow().AddCells(
-			[]*stickers.FlexBoxCell{
-				stickers.NewFlexBoxCell(7, 1).SetStyle(theme.ListStyle), // List
-				stickers.NewFlexBoxCell(3, 1),                           // Entry Information
-			},
-		),
-	}
-	app.flexBox.AddRows(rows)
 
 	return &app
 }
@@ -177,21 +163,20 @@ func (app *App) View() string {
 
 	var view string
 	switch {
-	case app.list.IsEmpty():
-		view = app.renderFull(theme.EmptyFolderStyle.Render("This folder is empty"))
+	// case app.list.IsEmpty():
+	// 	view = app.renderFull(theme.EmptyFolderStyle.Render("This folder is empty"))
 	case app.showHelp:
 		view = app.renderFull(theme.EmptyFolderStyle.Render(app.help.View(keys.Map)))
 	default:
-		app.flexBox.ForceRecalculate()
-		row := app.flexBox.Row(0)
-		// Set content of list view
-		row.Cell(0).SetContent(app.list.View())
-		// Set content of entry view
-		row.Cell(1).SetContent(app.preview.View())
-		view = zone.Mark("list", app.flexBox.Render())
+		view = lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			app.list.View(),
+			app.preview.View(),
+		)
+		view = zone.Mark("list", view)
 	}
 
-	secondRow := lipgloss.JoinHorizontal(lipgloss.Center, app.navBtns.View(), app.breadcrumb.View())
+	secondRow := lipgloss.JoinHorizontal(lipgloss.Top, app.navBtns.View(), app.breadcrumb.View())
 
 	return zone.Scan(lipgloss.JoinVertical(
 		lipgloss.Top,
@@ -204,8 +189,8 @@ func (app *App) View() string {
 
 func (app *App) renderFull(str string) string {
 	return lipgloss.Place(
-		app.flexBox.GetWidth(),
-		app.flexBox.GetHeight(),
+		app.width,
+		app.height,
 		lipgloss.Center,
 		lipgloss.Center,
 		str,
@@ -217,13 +202,11 @@ func (app *App) renderFull(str string) string {
 func (app *App) manageSizes(height, width int) {
 	app.width = width
 	app.height = height
-	app.flexBox.SetHeight(height - lipgloss.Height(app.navBtns.View()) - lipgloss.Height(app.navBtns.View()) - lipgloss.Height(app.fileBtns.View()))
-	app.flexBox.SetWidth(width)
-	app.flexBox.ForceRecalculate()
-	app.list.SetWidth(app.flexBox.Row(0).Cell(0).GetWidth())
-	app.list.SetHeight(app.flexBox.GetHeight())
-	app.preview.SetWidth(app.flexBox.Row(0).Cell(1).GetWidth())
-	app.preview.SetHeight(app.flexBox.GetHeight())
+	app.list.SetHeight(height - lipgloss.Height(app.navBtns.View()) - lipgloss.Height(app.navBtns.View()) - lipgloss.Height(app.fileBtns.View()) - 2) // maybe remove the -1?
+	listWidth := (width * 2) / 3
+	app.list.SetWidth(listWidth)
+	app.preview.SetHeight(height - lipgloss.Height(app.navBtns.View()) - lipgloss.Height(app.navBtns.View()) - lipgloss.Height(app.fileBtns.View()))
+	app.preview.SetWidth(width - listWidth)
 	app.help.Width = width
 	app.breadcrumb.SetWidth(width - lipgloss.Width(app.navBtns.View()))
 }
