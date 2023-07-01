@@ -9,7 +9,6 @@ import (
 	zone "github.com/lrstanley/bubblezone"
 )
 
-// TestDialogFocus tests the focus behaviour
 func TestDialogFocus(t *testing.T) {
 	dialog := NewDialogBox()
 	if dialog.focused {
@@ -20,21 +19,20 @@ func TestDialogFocus(t *testing.T) {
 	if dialog.selected != 0 {
 		t.Errorf("dialog should not have changed")
 	}
-
-	dialog, _ = dialog.Update(message.AskDialogMsg("test"))
+	msg := message.AskDialogGenericCmd("", "Is go the best?", []string{"Yes", "No"})()
+	dialog, _ = dialog.Update(msg)
 	if !dialog.focused {
 		t.Errorf("dialog should be focused")
 	}
-	dialog, _ = dialog.Update(message.AnswerDialogMsg(true))
+	dialog, _ = dialog.Update(tea.KeyMsg(tea.Key{Type: tea.KeyEnter}))
 	if dialog.focused {
 		t.Errorf("dialog should not be focused")
 	}
 }
 
-// TestDialogKeys tests the key behaviour
 func TestDialogKeys(t *testing.T) {
 	dialog := NewDialogBox()
-	dialog, _ = dialog.Update(message.AskDialogMsg("test"))
+	dialog, _ = dialog.Update(message.AskDialogGenericCmd("", "Is go the best?", []string{"Yes", "No"})())
 	if dialog.selected != 0 {
 		t.Errorf("dialog should have selected the first choice")
 	}
@@ -69,7 +67,7 @@ func TestDialogKeys(t *testing.T) {
 
 func TestDialogSelectionFalse(t *testing.T) {
 	dialog := NewDialogBox()
-	dialog, _ = dialog.Update(message.AskDialogMsg("test"))
+	dialog, _ = dialog.Update(message.AskDialogGenericCmd("", "Is go the best?", []string{"Yes", "No"})())
 
 	dialog, cmd := dialog.Update(tea.KeyMsg(tea.Key{Type: tea.KeyEnter}))
 	if dialog.focused {
@@ -78,32 +76,32 @@ func TestDialogSelectionFalse(t *testing.T) {
 	if cmd == nil {
 		t.Errorf("dialog should have returned a command")
 	}
-	answer, ok := cmd().(message.AnswerDialogMsg)
+	answer, ok := cmd().(AnswerDialogMsg)
 	if !ok {
 		t.Errorf("dialog should have returned a message.AnswerDialogCmd")
 	}
-	if answer {
-		t.Errorf("dialog should have returned false")
+	if answer.Answer() != "Yes" {
+		t.Errorf("dialog should have returned Yes")
 	}
 }
 
 func TestDialogSelectionTrue(t *testing.T) {
 	dialog := NewDialogBox()
-	dialog, _ = dialog.Update(message.AskDialogMsg("test"))
+	dialog, _ = dialog.Update(message.AskDialogGenericCmd("", "Is go the best?", []string{"Yes", "No"})())
 	dialog, _ = dialog.Update(tea.KeyMsg(tea.Key{Type: tea.KeyRight}))
 	dialog, cmd := dialog.Update(tea.KeyMsg(tea.Key{Type: tea.KeyEnter}))
-	if dialog.focused {
+	if dialog.Focused() {
 		t.Errorf("dialog should not be focused")
 	}
 	if cmd == nil {
 		t.Errorf("dialog should have returned a command")
 	}
-	answer, ok := cmd().(message.AnswerDialogMsg)
+	answer, ok := cmd().(AnswerDialogMsg)
 	if !ok {
 		t.Errorf("dialog should have returned a message.AnswerDialogCmd")
 	}
-	if !answer {
-		t.Errorf("dialog should have returned true")
+	if answer.Answer() != "No" {
+		t.Errorf("dialog should have returned No")
 	}
 }
 
@@ -111,10 +109,8 @@ func TestDialogView(t *testing.T) {
 	zone.NewGlobal()
 	dialog := NewDialogBox()
 	options := []string{"Bingo", "Bango"}
-	dialog, _ = dialog.Update(message.AskDialogMsg(""))
-	dialog.SetChoices(options)
 	msgTxt := "This is a test"
-	dialog.SetMessage(msgTxt)
+	dialog, _ = dialog.Update(message.AskDialogGenericCmd("", msgTxt, options)())
 	dialog, _ = dialog.Update(tea.KeyMsg(tea.Key{Type: tea.KeyRight}))
 	dialog, _ = dialog.Update(tea.KeyMsg(tea.Key{Type: tea.KeyEnter}))
 	dialog.SetHeight(200)
@@ -127,27 +123,6 @@ func TestDialogView(t *testing.T) {
 		t.Errorf("dialog view should contain the confirm button")
 	}
 	if !strings.Contains(view, options[1]) {
-		t.Errorf("dialog view should contain the cancel button")
-	}
-}
-
-func TestDialogDefaultsView(t *testing.T) {
-	zone.NewGlobal()
-	dialog := NewDialogBox()
-	msgTxt := "This is a test"
-	dialog, _ = dialog.Update(message.AskDialogMsg(msgTxt))
-	dialog, _ = dialog.Update(tea.KeyMsg(tea.Key{Type: tea.KeyRight}))
-	dialog, _ = dialog.Update(tea.KeyMsg(tea.Key{Type: tea.KeyEnter}))
-	dialog.SetHeight(200)
-	dialog.SetWidth(300)
-	view := dialog.View()
-	if !strings.Contains(view, msgTxt) {
-		t.Errorf("dialog view should contain the message")
-	}
-	if !strings.Contains(view, "confirm") {
-		t.Errorf("dialog view should contain the confirm button")
-	}
-	if !strings.Contains(view, "cancel") {
 		t.Errorf("dialog view should contain the cancel button")
 	}
 }

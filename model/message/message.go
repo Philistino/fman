@@ -35,19 +35,31 @@ func SelectedCmd(selected map[string]struct{}) tea.Cmd {
 	}
 }
 
-type AskDialogMsg string
-
-func AskDialogCmd(message string) tea.Cmd {
-	return func() tea.Msg {
-		return AskDialogMsg(message)
-	}
+type AskDialogGeneric struct {
+	id      string
+	message string
+	options []string
 }
 
-type AnswerDialogMsg bool
+func (d AskDialogGeneric) ID() string {
+	return d.id
+}
 
-func AnswerDialogCmd(answer bool) tea.Cmd {
+func (d AskDialogGeneric) Message() string {
+	return d.message
+}
+
+func (d AskDialogGeneric) Options() []string {
+	return d.options
+}
+
+func AskDialogGenericCmd(id string, message string, options []string) tea.Cmd {
 	return func() tea.Msg {
-		return AnswerDialogMsg(answer)
+		return AskDialogGeneric{
+			id:      id,
+			message: message,
+			options: options,
+		}
 	}
 }
 

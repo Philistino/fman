@@ -60,7 +60,7 @@ func (app *App) Init() tea.Cmd {
 }
 
 func NewApp(cfg cfg.Cfg, selectedTheme colors.Theme, fsys afero.Fs) *App {
-	absPath, err := filepath.Abs(cfg.Path)
+	absPath, err := filepath.Abs(filepath.Clean(cfg.Path))
 	if err != nil {
 		panic(err)
 	}
