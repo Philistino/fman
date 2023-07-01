@@ -8,6 +8,12 @@ import (
 	zone "github.com/lrstanley/bubblezone"
 )
 
+type ActiveNavBtns interface {
+	BackActive() bool
+	ForwardActive() bool
+	UpActive() bool
+}
+
 // navBtns handle the back/forward/up navigation buttons in the toolbar
 type navBtns struct {
 	backActive bool
@@ -24,11 +30,16 @@ func (toolbar *navBtns) Init() tea.Cmd {
 }
 
 func (toolbar *navBtns) Update(msg tea.Msg) (*navBtns, tea.Cmd) {
-	switch msg := msg.(type) {
-	case message.DirChangedMsg:
+	_, ok := msg.(ActiveNavBtns)
+	if ok {
+		msg := msg.(ActiveNavBtns)
 		toolbar.backActive = msg.BackActive()
 		toolbar.fwdActive = msg.ForwardActive()
 		toolbar.upActive = msg.UpActive()
+		return toolbar, nil
+	}
+
+	switch msg := msg.(type) {
 	case tea.MouseMsg:
 		if msg.Type != tea.MouseLeft {
 			return toolbar, nil
