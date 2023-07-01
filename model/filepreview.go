@@ -78,7 +78,6 @@ func NewFilePreviewer(theme colors.Theme, previewDelay int) *filePreview {
 
 func (fp *filePreview) Init() tea.Cmd {
 	return fp.spinner.Tick
-	// return nil
 }
 
 func (fp *filePreview) setNewEntry(entry entry.Entry) tea.Cmd {

@@ -114,11 +114,6 @@ func (list *List) Update(msg tea.Msg) (List, tea.Cmd) {
 		list.lastKeyCharacter = ' '
 		return *list, list.clearLastKey()
 
-	// delete this:
-	case message.NewEntryMsg:
-		// list.Blur()
-		return *list, message.AskDialogCmd("Is go the best?")
-
 	case tea.KeyMsg:
 		switch {
 

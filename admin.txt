@@ -2,20 +2,12 @@ Todo:
 
     Make UI components accept interfaces, particularly important for Entry
 
-    Cache up to root, down three levels (if not at root?)
-        Measure read times for each device and cache if needed?
-        Check chmod on re-read for cached dirs
-        For cache pruning, count slashes in path to know relative distance to CWD
-    Pre-walk
-
     When reading a directory, do not return on first error, but do something with the errors
-    Nav - read directories in new go routine with cancellable context. If a new read dir request comes in for a different directory
-        Cancel the old request and start the new one (if not caching).
-        Or just cache the read when it comes back
+    Nav - pause pre-walkers?
 
     Breadcrumb - need to handle clicks leaf -> root. There is a bug that misallocates clicks when the breadcrump is truncated
         Mostly fixed - add tests
-    breadcrumb - still an issue reading clicks when truncated, with a long path, and clicking second to last dir
+    Breadcrumb - still an issue reading clicks when truncated, with a long path, and clicking second to last dir
 
     Preview - toggle preview pane visibility
     Preview - could preview directories
@@ -24,11 +16,8 @@ Todo:
     Preview - Change behavior based on type of drive? https://stackoverflow.com/questions/62731962/get-list-of-fixed-drives 
     Preview - Because secondary reads on a file are immediate if cached but the read time is updated Because we check modtime, the LRU 
         is affected by "uses" that could merely be times when the file is navigated over.
-    Preview - Hanging on loading directory on ones that cannot be accessed.
-    Preview - if permission denied or other error, do not show loading directory message
 
     FS operations - mkdir/mkfile/delete/etc. 
-    FS operations - Dialog to confirm Changes
     FS operations - Dialog to show progress. I could show progress in the preview pane instead of the preview
 
     List - add sort methods for each column
@@ -38,6 +27,7 @@ Todo:
     List - Multi-select filesystem objects
     List - Emit msgs on selection changes
         If multi-selecting, what to do with preview? Show preview for cursor or none?
+    List - Show "This folder is empty." on empty folder. Once 
 
     Icons - clean up
     Icons - keep all directory icons the same color
@@ -50,10 +40,10 @@ Todo:
 
     Infobar - need to track state of messages. If a new message comes in before the last one is cleared, clear the old message for a moment and add the new message
         make sure the old clear duration is ignored when it comes 
+    Infobar - clear "Access denied" message on a dir change 
 
     Should I put all keys in one model or handle different key messages based on domain?
         The issue is navigation key presses could go on the nav buttons, file list, or global
-    Implement real navigation history - Done but need to write some tests
     Put long error messages in a pop-up box at bottom and shorten other views. Can freeze list?
     Pull navigation state out of UI
     Only change working directory on exit - this makes sense if not execing commands
@@ -62,11 +52,25 @@ Todo:
     Clean up theme/icon configuration and globals
         Icon sets and themes should be enums
     Return early if starting directory DNE or not reachable
-    Clean filepaths that are read from cli/config file
     Live toggle-able themes
 
+    What are the possible states?
+    Right panel
+        Hidden
+        Loading file preview
+        Previewing file
+        Dialog
+        Showing progress bars w/ cancel button?
+        Previewing directory?
+    Center panel
+        Loading directory
+        Showing directory
+        Showing empty directory
+    Left panel
+        Hidden
+        Quick access
+
     Caching filesystem reads
-    Read aheads in filetree
         
     Big features:
         Implement search (fzf?)
@@ -121,3 +125,11 @@ Finished:
     Preview - could delay showing the Preview Loading filler for a tenth of a second for smoother viewing?
     Preview - Track whether a file was read or not, if it was, set delay to zero for following read
     List - do not circle back when reaching top or bottom
+    Preview - if permission denied or other error, do not show loading directory message
+    Preview - Hanging on loading directory on ones that cannot be accessed.
+    Preview - show "Select a file to preview." on empty folder
+    Implement real navigation history
+    Read aheads in filetree
+    Clean filepaths that are read from cli/config file
+    FS operations - Dialog to confirm Changes
+

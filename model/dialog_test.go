@@ -19,7 +19,7 @@ func TestDialogFocus(t *testing.T) {
 	if dialog.selected != 0 {
 		t.Errorf("dialog should not have changed")
 	}
-	msg := message.AskDialogGenericCmd("", "Is go the best?", []string{"Yes", "No"})()
+	msg := message.AskDialogCmd("", "Is go the best?", []string{"Yes", "No"})()
 	dialog, _ = dialog.Update(msg)
 	if !dialog.focused {
 		t.Errorf("dialog should be focused")
@@ -32,7 +32,7 @@ func TestDialogFocus(t *testing.T) {
 
 func TestDialogKeys(t *testing.T) {
 	dialog := NewDialogBox()
-	dialog, _ = dialog.Update(message.AskDialogGenericCmd("", "Is go the best?", []string{"Yes", "No"})())
+	dialog, _ = dialog.Update(message.AskDialogCmd("", "Is go the best?", []string{"Yes", "No"})())
 	if dialog.selected != 0 {
 		t.Errorf("dialog should have selected the first choice")
 	}
@@ -67,7 +67,7 @@ func TestDialogKeys(t *testing.T) {
 
 func TestDialogSelectionFalse(t *testing.T) {
 	dialog := NewDialogBox()
-	dialog, _ = dialog.Update(message.AskDialogGenericCmd("", "Is go the best?", []string{"Yes", "No"})())
+	dialog, _ = dialog.Update(message.AskDialogCmd("", "Is go the best?", []string{"Yes", "No"})())
 
 	dialog, cmd := dialog.Update(tea.KeyMsg(tea.Key{Type: tea.KeyEnter}))
 	if dialog.focused {
@@ -87,7 +87,7 @@ func TestDialogSelectionFalse(t *testing.T) {
 
 func TestDialogSelectionTrue(t *testing.T) {
 	dialog := NewDialogBox()
-	dialog, _ = dialog.Update(message.AskDialogGenericCmd("", "Is go the best?", []string{"Yes", "No"})())
+	dialog, _ = dialog.Update(message.AskDialogCmd("", "Is go the best?", []string{"Yes", "No"})())
 	dialog, _ = dialog.Update(tea.KeyMsg(tea.Key{Type: tea.KeyRight}))
 	dialog, cmd := dialog.Update(tea.KeyMsg(tea.Key{Type: tea.KeyEnter}))
 	if dialog.Focused() {
@@ -110,7 +110,7 @@ func TestDialogView(t *testing.T) {
 	dialog := NewDialogBox()
 	options := []string{"Bingo", "Bango"}
 	msgTxt := "This is a test"
-	dialog, _ = dialog.Update(message.AskDialogGenericCmd("", msgTxt, options)())
+	dialog, _ = dialog.Update(message.AskDialogCmd("", msgTxt, options)())
 	dialog, _ = dialog.Update(tea.KeyMsg(tea.Key{Type: tea.KeyRight}))
 	dialog, _ = dialog.Update(tea.KeyMsg(tea.Key{Type: tea.KeyEnter}))
 	dialog.SetHeight(200)
