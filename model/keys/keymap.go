@@ -20,6 +20,11 @@ type KeyMap struct {
 	OpenFile              key.Binding
 	ShowHiddenEntries     key.Binding
 	ToggleHelp            key.Binding
+	MultiSelectUp         key.Binding
+	MultiSelectDown       key.Binding
+	MultiSelectAll        key.Binding
+	MultiSelectToTop      key.Binding
+	MultiSelectToBottom   key.Binding
 }
 
 var Map = KeyMap{
@@ -81,6 +86,26 @@ var Map = KeyMap{
 	),
 	ToggleHelp: key.NewBinding(
 		key.WithKeys("?"),
+	),
+	MultiSelectUp: key.NewBinding(
+		key.WithKeys("shift+up", "shift+k"),
+		key.WithHelp("shift+up/shift+k", "multi-select up"),
+	),
+	MultiSelectDown: key.NewBinding(
+		key.WithKeys("shift+down", "shift+j"),
+		key.WithHelp("shift+down/shift+j", "multi-select down"),
+	),
+	MultiSelectToTop: key.NewBinding(
+		key.WithKeys("shift+home"),
+		key.WithHelp("ctrl+shift+up", "multi-select to top"),
+	),
+	MultiSelectToBottom: key.NewBinding(
+		key.WithKeys("shift+end"),
+		key.WithHelp("ctrl+shift+down", "multi-select to bottom"),
+	),
+	MultiSelectAll: key.NewBinding(
+		key.WithKeys("ctrl+a"),
+		key.WithHelp("ctrl+a", "select all"),
 	),
 }
 

@@ -1,6 +1,7 @@
 package model
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -30,13 +31,13 @@ func TestUpdateView(t *testing.T) {
 		},
 		{
 			desc:         "path is /one/two/three",
-			path:         "/one/two/three",
-			wantContains: []string{"/", "one", "two", "three"},
+			path:         filepath.Join(pathSeparator, "one", "two", "three"),
+			wantContains: []string{pathSeparator, "one", "two", "three"},
 			wantLen:      4,
 		},
 		{
 			desc:         "path is C:/one/two/three",
-			path:         "C:/one/two/three",
+			path:         filepath.Join("C:", pathSeparator, "one", "two", "three"),
 			wantContains: []string{"C:", "one", "two", "three"},
 			wantLen:      4,
 		},
@@ -61,14 +62,14 @@ func TestUpdateView(t *testing.T) {
 			b.SetWidth(1000)
 			b.updateView(tc.path)
 			if len(b.viewParts) != tc.wantLen {
-				t.Errorf("TestUpdateView failed for testcase '%s': want len %d, got %d", tc.desc, tc.wantLen, len(b.viewParts))
+				t.Errorf("TestUpdateView failed for testcase '%s': want len %d, got %d, %q", tc.desc, tc.wantLen, len(b.viewParts), b.viewParts)
 			}
 			for i, want := range tc.wantContains {
 				if !strings.Contains(b.viewParts[i], want) {
-					t.Errorf("TestUpdateView failed for testcase '%s': %s not found", tc.desc, want)
+					t.Errorf("TestUpdateView failed for testcase '%s': '%s' not found", tc.desc, want)
 				}
 				if !strings.Contains(b.View(), want) {
-					t.Errorf("TestUpdateView failed for testcase '%s': %s not found in View()", tc.desc, want)
+					t.Errorf("TestUpdateView failed for testcase '%s': '%s' not found in View()", tc.desc, want)
 				}
 			}
 		})

@@ -1,10 +1,8 @@
 package list
 
 import (
-	"path/filepath"
 	"time"
 
-	"github.com/Philistino/fman/entry"
 	"github.com/Philistino/fman/model/keys"
 	"github.com/Philistino/fman/model/message"
 	"github.com/charmbracelet/bubbles/key"
@@ -24,14 +22,6 @@ func (list *List) restrictIndex() {
 	} else if list.cursorIdx >= len(list.entries) {
 		list.cursorIdx = 0
 	}
-}
-
-func getFullPath(entry entry.Entry, path string) string {
-	if entry.SymLinkPath != "" {
-		return entry.SymLinkPath
-	}
-
-	return filepath.Join(path, entry.Name())
 }
 
 func (list *List) handlePathChange(newDir message.DirChangedMsg) tea.Cmd {
@@ -64,7 +54,7 @@ func (list *List) handlePathChange(newDir message.DirChangedMsg) tea.Cmd {
 	list.restrictIndex()
 	list.flexBox.ForceRecalculate()
 	if len(list.entries) == 0 {
-		return nil
+		return message.EmptyDirCmd()
 	}
 	return message.NewEntryCmd(list.SelectedEntry())
 }
@@ -123,6 +113,12 @@ func (list *List) Update(msg tea.Msg) (List, tea.Cmd) {
 	case message.ClearKeyMsg:
 		list.lastKeyCharacter = ' '
 		return *list, list.clearLastKey()
+
+	// delete this:
+	case message.NewEntryMsg:
+		// list.Blur()
+		return *list, message.AskDialogCmd("Is go the best?")
+
 	case tea.KeyMsg:
 		switch {
 

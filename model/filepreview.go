@@ -203,6 +203,9 @@ func (fp *filePreview) Update(msg tea.Msg) (*filePreview, tea.Cmd) {
 	case previewReadyMsg:
 		fp.state = previewing
 		fp.handlePreviewMsg(msg)
+	case message.EmptyDirMsg:
+		fp.state = previewing
+		fp.viewPort.SetContent(fp.renderNoPreview("Select a file to preview"))
 	case tea.KeyMsg:
 		if key.Matches(msg, keys.Map.ScrollPreviewDown) {
 			fp.viewPort.LineDown(1)

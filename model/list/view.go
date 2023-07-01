@@ -34,7 +34,7 @@ func (list *List) View() string {
 		for i := 0; i < cellsLength; i++ {
 			list.flexBox.Row(0).Cell(i).SetContent(contents[i].String())
 		}
-		return lipgloss.JoinHorizontal(lipgloss.Center, list.flexBox.Render(), lipgloss.Place(list.flexBox.GetWidth(), 1, lipgloss.Center, lipgloss.Center, "This directory is empty"))
+		return lipgloss.JoinVertical(lipgloss.Center, list.flexBox.Render(), lipgloss.Place(list.flexBox.GetWidth(), 1, lipgloss.Center, lipgloss.Center, "This directory is empty"))
 	}
 
 	startIndex := max(0, list.cursorIdx-list.maxEntryToShow)

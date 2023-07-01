@@ -9,7 +9,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/Philistino/fman/entry"
-	"github.com/Philistino/fman/model/dialog"
 	"github.com/Philistino/fman/nav"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -23,6 +22,40 @@ type NewEntryMsg struct {
 func NewEntryCmd(newEntry entry.Entry) tea.Cmd {
 	return func() tea.Msg {
 		return NewEntryMsg{Entry: newEntry}
+	}
+}
+
+type SelectedMsg struct {
+	selected map[string]struct{}
+}
+
+func SelectedCmd(selected map[string]struct{}) tea.Cmd {
+	return func() tea.Msg {
+		return SelectedMsg{selected}
+	}
+}
+
+type AskDialogMsg string
+
+func AskDialogCmd(message string) tea.Cmd {
+	return func() tea.Msg {
+		return AskDialogMsg(message)
+	}
+}
+
+type AnswerDialogMsg bool
+
+func AnswerDialogCmd(answer bool) tea.Cmd {
+	return func() tea.Msg {
+		return AnswerDialogMsg(answer)
+	}
+}
+
+type EmptyDirMsg struct{}
+
+func EmptyDirCmd() tea.Cmd {
+	return func() tea.Msg {
+		return EmptyDirMsg{}
 	}
 }
 
@@ -47,10 +80,6 @@ func NewNotificationCmd(message string) tea.Cmd {
 	return func() tea.Msg {
 		return NewNotificationMsg{message}
 	}
-}
-
-type UpdateDialogMsg struct {
-	Dialog dialog.Dialog
 }
 
 // InternalCopyMsg is used to communicate to the main program
@@ -225,12 +254,6 @@ func NavOtherCmd(path string) tea.Cmd {
 		return NavOtherMsg{
 			Path: path,
 		}
-	}
-}
-
-func UpdateDialog(dialog *dialog.Dialog) tea.Cmd {
-	return func() tea.Msg {
-		return UpdateDialogMsg{Dialog: *dialog}
 	}
 }
 

@@ -9,7 +9,6 @@ import (
 )
 
 // navBtns handle the back/forward/up navigation buttons in the toolbar
-
 type navBtns struct {
 	backActive bool
 	fwdActive  bool

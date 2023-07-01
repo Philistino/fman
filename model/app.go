@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 
 	"github.com/Philistino/fman/cfg"
-	"github.com/Philistino/fman/model/dialog"
 	"github.com/Philistino/fman/model/infobar"
 	"github.com/Philistino/fman/model/keys"
 	"github.com/Philistino/fman/model/list"
@@ -29,7 +28,7 @@ type App struct {
 	preview    *filePreview
 	navBtns    *navBtns
 	infobar    infobar.Infobar
-	dialog     dialog.Model
+	dialog     *dialogBox
 	breadcrumb *breadCrumb
 
 	width  int
@@ -71,7 +70,7 @@ func NewApp(cfg cfg.Cfg, selectedTheme colors.Theme, fsys afero.Fs) *App {
 		preview:    NewFilePreviewer(selectedTheme, *cfg.PreviewDelay),
 		navBtns:    newNavBtns(),
 		infobar:    infobar.New(),
-		dialog:     dialog.New(),
+		dialog:     NewDialogBox(),
 		navi:       nav.NewNav(!*cfg.NoHidden, *cfg.DirsMixed, absPath, fsys, *cfg.PreviewDelay),
 		breadcrumb: newBrdCrumb(),
 		theme:      selectedTheme,
@@ -89,9 +88,6 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		app.manageSizes(msg.Height, msg.Width)
-	case message.UpdateDialogMsg:
-		app.dialog.SetDialog(&msg.Dialog)
-		return app, nil
 	case message.NavBackMsg:
 		cmd = message.HandleBackCmd(app.navi, []string{app.list.SelectedEntryName()}, app.list.CursorName())
 		cmds = append(cmds, cmd)
@@ -135,7 +131,7 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	var listCmd, toolbarCmd, entryCmd, infobarCmd, buttonBarCmd, breadCrmbCmd tea.Cmd
+	var listCmd, toolbarCmd, entryCmd, infobarCmd, buttonBarCmd, breadCrmbCmd, dialogCmd tea.Cmd
 
 	app.list, listCmd = app.list.Update(msg)
 	app.navBtns, toolbarCmd = app.navBtns.Update(msg)
@@ -143,28 +139,23 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	app.infobar, infobarCmd = app.infobar.Update(msg)
 	app.fileBtns, buttonBarCmd = app.fileBtns.Update(msg)
 	app.breadcrumb, breadCrmbCmd = app.breadcrumb.Update(msg)
+	app.dialog, dialogCmd = app.dialog.Update(msg)
 
-	cmds = append(cmds, listCmd, toolbarCmd, entryCmd, infobarCmd, buttonBarCmd, breadCrmbCmd)
+	cmds = append(cmds, listCmd, toolbarCmd, entryCmd, infobarCmd, buttonBarCmd, breadCrmbCmd, dialogCmd)
 
 	return app, tea.Batch(cmds...)
 }
 
 func (app *App) View() string {
-	// Render the dialog if it is open
-	if app.dialog.Dialog().IsOpen() {
-		return zone.Scan(lipgloss.Place(
-			app.width,
-			app.height,
-			lipgloss.Center,
-			lipgloss.Center,
-			app.dialog.View(),
-		))
-	}
 
 	var view string
 	switch {
-	// case app.list.IsEmpty():
-	// 	view = app.renderFull(theme.EmptyFolderStyle.Render("This folder is empty"))
+	case app.dialog.Focused():
+		view = lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			app.list.View(),
+			app.dialog.View(),
+		)
 	case app.showHelp:
 		view = app.renderFull(theme.EmptyFolderStyle.Render(app.help.View(keys.Map)))
 	default:
@@ -207,6 +198,8 @@ func (app *App) manageSizes(height, width int) {
 	app.list.SetWidth(listWidth)
 	app.preview.SetHeight(height - lipgloss.Height(app.navBtns.View()) - lipgloss.Height(app.navBtns.View()) - lipgloss.Height(app.fileBtns.View()))
 	app.preview.SetWidth(width - listWidth)
+	app.dialog.SetHeight(height - lipgloss.Height(app.navBtns.View()) - lipgloss.Height(app.navBtns.View()) - lipgloss.Height(app.fileBtns.View()))
+	app.dialog.SetWidth(width - listWidth)
 	app.help.Width = width
 	app.breadcrumb.SetWidth(width - lipgloss.Width(app.navBtns.View()))
 }
