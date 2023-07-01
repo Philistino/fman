@@ -18,35 +18,51 @@ const pathSeparator = string(filepath.Separator)
 
 var winRootRgx = regexp.MustCompile(`^[A-Za-z]:/?$`) // matches windows root paths like C:/ or D:
 
+// PathError is an interface that can be used to return a path and an error
+type PathError interface {
+	Path() string
+	Error() error
+}
+
+// breadCrumb is the model for the path breadcrumb
 type breadCrumb struct {
 	path      string
 	width     int
 	viewParts []string
 }
 
+// newBreadCrumb creates a new breadcrumb
 func newBrdCrumb() *breadCrumb {
 	return &breadCrumb{}
 }
 
+// Init initializes the model
 func (breadcrumb *breadCrumb) Init() tea.Cmd {
 	return nil
 }
 
+// Update updates the model
 func (breadcrumb *breadCrumb) Update(msg tea.Msg) (*breadCrumb, tea.Cmd) {
-	var cmd tea.Cmd
-	switch msg := msg.(type) {
-	case message.DirChangedMsg:
+	_, ok := msg.(PathError)
+	if ok {
+		msg := msg.(PathError)
 		if msg.Error() != nil {
 			return breadcrumb, nil
 		}
 		breadcrumb.path = msg.Path()
 		breadcrumb.updateView(msg.Path())
+		return breadcrumb, nil
+	}
+
+	var cmd tea.Cmd
+	switch msg := msg.(type) {
 	case tea.MouseMsg:
 		cmd = breadcrumb.handleMouseMsg(msg)
 	}
 	return breadcrumb, cmd
 }
 
+// View renders the model
 func (breadcrumb *breadCrumb) View() string {
 	parts := make([]string, 0, len(breadcrumb.viewParts))
 	for i, part := range breadcrumb.viewParts {
@@ -55,6 +71,7 @@ func (breadcrumb *breadCrumb) View() string {
 	return lipgloss.NewStyle().MarginLeft(2).Render(strings.Join(parts, ""))
 }
 
+// handleMouseMsg handles mouse clicks on the breadcrumb
 func (breadcrumb *breadCrumb) handleMouseMsg(msg tea.MouseMsg) tea.Cmd {
 	if msg.Type != tea.MouseLeft {
 		return nil
@@ -143,6 +160,7 @@ func (b *breadCrumb) SetWidth(width int) {
 	b.updateView(b.path)
 }
 
+// reverse reverses a slice
 func reverse[S ~[]E, E any](s S) {
 	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
 		s[i], s[j] = s[j], s[i]

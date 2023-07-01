@@ -30,6 +30,12 @@ func TestUpdateView(t *testing.T) {
 			wantLen:      1,
 		},
 		{
+			desc:         "path is separator",
+			path:         pathSeparator,
+			wantContains: []string{pathSeparator},
+			wantLen:      1,
+		},
+		{
 			desc:         "path is /one/two/three",
 			path:         filepath.Join(pathSeparator, "one", "two", "three"),
 			wantContains: []string{pathSeparator, "one", "two", "three"},
