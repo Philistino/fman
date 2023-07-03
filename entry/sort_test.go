@@ -147,6 +147,65 @@ func TestSort(t *testing.T) {
 			},
 			wantNames: []string{"b", "a", "z"},
 		},
+		{
+			"natural sort, dirs first, dirs only",
+			SortOrder{
+				method:    NameSort,
+				dirsFirst: true,
+				dirsOnly:  true,
+				reverse:   false,
+			},
+			[]Entry{
+				{FileInfo: fakeFileInfo{name: "a", isDir: false}},
+				{FileInfo: fakeFileInfo{name: "z", isDir: false}},
+				{FileInfo: fakeFileInfo{name: "b", isDir: false}},
+			},
+			[]string{},
+		},
+		{
+			"natural sort, dirs first, dirs only, file included",
+			SortOrder{
+				method:    NameSort,
+				dirsFirst: true,
+				dirsOnly:  true,
+				reverse:   false,
+			},
+			[]Entry{
+				{FileInfo: fakeFileInfo{name: "a", isDir: false}},
+				{FileInfo: fakeFileInfo{name: "z", isDir: true}},
+				{FileInfo: fakeFileInfo{name: "b", isDir: false}},
+			},
+			[]string{"z"},
+		},
+		{
+			"natural sort, no hidden, mixed hidden and non-hidden",
+			SortOrder{
+				method:     NameSort,
+				dirsFirst:  false,
+				dirsOnly:   false,
+				showHidden: false,
+				reverse:    false,
+			},
+			[]Entry{
+				{FileInfo: fakeFileInfo{name: "a", isDir: false}},
+				{FileInfo: fakeFileInfo{name: ".z", isDir: false}, IsHidden: true},
+				{FileInfo: fakeFileInfo{name: "b", isDir: false}},
+			},
+			[]string{"a", "b"},
+		},
+		{
+			"natural sort, no hidden, all hidden",
+			SortOrder{
+				method:     NameSort,
+				showHidden: false,
+			},
+			[]Entry{
+				{FileInfo: fakeFileInfo{name: ".a", isDir: false}, IsHidden: true},
+				{FileInfo: fakeFileInfo{name: ".z", isDir: false}, IsHidden: true},
+				{FileInfo: fakeFileInfo{name: ".b", isDir: false}, IsHidden: true},
+			},
+			[]string{},
+		},
 	}
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -181,6 +240,8 @@ func TestNaturalLess(t *testing.T) {
 		{"foo2bar", "foo10bar", true},
 		{"foo1bar", "foo10", true},
 		{"foo2bar", "foo10", true},
+		{"", "bingo", true},
+		{"bingo", "", false},
 	}
 
 	for _, test := range tests {

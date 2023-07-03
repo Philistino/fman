@@ -142,9 +142,6 @@ func sortEntries(dirPath string, entries []Entry, sortT SortOrder) []Entry {
 		}
 	}
 
-	// dir.ind = max(dir.ind, 0)
-	// dir.ind = min(dir.ind, len(entries)-1)
-
 	return entries
 }
 
