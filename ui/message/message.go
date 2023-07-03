@@ -35,13 +35,13 @@ func SelectedCmd(selected map[string]struct{}) tea.Cmd {
 	}
 }
 
-type EmptyDirMsg struct{}
+// type EmptyDirMsg struct{}
 
-func EmptyDirCmd() tea.Cmd {
-	return func() tea.Msg {
-		return EmptyDirMsg{}
-	}
-}
+// func EmptyDirCmd() tea.Cmd {
+// 	return func() tea.Msg {
+// 		return EmptyDirMsg{}
+// 	}
+// }
 
 type GetPreviewMsg struct {
 	Ctx  context.Context

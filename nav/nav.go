@@ -46,6 +46,8 @@ type Nav struct {
 	dryRun         bool // if true, do not alter the filesystem
 }
 
+// NewNav creates a new Nav struct. The startPath is the path to start the navigation at. The fsys is the filesystem to use.
+// The previewDelay is the delay in milliseconds before previewing a file. If dryRun is true, no changes will be made to the filesystem.
 func NewNav(showHidden bool, dirsMixed bool, startPath string, fsys afero.Fs, previewDelay int, dryRun bool) *Nav {
 
 	navi := &Nav{
@@ -105,6 +107,10 @@ func (n *Nav) Go(path string, currCursor string, currSelected []string) DirState
 	return n.newDirState(n.entries, newState, nil)
 }
 
+// handleCursor returns the cursor for the given destination path. If the destination is the parent of the source,
+// the cursor is set to the source. If the destination is in the history, the cursor is set to the last cursor
+// position. If the destination is a [great-]grandparent of the source, the cursor is set to the first child of
+// the source that is in the tree of the destination.
 func (n *Nav) handleCursor(dst string) string {
 	var cursor string
 	src := n.currentPath
@@ -131,10 +137,12 @@ func (n *Nav) handleCursor(dst string) string {
 	return cursor
 }
 
+// Back moves back in the history stack and returns a DirState struct
 func (n *Nav) Back(currSelected []string, currCursor string) DirState {
 	return n.fwdOrBack(currSelected, currCursor, navBack)
 }
 
+// Forward moves forward in the history stack and returns a DirState struct
 func (n *Nav) Forward(currSelected []string, currCursor string) DirState {
 	return n.fwdOrBack(currSelected, currCursor, navFwd)
 }
@@ -192,6 +200,7 @@ func (n *Nav) idleWalk() {
 	go entry.WalkUp(ctx, n.fsys, n.currentPath, 3, 3, false)
 }
 
+// CurrentPath returns the path to the current directory of the navigation instance.
 func (n *Nav) CurrentPath() string {
 	return n.currentPath
 }
@@ -222,10 +231,15 @@ func mapStruct[T comparable](list []T) map[T]struct{} {
 	return mapped
 }
 
+// GetPreview returns the preview for the file at the given path.
+// The preview is generated using the Nav instance's PreviewHandler.
 func (n *Nav) GetPreview(ctx context.Context, path string) entry.Preview {
 	return n.previewer.GetPreview(ctx, n.fsys, path)
 }
 
+// Delete removes the files or directories with the given names from the current directory.
+// If the Nav instance is in dry run mode, no files or directories will be removed.
+// Returns a slice of errors encountered during the deletion process.
 func (n *Nav) Delete(ctx context.Context, names []string) []error {
 
 	errs := make([]error, 0)

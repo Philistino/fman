@@ -116,10 +116,10 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd = message.HandleNavCmd(app.Navi, []string{app.list.SelectedEntryName()}, msg.Path, app.list.CursorName())
 		cmds = append(cmds, cmd)
 	case message.InternalCopyMsg:
-		cmd = app.setInternalClipboard()
+		cmd = app.clipboardCopy()
 		cmds = append(cmds, cmd)
 	case message.InternalPasteMsg:
-		cmd = app.paste()
+		cmd = app.clipboardPaste()
 		cmds = append(cmds, cmd)
 	case message.ToggleShowHiddenMsg:
 		app.Navi.SetShowHidden(!app.Navi.ShowHidden())
@@ -218,8 +218,8 @@ func (app *App) manageSizes(height, width int) {
 	app.breadcrumb.SetWidth(width - lipgloss.Width(app.navBtns.View()))
 }
 
-// setInternalClipboard sets the internal clipboard to the selected entries
-func (app *App) setInternalClipboard() tea.Cmd {
+// clipboardCopy sets the internal clipboard to the selected entries
+func (app *App) clipboardCopy() tea.Cmd {
 	selected := app.list.SelectedEntries()
 	clipboard := make([]string, 0, len(selected))
 	dir := app.Navi.CurrentPath()
@@ -231,7 +231,7 @@ func (app *App) setInternalClipboard() tea.Cmd {
 }
 
 // TODO: make this real
-func (app *App) paste() tea.Cmd {
+func (app *App) clipboardPaste() tea.Cmd {
 	return message.NewNotificationCmd("Paste!")
 }
 
@@ -247,7 +247,6 @@ func (app *App) getPreviewCmd(ctx context.Context, path string) tea.Cmd {
 }
 
 func (app *App) handleDeleteCmd() tea.Cmd {
-
 	app.list.Blur()
 	entries := app.list.SelectedEntries()
 	if len(entries) == 0 {

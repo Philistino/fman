@@ -81,7 +81,8 @@ func (toolbar *NavBtns) View() string {
 		upBtn = zone.Mark("up", theme.InactiveButtonStyle.Render(string(icons.UpArrowIcon)))
 	}
 
-	return lipgloss.JoinHorizontal(lipgloss.Left,
+	return lipgloss.JoinHorizontal(
+		lipgloss.Left,
 		backBtn,
 		fwdBtn,
 		upBtn,

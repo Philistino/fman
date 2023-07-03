@@ -51,7 +51,7 @@ func (list *List) handlePathChange(newDir message.DirChangedMsg) tea.Cmd {
 	list.restrictIndex()
 	list.flexBox.ForceRecalculate()
 	if len(list.entries) == 0 {
-		return message.EmptyDirCmd()
+		return nil
 	}
 	return message.NewEntryCmd(list.SelectedEntry())
 }

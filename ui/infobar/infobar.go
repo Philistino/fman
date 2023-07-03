@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Philistino/fman/storage"
+	"github.com/Philistino/fman/entry/storage"
 	"github.com/Philistino/fman/ui/infobar/queue"
 	"github.com/Philistino/fman/ui/message"
 
@@ -15,21 +15,21 @@ import (
 	"github.com/dustin/go-humanize"
 )
 
+type TickMsg time.Time
+
+const DEFAULT_MESSAGE = "--"
+
 type Infobar struct {
 	width           int                 // the width of the infobar, which should be the window width
 	progressWidth   int                 // the width of the progress bar
 	message         string              // the current message
 	defaultDuration time.Duration       // the default duration to display a message
-	minDuration     time.Duration       // the minimum gap to display the default message between messages
+	minDuration     time.Duration       // the minimum duration to display a message
 	startTime       time.Time           // the time the current message was displayed
-	messageId       uint16              // Used to track messages for clearing when multiple messages are to be displayed in a short time
+	messageId       uint16              // Used to track notifications for clearing. its ok if this wraps back around. It just needs to be big enough to not collide with the most recent messages
 	storageInfo     storage.StorageInfo // the disk storage info
 	stack           *queue.Fifo[string] // a stack of messages to display
 }
-
-type TickMsg time.Time
-
-const DEFAULT_MESSAGE = "--"
 
 func New() Infobar {
 	info, err := storage.GetStorageInfo()
@@ -61,7 +61,7 @@ type clearNotificationMsg struct {
 	id uint16
 }
 
-func (infobar *Infobar) clearMessage(id uint16, t time.Duration) tea.Cmd {
+func (infobar *Infobar) clearMessageCmd(id uint16, t time.Duration) tea.Cmd {
 	return func() tea.Msg {
 		time.Sleep(t)
 		return clearNotificationMsg{id: id}
@@ -80,29 +80,7 @@ func (infobar *Infobar) Update(msg tea.Msg) (Infobar, tea.Cmd) {
 	case message.NewNotificationMsg:
 		cmd = infobar.handleNewMessage(msg)
 	case clearNotificationMsg:
-		if infobar.messageId != msg.id {
-			return *infobar, nil
-		}
-		if infobar.stack.IsEmpty() {
-			infobar.message = DEFAULT_MESSAGE
-			infobar.startTime = time.Now()
-			infobar.messageId++
-			return *infobar, nil
-		}
-
-		noti, err := infobar.stack.Pop()
-		if err != nil {
-			log.Println("An error occurred while popping a notification from the stack", err.Error())
-		}
-		infobar.startTime = time.Now()
-		infobar.message = *noti
-		infobar.messageId++
-		clearDuration := infobar.defaultDuration
-		if !infobar.stack.IsEmpty() {
-			clearDuration = infobar.minDuration
-		}
-		cmd = infobar.clearMessage(infobar.messageId, clearDuration)
-
+		cmd = infobar.handleClearNotificationMsg(msg)
 	case tea.WindowSizeMsg:
 		infobar.width = msg.Width
 	}
@@ -111,11 +89,9 @@ func (infobar *Infobar) Update(msg tea.Msg) (Infobar, tea.Cmd) {
 
 func (i *Infobar) handleNewMessage(msg message.NewNotificationMsg) tea.Cmd {
 	if time.Since(i.startTime) < i.minDuration {
-		// the current message was not displayed long enough so push the new message to the stack
-		// and clear the current message after the minGapDuration has passed
 		i.stack.Push(DEFAULT_MESSAGE)
 		i.stack.Push(msg.Message)
-		return i.clearMessage(i.messageId, i.minDuration-time.Since(i.startTime))
+		return i.clearMessageCmd(i.messageId, i.minDuration-time.Since(i.startTime))
 	}
 
 	if i.message == msg.Message {
@@ -125,13 +101,35 @@ func (i *Infobar) handleNewMessage(msg message.NewNotificationMsg) tea.Cmd {
 		i.startTime = time.Now()
 		i.message = DEFAULT_MESSAGE
 		i.messageId++
-		return i.clearMessage(i.messageId, i.minDuration)
+		return i.clearMessageCmd(i.messageId, i.minDuration)
 	}
 
 	i.message = msg.Message
 	i.startTime = time.Now()
 	i.messageId++
-	return i.clearMessage(i.messageId, i.defaultDuration)
+	return i.clearMessageCmd(i.messageId, i.defaultDuration)
+}
+
+func (infobar *Infobar) handleClearNotificationMsg(msg clearNotificationMsg) tea.Cmd {
+	if infobar.messageId != msg.id {
+		return nil
+	}
+	if infobar.stack.IsEmpty() {
+		infobar.message = DEFAULT_MESSAGE
+		infobar.startTime = time.Now()
+		infobar.messageId++
+		return nil
+	}
+
+	noti, _ := infobar.stack.Pop()
+	infobar.startTime = time.Now()
+	infobar.message = *noti
+	infobar.messageId++
+	clearDuration := infobar.defaultDuration
+	if !infobar.stack.IsEmpty() {
+		clearDuration = infobar.minDuration
+	}
+	return infobar.clearMessageCmd(infobar.messageId, clearDuration)
 }
 
 func renderProgress(width int, usedSpace uint64, totalSpace uint64) string {
@@ -149,7 +147,7 @@ func (infobar *Infobar) View() string {
 	return lipgloss.JoinHorizontal(
 		lipgloss.Center,
 		logo,
-		style.Width(infobar.width-(lipgloss.Width(progress)+lipgloss.Width(usedSpace)+lipgloss.Width(logo)+1)).Render(" "+infobar.Message()),
+		style.Width(infobar.width-(lipgloss.Width(progress)+lipgloss.Width(usedSpace)+lipgloss.Width(logo)+1)).Render(" "+infobar.message),
 		progress,
 		style.Render(usedSpace),
 	)

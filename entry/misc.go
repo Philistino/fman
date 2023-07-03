@@ -23,11 +23,14 @@
 package entry
 
 import (
+	"bytes"
 	"fmt"
+	"os"
 	"path/filepath"
 	"unicode"
 
 	"github.com/mattn/go-runewidth"
+	"github.com/shirou/gopsutil/v3/disk"
 )
 
 func isRoot(name string) bool { return filepath.Dir(name) == name }
@@ -111,4 +114,37 @@ func humanizeSize(size int64) string {
 	}
 
 	return ""
+}
+
+// GetMounts returns a slice of Mounts.
+func GetMounts() ([]string, error) {
+	parts, err := disk.Partitions(true)
+	if err != nil {
+		return nil, err
+	}
+	// Probably actually want the disk.PartitionStat structs
+	mounts := make([]string, len(parts))
+	for i, part := range parts {
+		print(part.String())
+		mounts[i] = part.Mountpoint
+	}
+	return mounts, nil
+}
+
+// IsZipFile checks if file is zip or not.
+// Play: https://go.dev/play/p/9M0g2j_uF_e
+func IsZipFile(filepath string) (bool, error) {
+	f, err := os.Open(filepath)
+	if err != nil {
+		return false, err
+	}
+	defer f.Close()
+
+	buf := make([]byte, 4)
+	if n, err := f.Read(buf); err != nil || n < 4 {
+		return false, err
+	}
+
+	isZip := bytes.Equal(buf, []byte("PK\x03\x04"))
+	return isZip, nil
 }

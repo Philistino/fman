@@ -84,9 +84,9 @@ func (list *TableMgr) handlePathChange(newDir message.DirChangedMsg) tea.Cmd {
 		// list.cursorIdx = 0
 	}
 
-	if len(list.entries) == 0 {
-		return message.EmptyDirCmd()
-	}
+	// if len(list.entries) == 0 {
+	// 	return message.EmptyDirCmd()
+	// }
 	return nil
 	// return message.NewEntryCmd(list.SelectedEntry())
 }
