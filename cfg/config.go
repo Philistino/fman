@@ -22,6 +22,8 @@ const (
 	DefaultDirsMixed        = false
 	DefaultNoHidden         = false
 	DefaultDoubleClickDelay = 500
+	DefaultPrintPwdResult   = false
+	DefaultDryRun           = false
 )
 
 // These pointers are a janky way to get Nonetype values so we can know
@@ -37,6 +39,8 @@ type Cfg struct {
 	NoHidden         *bool  `arg:"--no-hidden" help:"do not show hidden files. Defaults to false"`
 	PreviewDelay     *int   `arg:"--preview-delay" placeholder:"DELAY" help:"delay in milliseconds before opening a file for previewing. This is meant to reduce io. Defaults to 200"`
 	DoubleClickDelay *int   `arg:"--double-click-delay" placeholder:"DELAY" help:"delay in milliseconds to register a second click as a double click. This is included for people with limited mobility. Defaults to 500"`
+	PrintPwdResult   *bool  `arg:"--print-pwd-as-result" help:"print the current working directory to stdout on exit. Defaults to false"`
+	DryRun           *bool  `arg:"--dry-run" help:"do not make filesystem changes. Defaults to false"`
 	// colorScheme theme.Theme // TODO: fetch colorscheme and icon map from theme and pin to config
 }
 
@@ -102,7 +106,12 @@ func mergeConfigs(cmdCfg Cfg, fileCfg Cfg) Cfg {
 	if cmdCfg.DoubleClickDelay == nil {
 		cmdCfg.DoubleClickDelay = fileCfg.DoubleClickDelay
 	}
-
+	if cmdCfg.PrintPwdResult == nil {
+		cmdCfg.PrintPwdResult = fileCfg.PrintPwdResult
+	}
+	if cmdCfg.DryRun == nil {
+		cmdCfg.DryRun = fileCfg.DryRun
+	}
 	return cmdCfg
 }
 
@@ -133,6 +142,14 @@ func setDefaults(cfg Cfg) Cfg {
 	if cfg.DoubleClickDelay == nil {
 		cfg.DoubleClickDelay = new(int)
 		*cfg.DoubleClickDelay = DefaultDoubleClickDelay
+	}
+	if cfg.PrintPwdResult == nil {
+		cfg.PrintPwdResult = new(bool)
+		*cfg.PrintPwdResult = DefaultPrintPwdResult
+	}
+	if cfg.DryRun == nil {
+		cfg.DryRun = new(bool)
+		*cfg.DryRun = DefaultDryRun
 	}
 	return cfg
 }
