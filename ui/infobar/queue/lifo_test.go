@@ -1,4 +1,4 @@
-package infobar
+package queue
 
 import (
 	"reflect"
@@ -11,7 +11,7 @@ func TestArrayStackPush(t *testing.T) {
 	stack.Push(2)
 	stack.Push(3)
 
-	expected := []int{3, 2, 1}
+	expected := []int{1, 2, 3}
 	values := stack.Data()
 	length := stack.Size()
 
@@ -44,7 +44,7 @@ func TestArrayStackPop(t *testing.T) {
 		t.Errorf("Failed TestArrayStack_Pop value: expected %d, got %d", 3, *topItem)
 	}
 
-	expected := []int{2, 1}
+	expected := []int{1, 2}
 	if !reflect.DeepEqual(expected, stack.Data()) {
 		t.Errorf("Failed TestArrayStack_Pop values: expected %v, got %v", expected, stack.Data())
 	}
@@ -70,7 +70,7 @@ func TestArrayStackPeak(t *testing.T) {
 		t.Errorf("Failed TestArrayStack_Peak value: expected %d, got %d", 3, *topItem)
 	}
 
-	expected := []int{3, 2, 1}
+	expected := []int{1, 2, 3}
 	if !reflect.DeepEqual(expected, stack.Data()) {
 		t.Errorf("Failed TestArrayStack_Peak values: expected %v, got %v", expected, stack.Data())
 	}

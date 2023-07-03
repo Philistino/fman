@@ -1,17 +1,25 @@
-package model
+package app
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
+	"sort"
+	"strings"
 
 	"github.com/Philistino/fman/cfg"
-	"github.com/Philistino/fman/model/infobar"
-	"github.com/Philistino/fman/model/keys"
-	"github.com/Philistino/fman/model/list"
-	"github.com/Philistino/fman/model/message"
 	"github.com/Philistino/fman/nav"
-	"github.com/Philistino/fman/theme"
-	"github.com/Philistino/fman/theme/colors"
+	"github.com/Philistino/fman/ui/breadcrumb"
+	"github.com/Philistino/fman/ui/dialog"
+	"github.com/Philistino/fman/ui/filebtns"
+	"github.com/Philistino/fman/ui/infobar"
+	"github.com/Philistino/fman/ui/keys"
+	"github.com/Philistino/fman/ui/list"
+	"github.com/Philistino/fman/ui/message"
+	"github.com/Philistino/fman/ui/navbtns"
+	"github.com/Philistino/fman/ui/preview"
+	"github.com/Philistino/fman/ui/theme"
+	"github.com/Philistino/fman/ui/theme/colors"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -23,13 +31,13 @@ import (
 // This is the main model for the app. It does two jobs, acts like a message bus for the different
 // components of the app, and composes the different UI components together.
 type App struct {
-	fileBtns   fileBtns
+	fileBtns   filebtns.FileBtns
 	list       list.List
-	preview    *filePreview
-	navBtns    *navBtns
+	preview    *preview.FilePreview
+	navBtns    *navbtns.NavBtns
 	infobar    infobar.Infobar
-	dialog     *dialogBox
-	breadcrumb *breadCrumb
+	dialog     *dialog.Dialog
+	breadcrumb *breadcrumb.BreadCrumb
 
 	width  int
 	height int
@@ -38,7 +46,7 @@ type App struct {
 	showHelp bool
 	config   cfg.Cfg
 
-	navi              *nav.Nav
+	Navi              *nav.Nav
 	theme             colors.Theme
 	internalClipboard []string // slice of paths to items in the "clipboard"
 }
@@ -51,7 +59,7 @@ func (app *App) Init() tea.Cmd {
 	// I am calling Reload here because it does not record the current state in the history
 	// and there is no current state to leave behind. This is a little bit of a bandaid
 	// over the history implementation not having a setter for initial state
-	cmd := message.HandleReloadCmd(app.navi, []string{""}, "")
+	cmd := message.HandleReloadCmd(app.Navi, []string{""}, "")
 	msg := cmd() // get the initial DirChangedMsg
 	load := func() tea.Msg {
 		return msg
@@ -65,14 +73,14 @@ func NewApp(cfg cfg.Cfg, selectedTheme colors.Theme, fsys afero.Fs) *App {
 		panic(err)
 	}
 	app := App{
-		fileBtns:   newFileBtns(),
+		fileBtns:   filebtns.NewFileBtns(),
 		list:       list.New(selectedTheme, *cfg.DoubleClickDelay),
-		preview:    NewFilePreviewer(selectedTheme, *cfg.PreviewDelay),
-		navBtns:    newNavBtns(),
+		preview:    preview.NewFilePreviewer(selectedTheme, *cfg.PreviewDelay),
+		navBtns:    navbtns.NewNavBtns(),
 		infobar:    infobar.New(),
-		dialog:     NewDialogBox(),
-		navi:       nav.NewNav(!*cfg.NoHidden, *cfg.DirsMixed, absPath, fsys, *cfg.PreviewDelay),
-		breadcrumb: newBrdCrumb(),
+		dialog:     dialog.NewDialog(theme.ButtonStyle, theme.EntryInfoStyle),
+		Navi:       nav.NewNav(!*cfg.NoHidden, *cfg.DirsMixed, absPath, fsys, *cfg.PreviewDelay, *cfg.DryRun),
+		breadcrumb: breadcrumb.NewBreadCrumb(),
 		theme:      selectedTheme,
 		config:     cfg,
 	}
@@ -89,23 +97,23 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		app.manageSizes(msg.Height, msg.Width)
 	case message.NavBackMsg:
-		cmd = message.HandleBackCmd(app.navi, []string{app.list.SelectedEntryName()}, app.list.CursorName())
+		cmd = message.HandleBackCmd(app.Navi, []string{app.list.SelectedEntryName()}, app.list.CursorName())
 		cmds = append(cmds, cmd)
 	case message.NavFwdMsg:
-		cmd = message.HandleFwdCmd(app.navi, []string{app.list.SelectedEntryName()}, app.list.CursorName())
+		cmd = message.HandleFwdCmd(app.Navi, []string{app.list.SelectedEntryName()}, app.list.CursorName())
 		cmds = append(cmds, cmd)
 	case message.NavUpMsg:
-		cmd = message.HandleNavCmd(app.navi, []string{app.list.SelectedEntryName()}, filepath.Dir(app.navi.CurrentPath()), app.list.CursorName())
+		cmd = message.HandleNavCmd(app.Navi, []string{app.list.SelectedEntryName()}, filepath.Dir(app.Navi.CurrentPath()), app.list.CursorName())
 		cmds = append(cmds, cmd)
 	case message.NavHomeMsg:
-		cmd = message.HandleNavCmd(app.navi, []string{app.list.SelectedEntryName()}, "~", app.list.CursorName())
+		cmd = message.HandleNavCmd(app.Navi, []string{app.list.SelectedEntryName()}, "~", app.list.CursorName())
 		cmds = append(cmds, cmd)
 	case message.NavDownMsg:
 		name := app.list.SelectedEntryName()
-		cmd = message.HandleNavCmd(app.navi, []string{name}, filepath.Join(app.navi.CurrentPath(), name), app.list.CursorName())
+		cmd = message.HandleNavCmd(app.Navi, []string{name}, filepath.Join(app.Navi.CurrentPath(), name), app.list.CursorName())
 		cmds = append(cmds, cmd)
 	case message.NavOtherMsg:
-		cmd = message.HandleNavCmd(app.navi, []string{app.list.SelectedEntryName()}, msg.Path, app.list.CursorName())
+		cmd = message.HandleNavCmd(app.Navi, []string{app.list.SelectedEntryName()}, msg.Path, app.list.CursorName())
 		cmds = append(cmds, cmd)
 	case message.InternalCopyMsg:
 		cmd = app.setInternalClipboard()
@@ -114,11 +122,17 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd = app.paste()
 		cmds = append(cmds, cmd)
 	case message.ToggleShowHiddenMsg:
-		app.navi.SetShowHidden(!app.navi.ShowHidden())
-		cmd = message.HandleReloadCmd(app.navi, []string{app.list.SelectedEntryName()}, app.list.CursorName())
+		app.Navi.SetShowHidden(!app.Navi.ShowHidden())
+		cmd = message.HandleReloadCmd(app.Navi, []string{app.list.SelectedEntryName()}, app.list.CursorName())
 		cmds = append(cmds, cmd)
 	case message.GetPreviewMsg:
 		cmd = app.getPreviewCmd(msg.Ctx, msg.Path)
+		cmds = append(cmds, cmd)
+	case message.DeleteMsg:
+		cmd = app.handleDeleteCmd()
+		cmds = append(cmds, cmd)
+	case dialog.AnswerMsg:
+		cmd = app.handleDialogAnswer(msg)
 		cmds = append(cmds, cmd)
 	case tea.KeyMsg:
 		if key.Matches(msg, keys.Map.ToggleHelp) {
@@ -198,7 +212,7 @@ func (app *App) manageSizes(height, width int) {
 	app.list.SetWidth(listWidth)
 	app.preview.SetHeight(height - lipgloss.Height(app.navBtns.View()) - lipgloss.Height(app.navBtns.View()) - lipgloss.Height(app.fileBtns.View()))
 	app.preview.SetWidth(width - listWidth)
-	app.dialog.SetHeight(height - lipgloss.Height(app.navBtns.View()) - lipgloss.Height(app.navBtns.View()) - lipgloss.Height(app.fileBtns.View()))
+	app.dialog.SetHeight(height - lipgloss.Height(app.navBtns.View()) - lipgloss.Height(app.navBtns.View()) - lipgloss.Height(app.fileBtns.View()) - 2)
 	app.dialog.SetWidth(width - listWidth)
 	app.help.Width = width
 	app.breadcrumb.SetWidth(width - lipgloss.Width(app.navBtns.View()))
@@ -208,7 +222,7 @@ func (app *App) manageSizes(height, width int) {
 func (app *App) setInternalClipboard() tea.Cmd {
 	selected := app.list.SelectedEntries()
 	clipboard := make([]string, 0, len(selected))
-	dir := app.navi.CurrentPath()
+	dir := app.Navi.CurrentPath()
 	for name := range selected {
 		clipboard = append(clipboard, filepath.Join(dir, name))
 	}
@@ -223,11 +237,56 @@ func (app *App) paste() tea.Cmd {
 
 func (app *App) getPreviewCmd(ctx context.Context, path string) tea.Cmd {
 	return func() tea.Msg {
-		preview := app.navi.GetPreview(ctx, path)
-		return previewReadyMsg{
+		prv := app.Navi.GetPreview(ctx, path)
+		return preview.PreviewReadyMsg{
 			Path:    path,
-			Preview: preview.Content,
-			Err:     preview.Err,
+			Preview: prv.Content,
+			Err:     prv.Err,
 		}
 	}
+}
+
+func (app *App) handleDeleteCmd() tea.Cmd {
+
+	app.list.Blur()
+	entries := app.list.SelectedEntries()
+	if len(entries) == 0 {
+		return message.NewNotificationCmd("No entries selected")
+	}
+	entryNames := make([]string, 0, len(entries))
+	for k := range entries {
+		entryNames = append(entryNames, k)
+	}
+	sort.Strings(entryNames)
+
+	return message.AskDialogCmd(
+		"Delete",
+		fmt.Sprintf("Permanently delete?\n%s", strings.Join(entryNames, ", ")),
+		[]string{"Cancel", "Confirm"},
+	)
+}
+
+func (app *App) handleDialogAnswer(msg dialog.AnswerMsg) tea.Cmd {
+	if msg.ID() == "Delete" && msg.Answer() == "Confirm" {
+		return app.deleteEntries()
+	}
+	return nil
+}
+
+func (app *App) deleteEntries() tea.Cmd {
+	entries := app.list.SelectedEntries()
+	entryNames := make([]string, 0, len(entries))
+	for k := range entries {
+		entryNames = append(entryNames, k)
+	}
+	sort.Strings(entryNames)
+	errs := app.Navi.Delete(context.Background(), entryNames)
+	cmds := make([]tea.Cmd, 0, len(errs))
+	for _, err := range errs {
+		cmds = append(cmds, message.NewNotificationCmd(err.Error()))
+	}
+	cmd := message.HandleReloadCmd(app.Navi, []string{app.list.SelectedEntryName()}, app.list.CursorName())
+	cmds = append(cmds, cmd)
+	app.list.Focus()
+	return tea.Batch(cmds...)
 }

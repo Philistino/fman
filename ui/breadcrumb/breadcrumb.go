@@ -1,4 +1,4 @@
-package model
+package breadcrumb
 
 import (
 	"path/filepath"
@@ -6,14 +6,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Philistino/fman/model/message"
-	"github.com/Philistino/fman/theme"
+	"github.com/Philistino/fman/ui/message"
+	"github.com/Philistino/fman/ui/theme"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	zone "github.com/lrstanley/bubblezone"
 )
 
-// const pathSeparator = "/" // use forward slash throughout the app
 const pathSeparator = string(filepath.Separator)
 
 var winRootRgx = regexp.MustCompile(`^[A-Za-z]:/?$`) // matches windows root paths like C:/ or D:
@@ -24,25 +23,25 @@ type PathError interface {
 	Error() error
 }
 
-// breadCrumb is the model for the path breadcrumb
-type breadCrumb struct {
+// BreadCrumb is the model for the path breadcrumb
+type BreadCrumb struct {
 	path      string
 	width     int
 	viewParts []string
 }
 
 // newBreadCrumb creates a new breadcrumb
-func newBrdCrumb() *breadCrumb {
-	return &breadCrumb{}
+func NewBreadCrumb() *BreadCrumb {
+	return &BreadCrumb{}
 }
 
 // Init initializes the model
-func (breadcrumb *breadCrumb) Init() tea.Cmd {
+func (breadcrumb *BreadCrumb) Init() tea.Cmd {
 	return nil
 }
 
 // Update updates the model
-func (breadcrumb *breadCrumb) Update(msg tea.Msg) (*breadCrumb, tea.Cmd) {
+func (breadcrumb *BreadCrumb) Update(msg tea.Msg) (*BreadCrumb, tea.Cmd) {
 	_, ok := msg.(PathError)
 	if ok {
 		msg := msg.(PathError)
@@ -63,7 +62,7 @@ func (breadcrumb *breadCrumb) Update(msg tea.Msg) (*breadCrumb, tea.Cmd) {
 }
 
 // View renders the model
-func (breadcrumb *breadCrumb) View() string {
+func (breadcrumb *BreadCrumb) View() string {
 	parts := make([]string, 0, len(breadcrumb.viewParts))
 	for i, part := range breadcrumb.viewParts {
 		parts = append(parts, zone.Mark(strconv.Itoa(i), part))
@@ -72,7 +71,7 @@ func (breadcrumb *breadCrumb) View() string {
 }
 
 // handleMouseMsg handles mouse clicks on the breadcrumb
-func (breadcrumb *breadCrumb) handleMouseMsg(msg tea.MouseMsg) tea.Cmd {
+func (breadcrumb *BreadCrumb) handleMouseMsg(msg tea.MouseMsg) tea.Cmd {
 	if msg.Type != tea.MouseLeft {
 		return nil
 	}
@@ -101,7 +100,7 @@ func (breadcrumb *breadCrumb) handleMouseMsg(msg tea.MouseMsg) tea.Cmd {
 // and updates the view attribute. This could probably be optimized a bit
 // but it's only called once per directory change instead of on every
 // call to View()
-func (breadcrumb *breadCrumb) updateView(path string) {
+func (breadcrumb *BreadCrumb) updateView(path string) {
 
 	// if the path is a root path, just return the root rendered
 	if winRootRgx.MatchString(path) {
@@ -155,7 +154,7 @@ func (breadcrumb *breadCrumb) updateView(path string) {
 // The width is not managed at the Breadcrumb model level because
 // the breadcrumb shares the same row with other renderables and the relative
 // widths should be managed above the level of this model
-func (b *breadCrumb) SetWidth(width int) {
+func (b *BreadCrumb) SetWidth(width int) {
 	b.width = width
 	b.updateView(b.path)
 }

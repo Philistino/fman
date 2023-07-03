@@ -1,17 +1,29 @@
-package model
+package dialog
 
 import (
 	"strings"
 	"testing"
 
-	"github.com/Philistino/fman/model/message"
+	"github.com/Philistino/fman/ui/message"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	zone "github.com/lrstanley/bubblezone"
 )
 
 func TestDialogFocus(t *testing.T) {
-	dialog := NewDialogBox()
-	if dialog.focused {
+	dialog := NewDialog(lipgloss.NewStyle(), lipgloss.NewStyle())
+	dialog.Init()
+	if dialog.Focused() {
+		t.Errorf("dialog should not be focused")
+	}
+
+	dialog.Focus()
+	if !dialog.Focused() {
+		t.Errorf("dialog should be focused")
+	}
+
+	dialog.Blur()
+	if dialog.Focused() {
 		t.Errorf("dialog should not be focused")
 	}
 
@@ -25,13 +37,13 @@ func TestDialogFocus(t *testing.T) {
 		t.Errorf("dialog should be focused")
 	}
 	dialog, _ = dialog.Update(tea.KeyMsg(tea.Key{Type: tea.KeyEnter}))
-	if dialog.focused {
+	if dialog.Focused() {
 		t.Errorf("dialog should not be focused")
 	}
 }
 
 func TestDialogKeys(t *testing.T) {
-	dialog := NewDialogBox()
+	dialog := NewDialog(lipgloss.NewStyle(), lipgloss.NewStyle())
 	dialog, _ = dialog.Update(message.AskDialogCmd("", "Is go the best?", []string{"Yes", "No"})())
 	if dialog.selected != 0 {
 		t.Errorf("dialog should have selected the first choice")
@@ -66,7 +78,7 @@ func TestDialogKeys(t *testing.T) {
 }
 
 func TestDialogSelectionFalse(t *testing.T) {
-	dialog := NewDialogBox()
+	dialog := NewDialog(lipgloss.NewStyle(), lipgloss.NewStyle())
 	dialog, _ = dialog.Update(message.AskDialogCmd("", "Is go the best?", []string{"Yes", "No"})())
 
 	dialog, cmd := dialog.Update(tea.KeyMsg(tea.Key{Type: tea.KeyEnter}))
@@ -76,17 +88,20 @@ func TestDialogSelectionFalse(t *testing.T) {
 	if cmd == nil {
 		t.Errorf("dialog should have returned a command")
 	}
-	answer, ok := cmd().(AnswerDialogMsg)
+	answer, ok := cmd().(AnswerMsg)
 	if !ok {
 		t.Errorf("dialog should have returned a message.AnswerDialogCmd")
 	}
 	if answer.Answer() != "Yes" {
 		t.Errorf("dialog should have returned Yes")
 	}
+	if answer.AnswerIdx() != 0 {
+		t.Errorf("dialog should have returned index of 0")
+	}
 }
 
 func TestDialogSelectionTrue(t *testing.T) {
-	dialog := NewDialogBox()
+	dialog := NewDialog(lipgloss.NewStyle(), lipgloss.NewStyle())
 	dialog, _ = dialog.Update(message.AskDialogCmd("", "Is go the best?", []string{"Yes", "No"})())
 	dialog, _ = dialog.Update(tea.KeyMsg(tea.Key{Type: tea.KeyRight}))
 	dialog, cmd := dialog.Update(tea.KeyMsg(tea.Key{Type: tea.KeyEnter}))
@@ -96,18 +111,21 @@ func TestDialogSelectionTrue(t *testing.T) {
 	if cmd == nil {
 		t.Errorf("dialog should have returned a command")
 	}
-	answer, ok := cmd().(AnswerDialogMsg)
+	answer, ok := cmd().(AnswerMsg)
 	if !ok {
 		t.Errorf("dialog should have returned a message.AnswerDialogCmd")
 	}
 	if answer.Answer() != "No" {
 		t.Errorf("dialog should have returned No")
 	}
+	if answer.AnswerIdx() != 1 {
+		t.Errorf("dialog should have returned index of 1")
+	}
 }
 
 func TestDialogView(t *testing.T) {
 	zone.NewGlobal()
-	dialog := NewDialogBox()
+	dialog := NewDialog(lipgloss.NewStyle(), lipgloss.NewStyle())
 	options := []string{"Bingo", "Bango"}
 	msgTxt := "This is a test"
 	dialog, _ = dialog.Update(message.AskDialogCmd("", msgTxt, options)())

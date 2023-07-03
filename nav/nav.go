@@ -3,6 +3,7 @@ package nav
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Philistino/fman/entry"
+	"github.com/Philistino/fman/entry/fileutils"
 	"github.com/Philistino/fman/nav/history"
 	"github.com/spf13/afero"
 )
@@ -20,6 +22,13 @@ import (
 // "github.com/gohugoio/hugo/watcher"
 
 // Need to do something with symlinks
+
+type navDirection uint8
+
+const (
+	navFwd navDirection = iota
+	navBack
+)
 
 const pathSeparator = string(filepath.Separator)
 
@@ -34,9 +43,10 @@ type Nav struct {
 	fsys           afero.Fs                // filesystem
 	previewer      *PreviewHandler         // previewer
 	idleWalkCancel context.CancelFunc
+	dryRun         bool // if true, do not alter the filesystem
 }
 
-func NewNav(showHidden bool, dirsMixed bool, startPath string, fsys afero.Fs, previewDelay int) *Nav {
+func NewNav(showHidden bool, dirsMixed bool, startPath string, fsys afero.Fs, previewDelay int, dryRun bool) *Nav {
 
 	navi := &Nav{
 		hist:        history.NewHistory[string](5000),
@@ -45,6 +55,7 @@ func NewNav(showHidden bool, dirsMixed bool, startPath string, fsys afero.Fs, pr
 		currentPath: startPath,
 		cursorHist:  make(map[string]string),
 		fsys:        fsys,
+		dryRun:      dryRun,
 		previewer: NewPreviewHandler(
 			context.Background(),
 			previewDelay,
@@ -71,10 +82,6 @@ func (n *Nav) Go(path string, currCursor string, currSelected []string) DirState
 	if path == n.currentPath {
 		return n.newDirState(n.entries, currState, err)
 	}
-
-	// if n.idleWalkCancel != nil {
-	// 	n.idleWalkCancel()
-	// }
 
 	entries, err := n.getEntries(path)
 	if err != nil {
@@ -125,60 +132,38 @@ func (n *Nav) handleCursor(dst string) string {
 }
 
 func (n *Nav) Back(currSelected []string, currCursor string) DirState {
-	currState := NavState{path: n.currentPath, cursor: currCursor, selected: mapStruct(currSelected)}
-	newPath, commit, err := n.hist.Back(n.currentPath)
-	if err != nil {
-		if errors.Is(err, history.ErrStackEmpty) {
-			return n.newDirState(n.entries, currState, nil)
-		}
-		return n.newDirState(n.entries, currState, err)
-	}
-
-	// if n.idleWalkCancel != nil {
-	// 	n.idleWalkCancel()
-	// }
-
-	entries, err := n.getEntries(newPath)
-	if err != nil {
-		return n.newDirState(n.entries, currState, err)
-	}
-
-	n.mu.Lock()
-	defer n.mu.Unlock()
-	n.idleWalk()
-
-	commit()
-	n.cursorHist[n.currentPath] = currCursor // save the cursor for the path we are leaving
-	n.currentPath = newPath
-	n.entries = entries
-	cursor := n.cursorHist[newPath] // note this may return an empty string
-	state := NavState{path: newPath, cursor: cursor}
-	return n.newDirState(entries, state, err)
+	return n.fwdOrBack(currSelected, currCursor, navBack)
 }
 
 func (n *Nav) Forward(currSelected []string, currCursor string) DirState {
+	return n.fwdOrBack(currSelected, currCursor, navFwd)
+}
+
+func (n *Nav) fwdOrBack(currSelected []string, currCursor string, direction navDirection) DirState {
+	var newPath string
+	var commit func()
+	var err error
+	switch direction {
+	case navFwd:
+		newPath, commit, err = n.hist.Foreward(n.currentPath)
+	case navBack:
+		newPath, commit, err = n.hist.Back(n.currentPath)
+	}
+
 	currState := NavState{path: n.currentPath, cursor: currCursor, selected: mapStruct(currSelected)}
-	newPath, commit, err := n.hist.Foreward(n.currentPath)
 	if err != nil {
 		if errors.Is(err, history.ErrStackEmpty) {
 			return n.newDirState(n.entries, currState, nil)
 		}
 		return n.newDirState(n.entries, currState, err)
 	}
-
-	// if n.idleWalkCancel != nil {
-	// 	n.idleWalkCancel()
-	// }
-
 	entries, err := n.getEntries(newPath)
 	if err != nil {
 		return n.newDirState(n.entries, currState, err)
 	}
-
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	n.idleWalk()
-
 	commit()
 	n.cursorHist[n.currentPath] = currCursor // save the cursor for the path we are leaving
 	n.currentPath = newPath
@@ -190,20 +175,13 @@ func (n *Nav) Forward(currSelected []string, currCursor string) DirState {
 
 // Reload reads and returns the current directory contents
 func (n *Nav) Reload(currSelected []string, currCursor string) DirState {
-	state := NavState{path: n.currentPath, cursor: currCursor, selected: mapStruct(currSelected)}
-
-	// if n.idleWalkCancel != nil {
-	// 	n.idleWalkCancel()
-	// }
-
+	currState := NavState{path: n.currentPath, cursor: currCursor, selected: mapStruct(currSelected)}
 	entries, err := n.getEntries(n.currentPath)
-
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	n.idleWalk()
-
 	n.entries = entries
-	return n.newDirState(entries, state, err)
+	return n.newDirState(entries, currState, err)
 }
 
 // idleWalk walks the current directory in the background so they are cached by the os
@@ -246,4 +224,26 @@ func mapStruct[T comparable](list []T) map[T]struct{} {
 
 func (n *Nav) GetPreview(ctx context.Context, path string) entry.Preview {
 	return n.previewer.GetPreview(ctx, n.fsys, path)
+}
+
+func (n *Nav) Delete(ctx context.Context, names []string) []error {
+
+	errs := make([]error, 0)
+	if n.dryRun {
+		return errs
+	}
+
+	paths := make([]string, len(names))
+	for i, name := range names {
+		paths[i] = filepath.Join(n.currentPath, name)
+	}
+	errs = fileutils.RemoveMany(ctx, n.fsys, paths)
+	returnErrs := make([]error, 0, len(errs))
+	for i, err := range errs {
+		if err == nil {
+			continue
+		}
+		returnErrs = append(returnErrs, fmt.Errorf("%s: %w", names[i], err))
+	}
+	return returnErrs
 }

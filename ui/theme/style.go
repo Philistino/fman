@@ -1,7 +1,7 @@
 package theme
 
 import (
-	"github.com/Philistino/fman/theme/colors"
+	"github.com/Philistino/fman/ui/theme/colors"
 	"github.com/charmbracelet/lipgloss"
 )
 

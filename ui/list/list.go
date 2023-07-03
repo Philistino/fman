@@ -5,7 +5,7 @@ import (
 
 	"github.com/76creates/stickers"
 	"github.com/Philistino/fman/entry"
-	"github.com/Philistino/fman/theme/colors"
+	"github.com/Philistino/fman/ui/theme/colors"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

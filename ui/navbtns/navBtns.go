@@ -1,8 +1,8 @@
-package model
+package navbtns
 
 import (
-	"github.com/Philistino/fman/model/message"
-	"github.com/Philistino/fman/theme"
+	"github.com/Philistino/fman/ui/message"
+	"github.com/Philistino/fman/ui/theme"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	zone "github.com/lrstanley/bubblezone"
@@ -14,22 +14,22 @@ type ActiveNavBtns interface {
 	UpActive() bool
 }
 
-// navBtns handle the back/forward/up navigation buttons in the toolbar
-type navBtns struct {
+// NavBtns handle the back/forward/up navigation buttons in the toolbar
+type NavBtns struct {
 	backActive bool
 	fwdActive  bool
 	upActive   bool
 }
 
-func newNavBtns() *navBtns {
-	return &navBtns{}
+func NewNavBtns() *NavBtns {
+	return &NavBtns{}
 }
 
-func (toolbar *navBtns) Init() tea.Cmd {
+func (toolbar *NavBtns) Init() tea.Cmd {
 	return nil
 }
 
-func (toolbar *navBtns) Update(msg tea.Msg) (*navBtns, tea.Cmd) {
+func (toolbar *NavBtns) Update(msg tea.Msg) (*NavBtns, tea.Cmd) {
 	_, ok := msg.(ActiveNavBtns)
 	if ok {
 		msg := msg.(ActiveNavBtns)
@@ -57,7 +57,7 @@ func (toolbar *navBtns) Update(msg tea.Msg) (*navBtns, tea.Cmd) {
 	return toolbar, nil
 }
 
-func (toolbar *navBtns) View() string {
+func (toolbar *NavBtns) View() string {
 
 	var backBtn, fwdBtn, upBtn string
 

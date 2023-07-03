@@ -1,6 +1,6 @@
 package theme
 
-import "github.com/Philistino/fman/theme/colors"
+import "github.com/Philistino/fman/ui/theme/colors"
 
 type ColorScheme int
 

@@ -39,25 +39,26 @@ type Entry struct {
 	SymLinkPath string // path of the symlink
 	IsHidden    bool   // whether the file is hidden
 	SizeInt     int64  // either size in bytes or count of entries in directory
+	Entries     []Entry
 }
 
-func handleSymlink(fsys afero.Fs, fullPath string, file fs.FileInfo) (string, fs.FileInfo, error) {
-	var symLinkPath string
+// func handleSymlink(fsys afero.Fs, fullPath string, file fs.FileInfo) (string, fs.FileInfo, error) {
+// 	var symLinkPath string
 
-	reader, ok := fsys.(afero.LinkReader) // check if filesystem supports reading symlinks
-	if !ok {
-		return symLinkPath, file, afero.ErrNoSymlink
-	}
-	symLinkPath, err := reader.ReadlinkIfPossible(fullPath)
-	if err != nil {
-		return symLinkPath, file, err
-	}
-	symInfo, err := fsys.Stat(symLinkPath)
-	if err != nil {
-		return symLinkPath, file, err
-	}
-	return symLinkPath, symInfo, nil
-}
+// 	reader, ok := fsys.(afero.LinkReader) // check if filesystem supports reading symlinks
+// 	if !ok {
+// 		return symLinkPath, file, afero.ErrNoSymlink
+// 	}
+// 	symLinkPath, err := reader.ReadlinkIfPossible(fullPath)
+// 	if err != nil {
+// 		return symLinkPath, file, err
+// 	}
+// 	symInfo, err := fsys.Stat(symLinkPath)
+// 	if err != nil {
+// 		return symLinkPath, file, err
+// 	}
+// 	return symLinkPath, symInfo, nil
+// }
 
 func getSize(fsys afero.Fs, file fs.FileInfo, filePath string) (string, int64, error) {
 	if !file.IsDir() {

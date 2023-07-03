@@ -3,8 +3,8 @@ package list
 import (
 	"time"
 
-	"github.com/Philistino/fman/model/keys"
-	"github.com/Philistino/fman/model/message"
+	"github.com/Philistino/fman/ui/keys"
+	"github.com/Philistino/fman/ui/message"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	zone "github.com/lrstanley/bubblezone"
@@ -25,9 +25,6 @@ func (list *List) restrictIndex() {
 }
 
 func (list *List) handlePathChange(newDir message.DirChangedMsg) tea.Cmd {
-	if newDir.Error() != nil {
-		return message.NewNotificationCmd(newDir.Error().Error())
-	}
 	list.selected = make(map[int]struct{})
 	list.entries = newDir.Entries()
 	selected := newDir.Selected()
@@ -185,5 +182,4 @@ func (list *List) Update(msg tea.Msg) (List, tea.Cmd) {
 	}
 	list.restrictIndex()
 	return *list, nil
-
 }

@@ -1,51 +1,55 @@
-package infobar
+package queue
 
 import "errors"
 
-// Stack implements stack with slice
-type Stack[T any] struct {
+// Fifo implements a FIFO queue using a slice
+// It is not thread safe
+type Fifo[T any] struct {
 	data []T
 }
 
 // NewStack returns a pointer to an empty Stack
-func NewStack[T any]() *Stack[T] {
-	return &Stack[T]{data: []T{}}
+func NewFifo[T any]() *Fifo[T] {
+	return &Fifo[T]{data: []T{}}
 }
 
 // Data returns the stack
-func (s *Stack[T]) Data() []T {
+func (s *Fifo[T]) Data() []T {
 	return s.data
 }
 
 // Size returns the length of the stack
-func (s *Stack[T]) Size() int {
+func (s *Fifo[T]) Size() int {
 	return len(s.data)
 }
 
 // IsEmpty returns true if the stack is empty
-func (s *Stack[T]) IsEmpty() bool {
+func (s *Fifo[T]) IsEmpty() bool {
 	return len(s.data) == 0
 }
 
 // Push element into stack
-func (s *Stack[T]) Push(value T) {
-	s.data = append([]T{value}, s.data...)
+func (s *Fifo[T]) Push(value T) {
+	s.data = append(s.data, value)
 }
 
 // Pop removes the top element from stack and returns it. If the stack is empty, this returns nil and error
-func (s *Stack[T]) Pop() (*T, error) {
+func (s *Fifo[T]) Pop() (*T, error) {
 	if s.IsEmpty() {
 		return nil, errors.New("stack is empty")
 	}
-
-	topItem := s.data[0]
-	s.data = s.data[1:]
-
-	return &topItem, nil
+	item := s.data[0]
+	if len(s.data) == 1 {
+		s.data = []T{}
+		return &item, nil
+	}
+	// copying this memory might be slow but this prevents a memory leak
+	s.data = append([]T{}, s.data[1:]...)
+	return &item, nil
 }
 
 // Peek returns the top element of stack without changing it's position. If stack is empty, returns nil and error
-func (s *Stack[T]) Peek() (*T, error) {
+func (s *Fifo[T]) Peek() (*T, error) {
 	if s.IsEmpty() {
 		return nil, errors.New("stack is empty")
 	}
@@ -53,6 +57,6 @@ func (s *Stack[T]) Peek() (*T, error) {
 }
 
 // Clear clears all the data in the stack
-func (s *Stack[T]) Clear() {
+func (s *Fifo[T]) Clear() {
 	s.data = []T{}
 }

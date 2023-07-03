@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/Philistino/fman/icons"
-	"github.com/Philistino/fman/theme"
+	"github.com/Philistino/fman/ui/theme"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/mattn/go-runewidth"
 	"github.com/muesli/termenv"

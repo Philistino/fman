@@ -1,8 +1,8 @@
-package model
+package filebtns
 
 import (
-	"github.com/Philistino/fman/model/message"
-	"github.com/Philistino/fman/theme"
+	"github.com/Philistino/fman/ui/message"
+	"github.com/Philistino/fman/ui/theme"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	zone "github.com/lrstanley/bubblezone"
@@ -21,7 +21,7 @@ import (
 // 	- compress activate when item is selected. TODO
 //	- extract activate when compressed item is selected. TODO
 
-type fileBtns struct {
+type FileBtns struct {
 	id            string
 	width         int
 	fileSelected  bool
@@ -30,8 +30,8 @@ type fileBtns struct {
 	// selectedIsArchive bool
 }
 
-func newFileBtns() fileBtns {
-	return fileBtns{
+func NewFileBtns() FileBtns {
+	return FileBtns{
 		id:            "buttonbar",
 		fileSelected:  false,
 		clipBoardFull: false,
@@ -39,11 +39,11 @@ func newFileBtns() fileBtns {
 	}
 }
 
-func (m fileBtns) Init() tea.Cmd {
+func (m FileBtns) Init() tea.Cmd {
 	return nil
 }
 
-func (m fileBtns) Update(msg tea.Msg) (fileBtns, tea.Cmd) {
+func (m FileBtns) Update(msg tea.Msg) (FileBtns, tea.Cmd) {
 	if !m.focused {
 		return m, nil
 	}
@@ -84,7 +84,7 @@ func (m fileBtns) Update(msg tea.Msg) (fileBtns, tea.Cmd) {
 	return m, cmd
 }
 
-func (m fileBtns) View() string {
+func (m FileBtns) View() string {
 	sectionWrapper := lipgloss.NewStyle().
 		Padding(0, 1, 1, 1)
 
@@ -151,4 +151,12 @@ func (m fileBtns) View() string {
 		// ),
 	)
 	return lipgloss.JoinHorizontal(lipgloss.Left, buttons)
+}
+
+func (m *FileBtns) Blur() {
+	m.focused = false
+}
+
+func (m *FileBtns) Focus() {
+	m.focused = true
 }

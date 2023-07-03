@@ -1,5 +1,4 @@
 Todo:
-
     Make UI components accept interfaces, particularly important for Entry
 
     When reading a directory, do not return on first error, but do something with the errors
@@ -9,7 +8,7 @@ Todo:
         Mostly fixed - add tests
     Breadcrumb - still an issue reading clicks when truncated, with a long path, and clicking second to last dir
 
-    Preview - toggle preview pane visibility
+    Preview - toggle preview pane visibility, particularly if the window is very narrow
     Preview - could preview directories
     Preview - Use this space for notifications when they arise?
     Preview - Create a monokai theme for glamour markdown rendering that looks like chroma rendering
@@ -47,8 +46,6 @@ Todo:
     Put long error messages in a pop-up box at bottom and shorten other views. Can freeze list?
     Pull navigation state out of UI
     Only change working directory on exit - this makes sense if not execing commands
-    Make main() smaller
-    Write some tests
     Clean up theme/icon configuration and globals
         Icon sets and themes should be enums
     Return early if starting directory DNE or not reachable
@@ -70,8 +67,18 @@ Todo:
         Hidden
         Quick access
 
+    Fs operation states:
+        Confirm
+            Ask for confirmation with dialog
+            Freeze list, buttons, navigation keys
+        Confirmed (during opertion)
+            Dialog: show "Deleting..." spinner with dialog cancel button, pass a callback fn (context CancelFunc) that will be called if cancelled               
+        Completed
+            Refresh directory
+                Show spinner if longer than 100ms
+            Unfreeze list, buttons, navigation keys
+
     Caching filesystem reads
-        
     Big features:
         Implement search (fzf?)
         Integrate with zoxide?

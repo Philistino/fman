@@ -5,14 +5,14 @@ import (
 	"os"
 
 	"github.com/Philistino/fman/cfg"
-	"github.com/Philistino/fman/model"
+	"github.com/Philistino/fman/ui/app"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	zone "github.com/lrstanley/bubblezone"
 	"github.com/muesli/termenv"
 	"github.com/spf13/afero"
 
-	"github.com/Philistino/fman/theme"
+	"github.com/Philistino/fman/ui/theme"
 )
 
 func main() {
@@ -36,10 +36,13 @@ func main() {
 	output.SetBackgroundColor(termenv.RGBColor(lipgloss.Color(selectedTheme.BackgroundColor)))
 	defer output.SetBackgroundColor(bg)
 
-	app := model.NewApp(cfg, selectedTheme, afero.NewOsFs())
-	p := tea.NewProgram(app, tea.WithAltScreen(), tea.WithMouseAllMotion())
+	a := app.NewApp(cfg, selectedTheme, afero.NewOsFs())
+	p := tea.NewProgram(a, tea.WithAltScreen(), tea.WithMouseAllMotion())
 	_, err = p.Run()
 	if err != nil {
 		println("An error occured: ", err.Error())
+	}
+	if cfg.PrintPwdResult != nil && *cfg.PrintPwdResult {
+		println(a.Navi.CurrentPath())
 	}
 }
