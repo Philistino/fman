@@ -1,12 +1,14 @@
 package fileutils
 
 import (
+	"context"
 	"io"
 	"os"
 	"path"
 	"path/filepath"
 
 	"github.com/spf13/afero"
+	"golang.org/x/sync/errgroup"
 )
 
 // MoveFile moves file from src to dst.
@@ -26,6 +28,31 @@ func MoveFile(fs afero.Fs, src, dst string) error {
 		return err
 	}
 	return nil
+}
+
+// MoveFileMany moves files from src into dst.
+// By default the rename filesystem system call is used. If src and dst point to different volumes
+// the file copy is used as a fallback
+func MoveFileMany(ctx context.Context, fs afero.Fs, src []string, dst string) []error {
+	g := errgroup.Group{}
+	g.SetLimit(10)
+	errs := make([]error, len(src))
+	for i, f := range src {
+		i, f := i, f
+		if ctx.Err() != nil {
+			errs[i] = ctx.Err()
+			continue
+		}
+		g.Go(func() error {
+			err := MoveFile(fs, f, filepath.Join(dst, filepath.Base(f)))
+			if err != nil {
+				errs[i] = err
+			}
+			return nil
+		})
+	}
+	g.Wait()
+	return errs
 }
 
 // CopyFile copies a file from source to dest and returns
@@ -63,10 +90,8 @@ func CopyFile(fs afero.Fs, source, dest string) error {
 	if err != nil {
 		return err
 	}
-	err = fs.Chmod(dest, info.Mode())
-	if err != nil {
-		return err
-	}
+	// this ignores an error if the file system does not support chmod
+	fs.Chmod(dest, info.Mode())
 
 	return nil
 }
