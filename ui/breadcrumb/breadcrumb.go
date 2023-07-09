@@ -28,11 +28,12 @@ type BreadCrumb struct {
 	path      string
 	width     int
 	viewParts []string
+	focused   bool
 }
 
 // newBreadCrumb creates a new breadcrumb
 func NewBreadCrumb() *BreadCrumb {
-	return &BreadCrumb{}
+	return &BreadCrumb{focused: true}
 }
 
 // Init initializes the model
@@ -42,6 +43,10 @@ func (breadcrumb *BreadCrumb) Init() tea.Cmd {
 
 // Update updates the model
 func (breadcrumb *BreadCrumb) Update(msg tea.Msg) (*BreadCrumb, tea.Cmd) {
+	if !breadcrumb.focused {
+		return breadcrumb, nil
+	}
+
 	_, ok := msg.(PathError)
 	if ok {
 		msg := msg.(PathError)
@@ -164,4 +169,14 @@ func reverse[S ~[]E, E any](s S) {
 	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
 		s[i], s[j] = s[j], s[i]
 	}
+}
+
+// Blur unfocuses the breadcrumb
+func (breadcrumb *BreadCrumb) Blur() {
+	breadcrumb.focused = false
+}
+
+// Focus focuses the breadcrumb
+func (breadcrumb *BreadCrumb) Focus() {
+	breadcrumb.focused = true
 }

@@ -127,11 +127,11 @@ func (d *Dialog) View() string {
 	inactiveBtnStyle := d.btnStyle.Copy().Border(lipgloss.HiddenBorder()).Padding(0, 2)
 	buttons := make([]string, len(d.message.Options()))
 	for i, choice := range d.message.Options() {
+		style := inactiveBtnStyle
 		if i == d.selected {
-			buttons[i] = zone.Mark(d.zPrefix+strconv.Itoa(i), activeBtnStyle.Render(choice))
-		} else {
-			buttons[i] = zone.Mark(d.zPrefix+strconv.Itoa(i), inactiveBtnStyle.Render(choice))
+			style = activeBtnStyle
 		}
+		buttons[i] = zone.Mark(d.zPrefix+strconv.Itoa(i), style.Render(choice))
 	}
 	renderedButtons := lipgloss.JoinHorizontal(lipgloss.Center, buttons...)
 	content := lipgloss.JoinVertical(lipgloss.Center, d.message.Message(), renderedButtons)

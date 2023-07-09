@@ -19,6 +19,7 @@ type NavBtns struct {
 	backActive bool
 	fwdActive  bool
 	upActive   bool
+	focused    bool
 }
 
 func NewNavBtns() *NavBtns {
@@ -30,6 +31,10 @@ func (toolbar *NavBtns) Init() tea.Cmd {
 }
 
 func (toolbar *NavBtns) Update(msg tea.Msg) (*NavBtns, tea.Cmd) {
+	if !toolbar.focused {
+		return toolbar, nil
+	}
+
 	_, ok := msg.(ActiveNavBtns)
 	if ok {
 		msg := msg.(ActiveNavBtns)
@@ -63,19 +68,19 @@ func (toolbar *NavBtns) View() string {
 
 	icons := theme.GetActiveIconTheme()
 
-	if toolbar.backActive {
+	if toolbar.backActive && toolbar.focused {
 		backBtn = zone.Mark("back", theme.ButtonStyle.Render(string(icons.LeftArrowIcon)))
 	} else {
 		backBtn = zone.Mark("back", theme.InactiveButtonStyle.Render(string(icons.LeftArrowIcon)))
 	}
 
-	if toolbar.fwdActive {
+	if toolbar.fwdActive && toolbar.focused {
 		fwdBtn = zone.Mark("forward", theme.ButtonStyle.Render(string(icons.RightArrowIcon)))
 	} else {
 		fwdBtn = zone.Mark("forward", theme.InactiveButtonStyle.Render(string(icons.RightArrowIcon)))
 	}
 
-	if toolbar.upActive {
+	if toolbar.upActive && toolbar.focused {
 		upBtn = zone.Mark("up", theme.ButtonStyle.Render(string(icons.UpArrowIcon)))
 	} else {
 		upBtn = zone.Mark("up", theme.InactiveButtonStyle.Render(string(icons.UpArrowIcon)))
@@ -87,4 +92,14 @@ func (toolbar *NavBtns) View() string {
 		fwdBtn,
 		upBtn,
 	)
+}
+
+// Blur unfocuses the toolbar
+func (toolbar *NavBtns) Blur() {
+	toolbar.focused = false
+}
+
+// Focus focuses the toolbar
+func (toolbar *NavBtns) Focus() {
+	toolbar.focused = true
 }
