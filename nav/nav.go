@@ -243,11 +243,9 @@ func (n *Nav) GetPreview(ctx context.Context, path string) entry.Preview {
 // If the Nav instance is in dry run mode, no files or directories will be removed.
 // Returns a slice of errors encountered during the deletion process.
 func (n *Nav) Delete(ctx context.Context, names []string) []error {
-
 	if n.dryRun {
 		return []error{dryRunError}
 	}
-
 	paths := make([]string, len(names))
 	for i, name := range names {
 		paths[i] = filepath.Join(n.currentPath, name)
@@ -261,4 +259,50 @@ func (n *Nav) Delete(ctx context.Context, names []string) []error {
 		returnErrs = append(returnErrs, fmt.Errorf("%s: %w", names[i], err))
 	}
 	return returnErrs
+}
+
+// Rename renames the file or directory with the given name to the given newName.
+// If the Nav instance is in dry run mode, no files or directories will be renamed.
+// Returns a slice of errors encountered during the rename process.
+func (n *Nav) Rename(ctx context.Context, name, newName string) []error {
+	if n.dryRun {
+		return []error{dryRunError}
+	}
+	path := filepath.Join(n.currentPath, name)
+	newPath := filepath.Join(n.currentPath, newName)
+	err := fileutils.MoveFile(n.fsys, path, newPath)
+	if err != nil {
+		return []error{err}
+	}
+	return nil
+}
+
+// MkDir creates a directory with the given name in the current directory.
+// If the Nav instance is in dry run mode, no directory will be created.
+// Returns a slice of errors encountered during the creation process.
+func (n *Nav) MkDir(ctx context.Context, name string) []error {
+	if n.dryRun {
+		return []error{dryRunError}
+	}
+	path := filepath.Join(n.currentPath, name)
+	err := fileutils.MakeDirIfNotExist(n.fsys, path)
+	if err != nil {
+		return []error{err}
+	}
+	return nil
+}
+
+// MkFile creates a file with the given name in the current directory.
+// If the Nav instance is in dry run mode, no file will be created.
+// Returns a slice of errors encountered during the creation process.
+func (n *Nav) MkFile(ctx context.Context, name string) []error {
+	if n.dryRun {
+		return []error{dryRunError}
+	}
+	path := filepath.Join(n.currentPath, name)
+	err := fileutils.MkFileIfNotExist(n.fsys, path)
+	if err != nil {
+		return []error{err}
+	}
+	return nil
 }
