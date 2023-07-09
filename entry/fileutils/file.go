@@ -151,3 +151,23 @@ func CommonPrefix(sep byte, paths ...string) string {
 
 	return string(c)
 }
+
+var PathAlreadyExistsError = &os.PathError{Op: "Create", Err: os.ErrExist}
+
+// MkFileIfNotExist creates a file if it does not exist
+// returns an error if the file already exists
+func MkFileIfNotExist(fs afero.Fs, path string) error {
+	exists, err := afero.Exists(fs, path)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return PathAlreadyExistsError
+	}
+	file, err := fs.Create(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	return nil
+}

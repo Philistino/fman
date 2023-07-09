@@ -2,6 +2,7 @@ package fileutils
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/spf13/afero"
@@ -95,5 +96,22 @@ func TestMoveFileMany(t *testing.T) {
 	}
 	if errs[0] == nil {
 		t.Errorf("expected error, got nil")
+	}
+}
+
+func TestMkFileIfNotExist(t *testing.T) {
+	// Create a new in-memory filesystem for testing
+	fs := afero.NewMemMapFs()
+
+	// Test creating a new file
+	err := MkFileIfNotExist(fs, "/path/to/new/file.txt")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	// Test creating a file that already exists
+	err = MkFileIfNotExist(fs, "/path/to/new/file.txt")
+	if !errors.Is(err, PathAlreadyExistsError) {
+		t.Errorf("Expected error: %v, but got: %v", PathAlreadyExistsError, err)
 	}
 }

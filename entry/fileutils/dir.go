@@ -60,3 +60,15 @@ func CopyDir(fs afero.Fs, source, dest string) error {
 
 	return nil
 }
+
+// MakeDirIfNotExist creates a directory if it does not exist.
+func MakeDirIfNotExist(fs afero.Fs, path string) error {
+	exists, err := afero.Exists(fs, path)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return PathAlreadyExistsError
+	}
+	return fs.MkdirAll(path, 0755)
+}

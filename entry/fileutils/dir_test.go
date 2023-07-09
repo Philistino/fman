@@ -81,3 +81,43 @@ func TestCopyDirErrorSrc(t *testing.T) {
 		t.Fatal("expected CopyDir to return an error, but it did not")
 	}
 }
+
+func TestMakeDirIfNotExist(t *testing.T) {
+	fs := afero.NewMemMapFs()
+
+	// Test creating a new directory.
+	err := MakeDirIfNotExist(fs, "/newdir")
+	if err != nil {
+		t.Errorf("MakeDirIfNotExist failed to create new directory: %v", err)
+	}
+
+	// Test creating an existing directory.
+	err = MakeDirIfNotExist(fs, "/newdir")
+	if err != PathAlreadyExistsError {
+		t.Errorf("MakeDirIfNotExist failed to return PathAlreadyExistsError: %v", err)
+	}
+
+	// Test creating a directory with a parent directory that doesn't exist.
+	err = MakeDirIfNotExist(fs, "/parent/newdir")
+	if err != nil {
+		t.Errorf("MakeDirIfNotExist failed to create new directory with parent directory: %v", err)
+	}
+
+	// Test creating a directory with a parent directory that exists.
+	err = MakeDirIfNotExist(fs, "/parent/newdir")
+	if err != PathAlreadyExistsError {
+		t.Errorf("MakeDirIfNotExist failed to return PathAlreadyExistsError with parent directory: %v", err)
+	}
+
+	// Test creating a directory with a parent directory that is a file.
+	file, err := fs.Create("/parent")
+	if err != nil {
+		t.Errorf("Failed to create file for test: %v", err)
+	}
+	defer file.Close()
+
+	err = MakeDirIfNotExist(fs, "/parent/newdir")
+	if err == nil {
+		t.Errorf("MakeDirIfNotExist failed to return an error with parent directory as file")
+	}
+}
