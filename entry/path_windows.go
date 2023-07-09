@@ -1,3 +1,6 @@
+//go:build windows
+// +build windows
+
 package entry
 
 import (
@@ -6,44 +9,35 @@ import (
 )
 
 var (
-	errInvalidFilenameEmpty               = errors.New("name is invalid, must not be empty")
+	errInvalidFilenameEmptyWindows        = errors.New("name is invalid, must not be empty")
 	errInvalidFilenameWindowsSpacePeriod  = errors.New("name is invalid, must not end in space or period on Windows")
 	errInvalidFilenameWindowsReservedName = errors.New("name is invalid, contains Windows reserved name (NUL, COM1, etc.)")
-	errInvalidFilenameWindowsReservedChar = errors.New("name is invalid, contains Windows reserved character (?, *, etc.)")
+	errInvalidFilenameWindowsReservedChar = errors.New(`name is invalid, contains Windows reserved character (<>:"|?*\/)`)
 )
 
-const windowsDisallowedCharacters = (`<>:"|?*` +
+const windowsDisallowedCharacters = (`<>:"|?*\/` +
 	"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f" +
 	"\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f")
 
-func WindowsInvalidFilename(name string) error {
+func InvalidFilename(name string) error {
 	if name == "" {
-		return errInvalidFilenameEmpty
+		return errInvalidFilenameEmptyWindows
 	}
 	// The path must not contain any disallowed characters.
 	if strings.ContainsAny(name, windowsDisallowedCharacters) {
 		return errInvalidFilenameWindowsReservedChar
 	}
 
-	// None of the path components should end in space or period, or be a
-	// reserved name.
-	for len(name) > 0 {
-		part, rest, _ := strings.Cut(name, `\`)
-		name = rest
-
-		if part == "" {
-			continue
-		}
-		switch part[len(part)-1] {
-		case ' ', '.':
-			// Names ending in space or period are not valid.
-			return errInvalidFilenameWindowsSpacePeriod
-		}
-		if windowsIsReserved(part) {
-			return errInvalidFilenameWindowsReservedName
-		}
+	// The name should not end in space or period
+	switch name[len(name)-1] {
+	case ' ', '.':
+		return errInvalidFilenameWindowsSpacePeriod
 	}
 
+	// or be a reserved name.
+	if windowsIsReserved(name) {
+		return errInvalidFilenameWindowsReservedName
+	}
 	return nil
 }
 
