@@ -101,6 +101,15 @@ func (list *List) CursorName() string {
 	return list.SelectedEntryName()
 }
 
+// EntryNames returns a slice of the names of the entries in the list
+func (list *List) EntryNames() []string {
+	names := make([]string, len(list.entries))
+	for i, entry := range list.entries {
+		names[i] = entry.Name()
+	}
+	return names
+}
+
 func (list *List) SetWidth(width int) {
 	list.width = width
 	list.flexBox.SetWidth(width)

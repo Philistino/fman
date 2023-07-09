@@ -1,4 +1,5 @@
 Todo:
+    Clicks in dialog stopped working
     Make UI components accept interfaces, particularly important for Entry
 
     When reading a directory, do not return on first error, but do something with the errors
@@ -18,6 +19,8 @@ Todo:
 
     FS operations - mkdir/mkfile/delete/etc. 
     FS operations - Dialog to show progress. I could show progress in the preview pane instead of the preview
+    FS operations - download file
+    FS operations - extract archive
 
     List - add sort methods for each column
     List - click column header to sort (add arrow icon and reverse on second click)
@@ -27,6 +30,8 @@ Todo:
     List - Emit msgs on selection changes
         If multi-selecting, what to do with preview? Show preview for cursor or none?
     List - Show "This folder is empty." on empty folder. Once 
+    List - ctrl+click for multi select
+    List - space for multi select
 
     Icons - clean up
     Icons - keep all directory icons the same color
@@ -39,7 +44,6 @@ Todo:
 
     Infobar - need to track state of messages. If a new message comes in before the last one is cleared, clear the old message for a moment and add the new message
         make sure the old clear duration is ignored when it comes 
-    Infobar - clear "Access denied" message on a dir change 
 
     Should I put all keys in one model or handle different key messages based on domain?
         The issue is navigation key presses could go on the nav buttons, file list, or global
@@ -139,4 +143,6 @@ Finished:
     Read aheads in filetree
     Clean filepaths that are read from cli/config file
     FS operations - Dialog to confirm Changes
+    Infobar - clear "Access denied" message on a dir change 
+
 
