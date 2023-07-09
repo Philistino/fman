@@ -25,6 +25,8 @@ import (
 
 type navDirection uint8
 
+var dryRunError = errors.New("dry run")
+
 const (
 	navFwd navDirection = iota
 	navBack
@@ -242,16 +244,15 @@ func (n *Nav) GetPreview(ctx context.Context, path string) entry.Preview {
 // Returns a slice of errors encountered during the deletion process.
 func (n *Nav) Delete(ctx context.Context, names []string) []error {
 
-	errs := make([]error, 0)
 	if n.dryRun {
-		return errs
+		return []error{dryRunError}
 	}
 
 	paths := make([]string, len(names))
 	for i, name := range names {
 		paths[i] = filepath.Join(n.currentPath, name)
 	}
-	errs = fileutils.RemoveMany(ctx, n.fsys, paths)
+	errs := fileutils.RemoveMany(ctx, n.fsys, paths)
 	returnErrs := make([]error, 0, len(errs))
 	for i, err := range errs {
 		if err == nil {

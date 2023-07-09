@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/Philistino/fman/cfg"
+	"github.com/Philistino/fman/entry"
 	"github.com/Philistino/fman/nav"
 	"github.com/Philistino/fman/ui/breadcrumb"
 	"github.com/Philistino/fman/ui/dialog"
@@ -35,7 +36,7 @@ type App struct {
 	list       list.List
 	preview    *preview.FilePreview
 	navBtns    *navbtns.NavBtns
-	infobar    infobar.Infobar
+	infobar    infobar.Infobar2
 	dialog     *dialog.Dialog
 	breadcrumb *breadcrumb.BreadCrumb
 
@@ -77,7 +78,7 @@ func NewApp(cfg cfg.Cfg, selectedTheme colors.Theme, fsys afero.Fs) *App {
 		list:       list.New(selectedTheme, *cfg.DoubleClickDelay),
 		preview:    preview.NewFilePreviewer(selectedTheme, *cfg.PreviewDelay),
 		navBtns:    navbtns.NewNavBtns(),
-		infobar:    infobar.New(),
+		infobar:    infobar.New2(),
 		dialog:     dialog.NewDialog(theme.ButtonStyle, theme.EntryInfoStyle),
 		Navi:       nav.NewNav(!*cfg.NoHidden, *cfg.DirsMixed, absPath, fsys, *cfg.PreviewDelay, *cfg.DryRun),
 		breadcrumb: breadcrumb.NewBreadCrumb(),
@@ -134,13 +135,19 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case dialog.AnswerMsg:
 		cmd = app.handleDialogAnswer(msg)
 		cmds = append(cmds, cmd)
+	case message.NewFileMsg, message.MkDirMsg, message.RenameMsg:
+		cmd = app.promptName(msg)
+		cmds = append(cmds, cmd)
+	case infobar.PromptAnswerMsg:
+		cmd = app.handleInfobarPromptAnswer(msg)
+		cmds = append(cmds, cmd)
 	case tea.KeyMsg:
 		if key.Matches(msg, keys.Map.ToggleHelp) {
 			// TODO Freeze components if showing help
 			app.showHelp = !app.showHelp
 		}
 		switch msg.String() {
-		case "ctrl+c", "q":
+		case "ctrl+c", "ctrl+q":
 			return app, tea.Quit
 		}
 	}
@@ -288,4 +295,66 @@ func (app *App) deleteEntries() tea.Cmd {
 	cmds = append(cmds, cmd)
 	app.list.Focus()
 	return tea.Batch(cmds...)
+}
+
+const (
+	promptNewFile = "New file"
+	promptNewDir  = "New directory"
+	promptRename  = "Rename"
+)
+
+// promptName prompts the user to enter a new name for a file or directory.
+// It returns a tea.Cmd that will display a prompt in the infobar.
+// The type of prompt depends on the type of message passed in.
+func (app *App) promptName(msg tea.Msg) tea.Cmd {
+	app.list.Blur()
+	app.fileBtns.Blur()
+	app.navBtns.Blur()
+	app.breadcrumb.Blur()
+
+	takenNames := app.list.EntryNames()
+
+	validator := func(s string) error {
+		if err := entry.InvalidFilename(s); err != nil {
+			return err
+		}
+		for _, name := range takenNames {
+			if name == s {
+				return fmt.Errorf("name already taken")
+			}
+		}
+		return nil
+	}
+
+	switch msg.(type) {
+	case message.NewFileMsg:
+		return infobar.PromptAskCmd(promptNewFile, "New file", validator)
+	case message.MkDirMsg:
+		return infobar.PromptAskCmd(promptNewDir, "New folder", validator)
+	case message.RenameMsg:
+		return infobar.PromptAskCmd(promptNewDir, "New name", validator)
+	}
+	return nil
+}
+
+// handleInfobarPromptAnswer
+func (app *App) handleInfobarPromptAnswer(msg infobar.PromptAnswerMsg) tea.Cmd {
+	app.list.Focus()
+	app.fileBtns.Focus()
+	app.navBtns.Focus()
+	app.breadcrumb.Focus()
+
+	if msg.Cancelled {
+		return nil
+	}
+
+	switch msg.ID {
+	case promptNewFile:
+		return message.NewNotificationCmd("New file: " + msg.Message)
+	case promptNewDir:
+		return message.NewNotificationCmd("New directory: " + msg.Message)
+	case promptRename:
+		return message.NewNotificationCmd("Rename: " + msg.Message)
+	}
+	return nil
 }
