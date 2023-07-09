@@ -43,9 +43,7 @@ func PromptAnswerCmd(id string, value string, cancelled bool) tea.Cmd {
 type prompt struct {
 	width     int
 	textInput textinput.Model
-	err       error
-	id        string
-	validator func(string) error
+	askMsg    PromptAskMsg
 }
 
 func (m prompt) Init() tea.Cmd {
@@ -62,18 +60,15 @@ func newPrompt() prompt {
 	ti.Cursor.Style = theme.SelectedItemStyle.Copy().Foreground(theme.GetActiveTheme("dracula").SelectedItemBgColor).Background(theme.GetActiveTheme("dracula").SelectedItemFgColor)
 	return prompt{
 		textInput: ti,
-		err:       nil,
 	}
 }
 
-type setPlaceholderMsg struct {
-	placeholder string
-}
+type resetPlaceholderMsg struct{}
 
-func setPlaceholderCmd(placeholder string) tea.Cmd {
+func resetPlaceholderCmd() tea.Cmd {
 	return func() tea.Msg {
 		time.Sleep(1000 * time.Millisecond)
-		return setPlaceholderMsg{placeholder: placeholder}
+		return resetPlaceholderMsg{}
 	}
 }
 
@@ -81,32 +76,32 @@ func (m prompt) Update(msg tea.Msg) (prompt, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case PromptAskMsg:
+		m.textInput.Reset()
+		m.askMsg = msg
 		m.textInput.Placeholder = msg.Placeholder + " (press ESC to cancel)"
-		m.validator = msg.Validator
-		m.id = msg.ID
 		m.textInput.Focus()
 	case PromptAnswerMsg:
 		m.textInput.Reset()
-	case setPlaceholderMsg:
-		m.textInput.Placeholder = msg.placeholder
+	case resetPlaceholderMsg:
+		m.textInput.Placeholder = m.askMsg.Placeholder + " (press ESC to cancel)"
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEnter:
-			if m.validator != nil {
-				if err := m.validator(m.textInput.Value()); err != nil {
+			if m.askMsg.Validator != nil {
+				if err := m.askMsg.Validator(m.textInput.Value()); err != nil {
 					m.textInput.Reset()
-					cmd = setPlaceholderCmd(m.textInput.Placeholder)
+					cmd = resetPlaceholderCmd()
 					m.textInput.Placeholder = err.Error()
 					return m, cmd
 				}
-				m.textInput.Blur()
-				cmd = PromptAnswerCmd(m.id, m.textInput.Value(), false)
-				m.textInput.Reset()
-				return m, cmd
 			}
+			m.textInput.Blur()
+			cmd = PromptAnswerCmd(m.askMsg.ID, m.textInput.Value(), false)
+			m.textInput.Reset()
+			return m, cmd
 		case tea.KeyEsc:
 			m.textInput.Blur()
-			cmd = PromptAnswerCmd(m.id, m.textInput.Value(), true)
+			cmd = PromptAnswerCmd(m.askMsg.ID, m.textInput.Value(), true)
 			m.textInput.Reset()
 			return m, cmd
 		}

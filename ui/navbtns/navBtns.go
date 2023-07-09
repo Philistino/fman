@@ -23,7 +23,7 @@ type NavBtns struct {
 }
 
 func NewNavBtns() *NavBtns {
-	return &NavBtns{}
+	return &NavBtns{focused: true}
 }
 
 func (toolbar *NavBtns) Init() tea.Cmd {

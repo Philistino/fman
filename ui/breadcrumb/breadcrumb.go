@@ -31,7 +31,8 @@ type BreadCrumb struct {
 	focused   bool
 }
 
-// newBreadCrumb creates a new breadcrumb
+// NewBreadCrumb creates a new breadcrumb.
+// It is focused by default
 func NewBreadCrumb() *BreadCrumb {
 	return &BreadCrumb{focused: true}
 }

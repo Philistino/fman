@@ -11,7 +11,7 @@ import (
 	"github.com/dustin/go-humanize"
 )
 
-type Infobar2 struct {
+type Infobar struct {
 	width             int // the width of the infobar, which should be the window width
 	prompt            prompt
 	notis             notifications
@@ -23,7 +23,7 @@ type Infobar2 struct {
 	middleWidth       int
 }
 
-func New2() Infobar2 {
+func New() Infobar {
 	info, err := storage.GetStorageInfo()
 	if err != nil {
 		log.Println("An error occurred while getting storage info", err.Error())
@@ -31,7 +31,7 @@ func New2() Infobar2 {
 	notis := newNotifications()
 	prompt := newPrompt()
 	diskFreeWidth := 20
-	return Infobar2{
+	return Infobar{
 		width:             0,
 		diskFreeWidth:     diskFreeWidth,
 		storageInfo:       info,
@@ -44,14 +44,14 @@ func New2() Infobar2 {
 }
 
 // Init initializes the model. It must be called.
-func (m *Infobar2) Init() tea.Cmd {
+func (m *Infobar) Init() tea.Cmd {
 	m.notis.Init()
 	m.prompt.Init()
 	return nil
 }
 
 // Update handles messages from the program.
-func (m Infobar2) Update(msg tea.Msg) (Infobar2, tea.Cmd) {
+func (m Infobar) Update(msg tea.Msg) (Infobar, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
@@ -74,7 +74,7 @@ func renderProgress(width int, usedSpace uint64, totalSpace uint64) string {
 	return theme.ProgressStyle.Width(width).Render(usedStr)
 }
 
-func (m Infobar2) View() string {
+func (m Infobar) View() string {
 	style := theme.InfobarStyle
 	var middleSection string
 	if m.prompt.textInput.Focused() {
