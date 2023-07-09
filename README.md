@@ -6,6 +6,8 @@
 
 > **Awesome TUI File Manager**
 
+### THIS REPO UNDERGOING A REWRITE.
+
 <div align="center">
 
 [Features](#rocket-features) • [Installation](#zap-installation) • [Built With](#heart-built-with) • [Themes](#lipstick-themes) • [License](#pagefacingup-license)
