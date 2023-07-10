@@ -5,6 +5,7 @@ import "github.com/charmbracelet/bubbles/key"
 // Moved this in here temporarily. Should be moved to /model when all components are in the same package
 
 type KeyMap struct {
+	Quit                  key.Binding
 	MoveCursorUp          key.Binding
 	MoveCursorDown        key.Binding
 	GoToTop               key.Binding
@@ -28,6 +29,10 @@ type KeyMap struct {
 }
 
 var Map = KeyMap{
+	Quit: key.NewBinding(
+		key.WithKeys("ctrl+q", "esc"),
+		key.WithHelp("ctrl+q/esc", "Quit"),
+	),
 	MoveCursorUp: key.NewBinding(
 		key.WithKeys("w", "up"),
 		key.WithHelp("w/↑", "Move cursor up"),

@@ -1,14 +1,9 @@
 package app
 
 import (
-	"context"
-	"fmt"
 	"path/filepath"
-	"sort"
-	"strings"
 
 	"github.com/Philistino/fman/cfg"
-	"github.com/Philistino/fman/entry"
 	"github.com/Philistino/fman/nav"
 	"github.com/Philistino/fman/ui/breadcrumb"
 	"github.com/Philistino/fman/ui/dialog"
@@ -36,7 +31,7 @@ type App struct {
 	list       list.List
 	preview    *preview.FilePreview
 	navBtns    *navbtns.NavBtns
-	infobar    infobar.Infobar2
+	infobar    infobar.Infobar
 	dialog     *dialog.Dialog
 	breadcrumb *breadcrumb.BreadCrumb
 
@@ -47,9 +42,8 @@ type App struct {
 	showHelp bool
 	config   cfg.Cfg
 
-	Navi              *nav.Nav
-	theme             colors.Theme
-	internalClipboard []string // slice of paths to items in the "clipboard"
+	Navi  *nav.Nav
+	theme colors.Theme
 }
 
 func (app *App) Init() tea.Cmd {
@@ -78,7 +72,7 @@ func NewApp(cfg cfg.Cfg, selectedTheme colors.Theme, fsys afero.Fs) *App {
 		list:       list.New(selectedTheme, *cfg.DoubleClickDelay),
 		preview:    preview.NewFilePreviewer(selectedTheme, *cfg.PreviewDelay),
 		navBtns:    navbtns.NewNavBtns(),
-		infobar:    infobar.New2(),
+		infobar:    infobar.New(),
 		dialog:     dialog.NewDialog(theme.ButtonStyle, theme.EntryInfoStyle),
 		Navi:       nav.NewNav(!*cfg.NoHidden, *cfg.DirsMixed, absPath, fsys, *cfg.PreviewDelay, *cfg.DryRun),
 		breadcrumb: breadcrumb.NewBreadCrumb(),
@@ -116,12 +110,12 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case message.NavOtherMsg:
 		cmd = message.HandleNavCmd(app.Navi, []string{app.list.SelectedEntryName()}, msg.Path, app.list.CursorName())
 		cmds = append(cmds, cmd)
-	case message.InternalCopyMsg:
-		cmd = app.clipboardCopy()
+	case message.InternalCopyMsg, message.CutMsg:
+		cmd = app.handleCopy(msg)
 		cmds = append(cmds, cmd)
 	case message.InternalPasteMsg:
-		cmd = app.clipboardPaste()
-		cmds = append(cmds, cmd)
+		// cmd = app.handlePaste()
+		// cmds = append(cmds, cmd)
 	case message.ToggleShowHiddenMsg:
 		app.Navi.SetShowHidden(!app.Navi.ShowHidden())
 		cmd = message.HandleReloadCmd(app.Navi, []string{app.list.SelectedEntryName()}, app.list.CursorName())
@@ -136,10 +130,10 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd = app.handleDialogAnswer(msg)
 		cmds = append(cmds, cmd)
 	case message.NewFileMsg, message.MkDirMsg, message.RenameMsg:
-		cmd = app.promptName(msg)
+		cmd = app.promptInput(msg)
 		cmds = append(cmds, cmd)
 	case infobar.PromptAnswerMsg:
-		cmd = app.handleInfobarPromptAnswer(msg)
+		cmd = app.handleInput(msg)
 		cmds = append(cmds, cmd)
 	case tea.KeyMsg:
 		if key.Matches(msg, keys.Map.ToggleHelp) {
@@ -223,138 +217,4 @@ func (app *App) manageSizes(height, width int) {
 	app.dialog.SetWidth(width - listWidth)
 	app.help.Width = width
 	app.breadcrumb.SetWidth(width - lipgloss.Width(app.navBtns.View()))
-}
-
-// clipboardCopy sets the internal clipboard to the selected entries
-func (app *App) clipboardCopy() tea.Cmd {
-	selected := app.list.SelectedEntries()
-	clipboard := make([]string, 0, len(selected))
-	dir := app.Navi.CurrentPath()
-	for name := range selected {
-		clipboard = append(clipboard, filepath.Join(dir, name))
-	}
-	app.internalClipboard = clipboard
-	return message.NewNotificationCmd("Copied!")
-}
-
-// TODO: make this real
-func (app *App) clipboardPaste() tea.Cmd {
-	return message.NewNotificationCmd("Paste!")
-}
-
-func (app *App) getPreviewCmd(ctx context.Context, path string) tea.Cmd {
-	return func() tea.Msg {
-		prv := app.Navi.GetPreview(ctx, path)
-		return preview.PreviewReadyMsg{
-			Path:    path,
-			Preview: prv.Content,
-			Err:     prv.Err,
-		}
-	}
-}
-
-func (app *App) handleDeleteCmd() tea.Cmd {
-	app.list.Blur()
-	entries := app.list.SelectedEntries()
-	if len(entries) == 0 {
-		return message.NewNotificationCmd("No entries selected")
-	}
-	entryNames := make([]string, 0, len(entries))
-	for k := range entries {
-		entryNames = append(entryNames, k)
-	}
-	sort.Strings(entryNames)
-
-	return message.AskDialogCmd(
-		"Delete",
-		fmt.Sprintf("Permanently delete?\n%s", strings.Join(entryNames, ", ")),
-		[]string{"Cancel", "Confirm"},
-	)
-}
-
-func (app *App) handleDialogAnswer(msg dialog.AnswerMsg) tea.Cmd {
-	if msg.ID() == "Delete" && msg.Answer() == "Confirm" {
-		return app.deleteEntries()
-	}
-	return nil
-}
-
-func (app *App) deleteEntries() tea.Cmd {
-	entries := app.list.SelectedEntries()
-	entryNames := make([]string, 0, len(entries))
-	for k := range entries {
-		entryNames = append(entryNames, k)
-	}
-	sort.Strings(entryNames)
-	errs := app.Navi.Delete(context.Background(), entryNames)
-	cmds := make([]tea.Cmd, 0, len(errs))
-	for _, err := range errs {
-		cmds = append(cmds, message.NewNotificationCmd(err.Error()))
-	}
-	cmd := message.HandleReloadCmd(app.Navi, []string{app.list.SelectedEntryName()}, app.list.CursorName())
-	cmds = append(cmds, cmd)
-	app.list.Focus()
-	return tea.Batch(cmds...)
-}
-
-const (
-	promptNewFile = "New file"
-	promptNewDir  = "New directory"
-	promptRename  = "Rename"
-)
-
-// promptName prompts the user to enter a new name for a file or directory.
-// It returns a tea.Cmd that will display a prompt in the infobar.
-// The type of prompt depends on the type of message passed in.
-func (app *App) promptName(msg tea.Msg) tea.Cmd {
-	app.list.Blur()
-	app.fileBtns.Blur()
-	app.navBtns.Blur()
-	app.breadcrumb.Blur()
-
-	takenNames := app.list.EntryNames()
-
-	validator := func(s string) error {
-		if err := entry.InvalidFilename(s); err != nil {
-			return err
-		}
-		for _, name := range takenNames {
-			if name == s {
-				return fmt.Errorf("name already taken")
-			}
-		}
-		return nil
-	}
-
-	switch msg.(type) {
-	case message.NewFileMsg:
-		return infobar.PromptAskCmd(promptNewFile, "New file", validator)
-	case message.MkDirMsg:
-		return infobar.PromptAskCmd(promptNewDir, "New folder", validator)
-	case message.RenameMsg:
-		return infobar.PromptAskCmd(promptNewDir, "New name", validator)
-	}
-	return nil
-}
-
-// handleInfobarPromptAnswer
-func (app *App) handleInfobarPromptAnswer(msg infobar.PromptAnswerMsg) tea.Cmd {
-	app.list.Focus()
-	app.fileBtns.Focus()
-	app.navBtns.Focus()
-	app.breadcrumb.Focus()
-
-	if msg.Cancelled {
-		return nil
-	}
-
-	switch msg.ID {
-	case promptNewFile:
-		return message.NewNotificationCmd("New file: " + msg.Message)
-	case promptNewDir:
-		return message.NewNotificationCmd("New directory: " + msg.Message)
-	case promptRename:
-		return message.NewNotificationCmd("Rename: " + msg.Message)
-	}
-	return nil
 }

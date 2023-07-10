@@ -25,7 +25,7 @@ import (
 
 type navDirection uint8
 
-var dryRunError = errors.New("dry run")
+var errDryRunError = errors.New("dry run")
 
 const (
 	navFwd navDirection = iota
@@ -46,6 +46,7 @@ type Nav struct {
 	previewer      *PreviewHandler         // previewer
 	idleWalkCancel context.CancelFunc
 	dryRun         bool // if true, do not alter the filesystem
+	clipboard      clipBoard
 }
 
 // NewNav creates a new Nav struct. The startPath is the path to start the navigation at. The fsys is the filesystem to use.
@@ -244,7 +245,7 @@ func (n *Nav) GetPreview(ctx context.Context, path string) entry.Preview {
 // Returns a slice of errors encountered during the deletion process.
 func (n *Nav) Delete(ctx context.Context, names []string) []error {
 	if n.dryRun {
-		return []error{dryRunError}
+		return []error{errDryRunError}
 	}
 	paths := make([]string, len(names))
 	for i, name := range names {
@@ -266,7 +267,7 @@ func (n *Nav) Delete(ctx context.Context, names []string) []error {
 // Returns a slice of errors encountered during the rename process.
 func (n *Nav) Rename(ctx context.Context, name, newName string) []error {
 	if n.dryRun {
-		return []error{dryRunError}
+		return []error{errDryRunError}
 	}
 	path := filepath.Join(n.currentPath, name)
 	newPath := filepath.Join(n.currentPath, newName)
@@ -282,7 +283,7 @@ func (n *Nav) Rename(ctx context.Context, name, newName string) []error {
 // Returns a slice of errors encountered during the creation process.
 func (n *Nav) MkDir(ctx context.Context, name string) []error {
 	if n.dryRun {
-		return []error{dryRunError}
+		return []error{errDryRunError}
 	}
 	path := filepath.Join(n.currentPath, name)
 	err := fileutils.MakeDirIfNotExist(n.fsys, path)
@@ -297,7 +298,7 @@ func (n *Nav) MkDir(ctx context.Context, name string) []error {
 // Returns a slice of errors encountered during the creation process.
 func (n *Nav) MkFile(ctx context.Context, name string) []error {
 	if n.dryRun {
-		return []error{dryRunError}
+		return []error{errDryRunError}
 	}
 	path := filepath.Join(n.currentPath, name)
 	err := fileutils.MkFileIfNotExist(n.fsys, path)

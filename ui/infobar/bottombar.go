@@ -3,8 +3,10 @@ package infobar
 import (
 	"log"
 	"strings"
+	"time"
 
 	"github.com/Philistino/fman/entry/storage"
+	"github.com/Philistino/fman/ui/message"
 	"github.com/Philistino/fman/ui/theme"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -38,7 +40,7 @@ func New() Infobar {
 		prompt:            prompt,
 		notis:             notis,
 		logo:              theme.LogoStyle.Render(string(theme.GetActiveIconTheme().GopherIcon) + "FMAN"),
-		diskFree:          lipgloss.JoinHorizontal(lipgloss.Center, " ", humanize.Bytes(info.AvailableSpace), "/", humanize.Bytes(info.TotalSpace), " free"),
+		diskFree:          renderDiskFree(info.AvailableSpace, info.TotalSpace),
 		diskFreeIndicator: renderProgress(diskFreeWidth, info.AvailableSpace, info.TotalSpace),
 	}
 }
@@ -47,12 +49,28 @@ func New() Infobar {
 func (m *Infobar) Init() tea.Cmd {
 	m.notis.Init()
 	m.prompt.Init()
-	return nil
+	return checkStorage()
+}
+
+func checkStorage() tea.Cmd {
+	return func() tea.Msg {
+		time.Sleep(10 * time.Second)
+		info, err := storage.GetStorageInfo()
+		if err != nil {
+			message.NewNotificationCmd("An error occurred while getting storage info")
+		}
+		return info
+	}
 }
 
 // Update handles messages from the program.
 func (m Infobar) Update(msg tea.Msg) (Infobar, tea.Cmd) {
 	switch msg := msg.(type) {
+	case storage.StorageInfo:
+		m.storageInfo = msg
+		m.diskFree = renderDiskFree(msg.AvailableSpace, msg.TotalSpace)
+		m.diskFreeIndicator = renderProgress(m.diskFreeWidth, msg.AvailableSpace, msg.TotalSpace)
+		return m, checkStorage()
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.middleWidth = m.width - (lipgloss.Width(m.diskFree) + lipgloss.Width(m.diskFreeIndicator) + lipgloss.Width(m.logo) + 1)
@@ -72,6 +90,10 @@ func renderProgress(width int, usedSpace uint64, totalSpace uint64) string {
 	usedWidth := (int(usedSpace) * width / int(totalSpace))
 	usedStr := strings.Repeat("█", int(width-usedWidth))
 	return theme.ProgressStyle.Width(width).Render(usedStr)
+}
+
+func renderDiskFree(availableSpace uint64, totalSpace uint64) string {
+	return lipgloss.JoinHorizontal(lipgloss.Center, " ", humanize.Bytes(availableSpace), "/", humanize.Bytes(totalSpace), " free")
 }
 
 func (m Infobar) View() string {
