@@ -1,0 +1,10 @@
+version: 2
+sql:
+  - engine: "sqlite"
+    schema: "bookmarks/.sqlite/schema.sql"
+    queries: "bookmarks/.sqlite/queries.sql"
+    gen:
+      go:
+        package: "store"
+        out: "bookmarks/store"
+        emit_prepared_queries: true
