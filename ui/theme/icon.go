@@ -18,6 +18,11 @@ type iconSet struct {
 	NameIcon rune
 
 	AddItemIcon rune
+	TrashIcon   rune
+	CopyIcon    rune
+	PasteIcon   rune
+
+	PinIcon rune
 }
 
 type iconSets map[string]iconSet
@@ -35,6 +40,10 @@ var nerdFont = iconSet{
 	SizeIcon:            '\uf200',
 	NameIcon:            '\ue612',
 	AddItemIcon:         '\uf067',
+	TrashIcon:           '\uf1f8',
+	CopyIcon:            '\uebcc',
+	PasteIcon:           '\uf0ea',
+	PinIcon:             '\ueba0',
 }
 
 var emoji = iconSet{
@@ -47,6 +56,9 @@ var emoji = iconSet{
 	FolderIcon:          '📁',
 	SymlinkIcon:         '🔗',
 	AddItemIcon:         '+',
+	TrashIcon:           '🗑',
+	PasteIcon:           '📋',
+	PinIcon:             '📌',
 }
 
 var noIcons = iconSet{

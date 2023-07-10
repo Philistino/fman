@@ -1,4 +1,4 @@
-package model
+package table
 
 // manageSelected manages the selected rows in the table based on the given parameters.
 // It moves the cursor up or down by the given number of rows (n), and updates the selected rows

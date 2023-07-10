@@ -3,6 +3,8 @@ package fileutils
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/spf13/afero"
@@ -114,4 +116,57 @@ func TestMkFileIfNotExist(t *testing.T) {
 	if !errors.Is(err, PathAlreadyExistsError) {
 		t.Errorf("Expected error: %v, but got: %v", PathAlreadyExistsError, err)
 	}
+}
+
+func TestMoveFile(t *testing.T) {
+	dir, err := os.MkdirTemp("", "test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(dir)
+
+	fsys := afero.NewOsFs()
+	src := filepath.Join(dir, "test")
+	file, err := fsys.Create(src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
+	_, err = file.WriteString("Bingo Bango Bongo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = file.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dst := filepath.Join(dir, "test2")
+	err = MoveFile(afero.NewOsFs(), src, dst)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = fsys.Stat(src)
+	if !errors.Is(err, os.ErrNotExist) {
+		t.Errorf("expected error: %v, got: %v", os.ErrNotExist, err)
+	}
+
+	file, err = fsys.Open(dst)
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			t.Errorf("expected error: %v, got: %v", os.ErrNotExist, err)
+		}
+		t.Fatal(err)
+	}
+	defer file.Close()
+
+	contents, err := afero.ReadAll(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(contents) != "Bingo Bango Bongo" {
+		t.Errorf("expected contents: %s, got: %s", "Bingo Bango Bongo", string(contents))
+	}
+
 }

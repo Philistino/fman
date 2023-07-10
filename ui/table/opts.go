@@ -1,4 +1,4 @@
-package model
+package table
 
 // Option is used to set options in New
 type Option func(*Table)

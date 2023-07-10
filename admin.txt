@@ -21,6 +21,7 @@ Todo:
     FS operations - Dialog to show progress. I could show progress in the preview pane instead of the preview
     FS operations - download file
     FS operations - extract archive
+    FS operations - show dialog if file/directory already exists (skip, replace, checkmark for do this for all)
 
     List - add sort methods for each column
     List - click column header to sort (add arrow icon and reverse on second click)
@@ -32,7 +33,7 @@ Todo:
     List - Show "This folder is empty." on empty folder. Once 
     List - ctrl+click for multi select
     List - space for multi select
-
+    
     Icons - clean up
     Icons - keep all directory icons the same color
 
@@ -144,5 +145,5 @@ Finished:
     Clean filepaths that are read from cli/config file
     FS operations - Dialog to confirm Changes
     Infobar - clear "Access denied" message on a dir change 
-
+    Infobar - update storage used every x duration
 

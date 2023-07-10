@@ -2,6 +2,8 @@ package fileutils
 
 import (
 	"errors"
+	"log"
+	"path/filepath"
 
 	"github.com/spf13/afero"
 )
@@ -71,4 +73,68 @@ func MakeDirIfNotExist(fs afero.Fs, path string) error {
 		return PathAlreadyExistsError
 	}
 	return fs.MkdirAll(path, 0755)
+}
+
+// MoveDir moves a directory from source to dest and all
+// of its sub-directories. It doesn't stop if it finds an error
+// during the move. Returns an error if any.
+func MoveDir(fs afero.Fs, source, dest string) error {
+	source = filepath.Clean(source)
+	dest = filepath.Clean(dest)
+
+	err := fs.Rename(source, dest)
+	if err == nil {
+		return nil
+	}
+
+	// Get properties of source.
+	srcinfo, err := fs.Stat(source)
+	if err != nil {
+		return err
+	}
+
+	// Create the destination directory.
+	err = fs.MkdirAll(dest, srcinfo.Mode())
+	if err != nil {
+		return err
+	}
+
+	dir, _ := fs.Open(source)
+	obs, err := dir.Readdir(-1)
+	if err != nil {
+		return err
+	}
+
+	var errs []error
+
+	for _, obj := range obs {
+		fsource := filepath.Join(source, obj.Name())
+		fdest := filepath.Join(dest, obj.Name())
+		log.Println(fsource, fdest)
+
+		if obj.IsDir() {
+			// Create sub-directories, recursively.
+			err = MoveDir(fs, fsource, fdest)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		} else {
+			// Perform the file move.
+			err = MoveFile(fs, fsource, fdest)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}
+	}
+
+	var errString string
+	for _, err := range errs {
+		errString += err.Error() + "\n"
+	}
+
+	if errString != "" {
+		return errors.New(errString)
+	}
+
+	return nil
 }

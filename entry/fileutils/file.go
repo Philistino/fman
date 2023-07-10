@@ -15,19 +15,8 @@ import (
 // By default the rename filesystem system call is used. If src and dst point to different volumes
 // the file copy is used as a fallback
 func MoveFile(fs afero.Fs, src, dst string) error {
-	if fs.Rename(src, dst) == nil {
-		return nil
-	}
-	// fallback
-	err := CopyFile(fs, src, dst)
-	if err != nil {
-		_ = fs.Remove(dst)
-		return err
-	}
-	if err := fs.Remove(src); err != nil {
-		return err
-	}
-	return nil
+	err := RenameOrCopy(fs, src, dst)
+	return err
 }
 
 // MoveFileMany moves files from src into dst.
