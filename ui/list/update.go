@@ -131,9 +131,9 @@ func (list *List) Update(msg tea.Msg) (List, tea.Cmd) {
 		// 	clipboard.WriteAll(path)
 		// 	return *list, message.SendMessage("Copied!")
 
-		case key.Matches(msg, keys.Map.GoToTop): // Move to the beginning of the list
+		case key.Matches(msg, keys.Map.MoveCursorToTop): // Move to the beginning of the list
 			list.cursorIdx = 0
-		case key.Matches(msg, keys.Map.GoToBottom): // Move to the end of the list
+		case key.Matches(msg, keys.Map.MoveCursorToBottom): // Move to the end of the list
 			list.cursorIdx = len(list.entries) - 1
 		case key.Matches(msg, keys.Map.MoveCursorUp): // Select entry above
 			if len(list.entries) == 0 {

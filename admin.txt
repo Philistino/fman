@@ -8,6 +8,7 @@ Todo:
     Breadcrumb - need to handle clicks leaf -> root. There is a bug that misallocates clicks when the breadcrump is truncated
         Mostly fixed - add tests
     Breadcrumb - still an issue reading clicks when truncated, with a long path, and clicking second to last dir
+    Breadcrumb - convert path to editable text box for navigation
 
     Preview - toggle preview pane visibility, particularly if the window is very narrow
     Preview - could preview directories
@@ -93,6 +94,7 @@ Todo:
     Resizes on Windows
         procGetLargestConsoleWindowSize = k32.NewProc("GetLargestConsoleWindowSize") https://github.com/gdamore/tcell/blob/47ec3a77754f83e84481fc9cdd0bc2072cd292ba/console_win.go
         Polling using termenv - https://github.com/charmbracelet/bubbletea/discussions/661 
+    Mutliple tabs with shared "clipboard"
 
     Ruled out for now:
         List - Use nerd-font icons based on file type - default to emojis.

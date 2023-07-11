@@ -59,7 +59,7 @@ func (app *App) Init() tea.Cmd {
 	load := func() tea.Msg {
 		return msg
 	}
-	return tea.Batch(load, app.preview.Init())
+	return tea.Batch(load, app.preview.Init(), message.NewNotificationCmd("Welcome to fman! Press ? for help"))
 }
 
 func NewApp(cfg cfg.Cfg, selectedTheme colors.Theme, fsys afero.Fs) *App {
@@ -136,12 +136,17 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd = app.handleInput(msg)
 		cmds = append(cmds, cmd)
 	case tea.KeyMsg:
-		if key.Matches(msg, keys.Map.ToggleHelp) {
+		switch {
+		case key.Matches(msg, keys.Map.ToggleHelp):
 			// TODO Freeze components if showing help
+			if app.showHelp {
+				cmd = func() tea.Msg {
+					return tea.ClearScreen()
+				}
+				cmds = append(cmds, cmd)
+			}
 			app.showHelp = !app.showHelp
-		}
-		switch msg.String() {
-		case "ctrl+c", "ctrl+q":
+		case key.Matches(msg, keys.Map.Quit):
 			return app, tea.Quit
 		}
 	}
@@ -172,7 +177,7 @@ func (app *App) View() string {
 			app.dialog.View(),
 		)
 	case app.showHelp:
-		view = app.renderFull(theme.EmptyFolderStyle.Render(app.help.View(keys.Map)))
+		view = app.renderFull(theme.EmptyFolderStyle.Render(keys.Map.ViewHelp()))
 	default:
 		view = lipgloss.JoinHorizontal(
 			lipgloss.Top,
@@ -215,6 +220,7 @@ func (app *App) manageSizes(height, width int) {
 	app.preview.SetWidth(width - listWidth)
 	app.dialog.SetHeight(height - lipgloss.Height(app.navBtns.View()) - lipgloss.Height(app.navBtns.View()) - lipgloss.Height(app.fileBtns.View()) - 2)
 	app.dialog.SetWidth(width - listWidth)
+	keys.Map.SetSize(width-theme.EmptyFolderStyle.GetHorizontalPadding(), height-theme.EmptyFolderStyle.GetVerticalPadding())
 	app.help.Width = width
 	app.breadcrumb.SetWidth(width - lipgloss.Width(app.navBtns.View()))
 }

@@ -16,7 +16,7 @@ var (
 	ProgressStyle       = lipgloss.NewStyle().Border(lipgloss.NormalBorder(), false, true)
 	InfobarStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("#000"))
 	ArrowStyle          = lipgloss.NewStyle().Align(lipgloss.Center)
-	EmptyFolderStyle    = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).Padding(2)
+	EmptyFolderStyle    = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).Padding(1)
 	ButtonStyle         = lipgloss.NewStyle().Padding(0, 1).Border(lipgloss.NormalBorder(), false, true)
 	InactiveButtonStyle = lipgloss.NewStyle().Padding(0, 1).
 				Border(lipgloss.NormalBorder(), false, true).
