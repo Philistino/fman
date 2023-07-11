@@ -5,9 +5,12 @@ import (
 	"testing"
 
 	"github.com/Philistino/fman/bookmarks"
+	zone "github.com/lrstanley/bubblezone"
 )
 
 func TestBookmarksStartWithNoBookmarks(t *testing.T) {
+	zone.NewGlobal()
+
 	querier, _ := bookmarks.NewQueries(context.Background(), ":memory:")
 	defer querier.Close()
 
@@ -29,6 +32,8 @@ func TestBookmarksStartWithNoBookmarks(t *testing.T) {
 }
 
 func TestBookmarksStartWithBookmarks(t *testing.T) {
+	zone.NewGlobal()
+
 	querier, _ := bookmarks.NewQueries(context.Background(), ":memory:")
 	defer querier.Close()
 	querier.CreateBookmarks(context.Background(), []string{"Bingo", "Bango"})
@@ -59,6 +64,8 @@ func TestBookmarksStartWithBookmarks(t *testing.T) {
 }
 
 func TestShowHide(t *testing.T) {
+	zone.NewGlobal()
+
 	querier, _ := bookmarks.NewQueries(context.Background(), ":memory:")
 	defer querier.Close()
 
@@ -84,6 +91,8 @@ func TestShowHide(t *testing.T) {
 }
 
 func TestSize(t *testing.T) {
+	zone.NewGlobal()
+
 	querier, _ := bookmarks.NewQueries(context.Background(), ":memory:")
 	defer querier.Close()
 

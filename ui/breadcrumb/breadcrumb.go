@@ -29,12 +29,13 @@ type BreadCrumb struct {
 	width     int
 	viewParts []string
 	focused   bool
+	zPrefix   string
 }
 
 // NewBreadCrumb creates a new breadcrumb.
 // It is focused by default
 func NewBreadCrumb() *BreadCrumb {
-	return &BreadCrumb{focused: true}
+	return &BreadCrumb{focused: true, zPrefix: zone.NewPrefix()}
 }
 
 // Init initializes the model
@@ -71,7 +72,7 @@ func (breadcrumb *BreadCrumb) Update(msg tea.Msg) (*BreadCrumb, tea.Cmd) {
 func (breadcrumb *BreadCrumb) View() string {
 	parts := make([]string, 0, len(breadcrumb.viewParts))
 	for i, part := range breadcrumb.viewParts {
-		parts = append(parts, zone.Mark(strconv.Itoa(i), part))
+		parts = append(parts, zone.Mark(breadcrumb.zPrefix+strconv.Itoa(i), part))
 	}
 	return lipgloss.NewStyle().MarginLeft(2).Render(strings.Join(parts, ""))
 }
@@ -85,7 +86,7 @@ func (breadcrumb *BreadCrumb) handleMouseMsg(msg tea.MouseMsg) tea.Cmd {
 	clicked := false
 	var viewPartClicked int
 	for i := 0; i < len(breadcrumb.viewParts); i++ {
-		if !zone.Get(strconv.Itoa(i)).InBounds(msg) {
+		if !zone.Get(breadcrumb.zPrefix + strconv.Itoa(i)).InBounds(msg) {
 			continue
 		}
 		viewPartClicked = i

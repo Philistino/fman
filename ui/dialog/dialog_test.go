@@ -11,6 +11,7 @@ import (
 )
 
 func TestDialogFocus(t *testing.T) {
+	zone.NewGlobal()
 	dialog := NewDialog(lipgloss.NewStyle(), lipgloss.NewStyle())
 	dialog.Init()
 	if dialog.Focused() {
@@ -43,6 +44,8 @@ func TestDialogFocus(t *testing.T) {
 }
 
 func TestDialogKeys(t *testing.T) {
+	zone.NewGlobal()
+
 	dialog := NewDialog(lipgloss.NewStyle(), lipgloss.NewStyle())
 	dialog, _ = dialog.Update(message.AskDialogCmd("", "Is go the best?", []string{"Yes", "No"})())
 	if dialog.selected != 0 {
@@ -78,6 +81,7 @@ func TestDialogKeys(t *testing.T) {
 }
 
 func TestDialogSelectionFalse(t *testing.T) {
+	zone.NewGlobal()
 	dialog := NewDialog(lipgloss.NewStyle(), lipgloss.NewStyle())
 	dialog, _ = dialog.Update(message.AskDialogCmd("", "Is go the best?", []string{"Yes", "No"})())
 
@@ -101,6 +105,7 @@ func TestDialogSelectionFalse(t *testing.T) {
 }
 
 func TestDialogSelectionTrue(t *testing.T) {
+	zone.NewGlobal()
 	dialog := NewDialog(lipgloss.NewStyle(), lipgloss.NewStyle())
 	dialog, _ = dialog.Update(message.AskDialogCmd("", "Is go the best?", []string{"Yes", "No"})())
 	dialog, _ = dialog.Update(tea.KeyMsg(tea.Key{Type: tea.KeyRight}))

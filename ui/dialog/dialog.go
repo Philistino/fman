@@ -61,7 +61,7 @@ type Dialog struct {
 // NewDialog creates a new dialog box
 func NewDialog(btnStyle lipgloss.Style, wrapperStyle lipgloss.Style) *Dialog {
 	return &Dialog{
-		zPrefix:      "dialog",
+		zPrefix:      zone.NewPrefix(),
 		focused:      false,
 		btnStyle:     btnStyle,
 		wrapperStyle: wrapperStyle,

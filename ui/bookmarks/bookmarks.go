@@ -13,6 +13,7 @@ import (
 	"github.com/Philistino/fman/ui/theme"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	zone "github.com/lrstanley/bubblezone"
 )
 
 // TODO: Only bookmark directories, not files
@@ -51,7 +52,7 @@ func NewBookmarks(quierier *bookmarks.Querier, pinIcon rune, hidden bool, double
 		quierier: quierier,
 		hidden:   hidden,
 		pinIcon:  pinIcon,
-		zPrefix:  "bookmarks",
+		zPrefix:  zone.NewPrefix(),
 		table:    table,
 	}
 }

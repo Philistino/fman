@@ -22,7 +22,7 @@ import (
 //	- extract activate when compressed item is selected. TODO
 
 type FileBtns struct {
-	id            string
+	zPrefix       string
 	width         int
 	fileSelected  bool
 	clipBoardFull bool
@@ -32,7 +32,7 @@ type FileBtns struct {
 
 func NewFileBtns() FileBtns {
 	return FileBtns{
-		id:            "buttonbar",
+		zPrefix:       zone.NewPrefix(),
 		fileSelected:  false,
 		clipBoardFull: false,
 		focused:       true,
@@ -63,19 +63,19 @@ func (m FileBtns) Update(msg tea.Msg) (FileBtns, tea.Cmd) {
 			return m, nil
 		}
 		switch {
-		case zone.Get(m.id + "new file").InBounds(msg):
+		case zone.Get(m.zPrefix + "new file").InBounds(msg):
 			cmd = message.NewFileCmd()
-		case zone.Get(m.id + "new folder").InBounds(msg):
+		case zone.Get(m.zPrefix + "new folder").InBounds(msg):
 			cmd = message.MkDirCmd()
-		case zone.Get(m.id+"cut").InBounds(msg) && m.fileSelected:
+		case zone.Get(m.zPrefix+"cut").InBounds(msg) && m.fileSelected:
 			cmd = message.CutCmd()
-		case zone.Get(m.id+"copy").InBounds(msg) && m.fileSelected:
+		case zone.Get(m.zPrefix+"copy").InBounds(msg) && m.fileSelected:
 			cmd = message.InternalCopyCmd()
-		case zone.Get(m.id+"paste").InBounds(msg) && m.clipBoardFull:
+		case zone.Get(m.zPrefix+"paste").InBounds(msg) && m.clipBoardFull:
 			cmd = message.InternalPasteCmd()
-		case zone.Get(m.id+"rename").InBounds(msg) && m.fileSelected:
+		case zone.Get(m.zPrefix+"rename").InBounds(msg) && m.fileSelected:
 			cmd = message.RenameCmd()
-		case zone.Get(m.id+"delete").InBounds(msg) && m.fileSelected:
+		case zone.Get(m.zPrefix+"delete").InBounds(msg) && m.fileSelected:
 			cmd = message.DeleteCmd()
 			// case zone.Get(m.id + "compress").InBounds(msg):
 			// case zone.Get(m.id + "extract").InBounds(msg):
@@ -128,18 +128,18 @@ func (m FileBtns) View() string {
 		sectionWrapper.Copy().BorderLeft(false).PaddingLeft(0).Render(
 			lipgloss.JoinHorizontal(
 				lipgloss.Top,
-				zone.Mark(m.id+"new file", newFile),
-				zone.Mark(m.id+"new folder", newFolder),
+				zone.Mark(m.zPrefix+"new file", newFile),
+				zone.Mark(m.zPrefix+"new folder", newFolder),
 			),
 		),
 		sectionWrapper.Copy().BorderLeft(false).Render(
 			lipgloss.JoinHorizontal(
 				lipgloss.Top,
-				zone.Mark(m.id+"cut", cut),
-				zone.Mark(m.id+"copy", copy),
-				zone.Mark(m.id+"paste", paste),
-				zone.Mark(m.id+"rename", rename),
-				zone.Mark(m.id+"delete", delete),
+				zone.Mark(m.zPrefix+"cut", cut),
+				zone.Mark(m.zPrefix+"copy", copy),
+				zone.Mark(m.zPrefix+"paste", paste),
+				zone.Mark(m.zPrefix+"rename", rename),
+				zone.Mark(m.zPrefix+"delete", delete),
 			),
 		),
 		// sectionWrapper.Copy().BorderLeft(false).BorderRight(false).PaddingRight(0).Render(

@@ -20,10 +20,11 @@ type NavBtns struct {
 	fwdActive  bool
 	upActive   bool
 	focused    bool
+	zPrefix    string
 }
 
 func NewNavBtns() *NavBtns {
-	return &NavBtns{focused: true}
+	return &NavBtns{focused: true, zPrefix: zone.NewPrefix()}
 }
 
 func (toolbar *NavBtns) Init() tea.Cmd {
@@ -49,13 +50,13 @@ func (toolbar *NavBtns) Update(msg tea.Msg) (*NavBtns, tea.Cmd) {
 		if msg.Type != tea.MouseLeft {
 			return toolbar, nil
 		}
-		if zone.Get("forward").InBounds(msg) && toolbar.fwdActive {
+		if zone.Get(toolbar.zPrefix+"forward").InBounds(msg) && toolbar.fwdActive {
 			return toolbar, message.NavFwdCmd()
 		}
-		if zone.Get("back").InBounds(msg) && toolbar.backActive {
+		if zone.Get(toolbar.zPrefix+"back").InBounds(msg) && toolbar.backActive {
 			return toolbar, message.NavBackCmd()
 		}
-		if zone.Get("up").InBounds(msg) && toolbar.upActive {
+		if zone.Get(toolbar.zPrefix+"up").InBounds(msg) && toolbar.upActive {
 			return toolbar, message.NavUpCmd()
 		}
 	}
@@ -69,21 +70,21 @@ func (toolbar *NavBtns) View() string {
 	icons := theme.GetActiveIconTheme()
 
 	if toolbar.backActive && toolbar.focused {
-		backBtn = zone.Mark("back", theme.ButtonStyle.Render(string(icons.LeftArrowIcon)))
+		backBtn = zone.Mark(toolbar.zPrefix+"back", theme.ButtonStyle.Render(string(icons.LeftArrowIcon)))
 	} else {
-		backBtn = zone.Mark("back", theme.InactiveButtonStyle.Render(string(icons.LeftArrowIcon)))
+		backBtn = zone.Mark(toolbar.zPrefix+"back", theme.InactiveButtonStyle.Render(string(icons.LeftArrowIcon)))
 	}
 
 	if toolbar.fwdActive && toolbar.focused {
-		fwdBtn = zone.Mark("forward", theme.ButtonStyle.Render(string(icons.RightArrowIcon)))
+		fwdBtn = zone.Mark(toolbar.zPrefix+"forward", theme.ButtonStyle.Render(string(icons.RightArrowIcon)))
 	} else {
-		fwdBtn = zone.Mark("forward", theme.InactiveButtonStyle.Render(string(icons.RightArrowIcon)))
+		fwdBtn = zone.Mark(toolbar.zPrefix+"forward", theme.InactiveButtonStyle.Render(string(icons.RightArrowIcon)))
 	}
 
 	if toolbar.upActive && toolbar.focused {
-		upBtn = zone.Mark("up", theme.ButtonStyle.Render(string(icons.UpArrowIcon)))
+		upBtn = zone.Mark(toolbar.zPrefix+"up", theme.ButtonStyle.Render(string(icons.UpArrowIcon)))
 	} else {
-		upBtn = zone.Mark("up", theme.InactiveButtonStyle.Render(string(icons.UpArrowIcon)))
+		upBtn = zone.Mark(toolbar.zPrefix+"up", theme.InactiveButtonStyle.Render(string(icons.UpArrowIcon)))
 	}
 
 	return lipgloss.JoinHorizontal(
