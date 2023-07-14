@@ -3,6 +3,7 @@ package keys
 import (
 	"strings"
 
+	"github.com/Philistino/fman/ui/theme/colors"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -45,12 +46,12 @@ var Map = KeyMap{
 		key.WithHelp("ctrl+q", "Quit"),
 	),
 	MoveCursorUp: key.NewBinding(
-		key.WithKeys("w", "up"),
-		key.WithHelp("↑/w", "Move cursor up"),
+		key.WithKeys("up"),
+		key.WithHelp("↑", "Move cursor up"),
 	),
 	MoveCursorDown: key.NewBinding(
-		key.WithKeys("s", "down"),
-		key.WithHelp("↓/s", "Move cursor down"),
+		key.WithKeys("down"),
+		key.WithHelp("↓", "Move cursor down"),
 	),
 	MoveCursorToTop: key.NewBinding(
 		key.WithKeys("home"),
@@ -65,12 +66,12 @@ var Map = KeyMap{
 		key.WithHelp("~", "Go to home folder"),
 	),
 	GoToParentDirectory: key.NewBinding(
-		key.WithKeys("a", "left"),
-		key.WithHelp("←/a", "Go to parent folder"),
+		key.WithKeys("left"),
+		key.WithHelp("←", "Go to parent folder"),
 	),
 	GoToSelectedDirectory: key.NewBinding(
-		key.WithKeys("d", "right"),
-		key.WithHelp("→/d", "Go to selected folder"),
+		key.WithKeys("right"),
+		key.WithHelp("→", "Go to selected folder"),
 	),
 	GoBack: key.NewBinding(
 		key.WithKeys("alt+left"),
@@ -105,12 +106,12 @@ var Map = KeyMap{
 		key.WithHelp("?", "Toggle help"),
 	),
 	MultiSelectUp: key.NewBinding(
-		key.WithKeys("shift+up", "shift+k"),
-		key.WithHelp("shift+up/shift+k", "Multi-select up"),
+		key.WithKeys("shift+up"),
+		key.WithHelp("shift+↑", "Multi-select up"),
 	),
 	MultiSelectDown: key.NewBinding(
-		key.WithKeys("shift+down", "shift+j"),
-		key.WithHelp("shift+down/shift+j", "Multi-select down"),
+		key.WithKeys("shift+down"),
+		key.WithHelp("shift+↓", "Multi-select down"),
 	),
 	MultiSelectToTop: key.NewBinding(
 		key.WithKeys("shift+home"),
@@ -127,21 +128,16 @@ var Map = KeyMap{
 }
 
 func (k KeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{}
+	return nil
 }
 
 func (k KeyMap) FullHelp() [][]key.Binding {
-	chunk1 := []key.Binding{k.Quit, k.ToggleHelp, k.ShowHiddenEntries, k.OpenFile}
-	chunk2 := []key.Binding{k.MoveCursorUp, k.MoveCursorDown, k.MoveCursorToTop, k.MoveCursorToBottom}
-	// chunk3 := []key.Binding{k.MultiSelectUp, k.MultiSelectDown, k.MultiSelectToTop, k.MultiSelectToBottom, k.MultiSelectAll}
-	chunk4 := []key.Binding{k.GoToParentDirectory, k.GoToSelectedDirectory, k.GoToHomeDirectory, k.GoBack, k.GoForward}
-	chunk5 := []key.Binding{k.ScrollPreviewUp, k.ScrollPreviewDown}
-
 	return [][]key.Binding{
-		chunk1,
-		chunk2,
-		chunk4,
-		chunk5,
+		{k.Quit, k.ToggleHelp, k.ShowHiddenEntries, k.OpenFile},
+		{k.MoveCursorUp, k.MoveCursorDown, k.MoveCursorToTop, k.MoveCursorToBottom},
+		{k.GoToParentDirectory, k.GoToSelectedDirectory, k.GoToHomeDirectory, k.GoBack, k.GoForward},
+		{k.MultiSelectAll, k.MultiSelectUp, k.MultiSelectDown, k.MultiSelectToTop, k.MultiSelectToBottom},
+		{k.ScrollPreviewUp, k.ScrollPreviewDown},
 	}
 }
 
@@ -154,15 +150,100 @@ func (k KeyMap) Width() int {
 	return k.width
 }
 
-func (k KeyMap) ViewHelp() string {
-	chunk1 := []key.Binding{k.Quit, k.ToggleHelp, k.ShowHiddenEntries, k.OpenFile}
-	chunk2 := []key.Binding{k.MoveCursorUp, k.MoveCursorDown, k.MoveCursorToTop, k.MoveCursorToBottom}
-	chunk3 := []key.Binding{k.MultiSelectAll, k.MultiSelectUp, k.MultiSelectDown, k.MultiSelectToTop, k.MultiSelectToBottom}
-	chunk4 := []key.Binding{k.GoToParentDirectory, k.GoToSelectedDirectory, k.GoToHomeDirectory, k.GoBack, k.GoForward}
-	chunk5 := []key.Binding{k.ScrollPreviewUp, k.ScrollPreviewDown}
+// renderGroup renders a group of key bindings as a help box string.
+// It takes a slice of key bindings as input and returns a string.
+func (k KeyMap) renderGroup(group []key.Binding) string {
+	var (
+		keys         []string
+		descriptions []string
+	)
 
-	groups := [][]key.Binding{chunk1, chunk2, chunk3, chunk4, chunk5}
+	for _, kb := range group {
+		if !kb.Enabled() {
+			continue
+		}
+		keys = append(keys, kb.Help().Key)
+		descriptions = append(descriptions, kb.Help().Desc)
+	}
 
+	// Calculate the width of the keys column
+	var (
+		maxKeyWidth int
+		keyColWidth int
+	)
+	for _, key := range keys {
+		if len(key) > maxKeyWidth {
+			maxKeyWidth = len(key)
+		}
+	}
+	if maxKeyWidth > 0 {
+		keyColWidth = maxKeyWidth + 2
+	}
+
+	// Calculate the width of the descriptions column
+	var (
+		maxDescWidth int
+		descColWidth int
+	)
+	for _, desc := range descriptions {
+		if len(desc) > maxDescWidth {
+			maxDescWidth = len(desc)
+		}
+	}
+	if maxDescWidth > 0 {
+		descColWidth = maxDescWidth + 2
+	}
+
+	// Calculate the width of the help box
+	var (
+		helpBoxWidth int
+	)
+	if keyColWidth > 0 && descColWidth > 0 {
+		helpBoxWidth = keyColWidth + descColWidth
+	}
+
+	// Render the keys and descriptions
+	var (
+		keysStr         string
+		descriptionsStr string
+	)
+	for i, key := range keys {
+		desc := descriptions[i]
+		if keyColWidth > 0 {
+			key = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF00FF")).Render(key)
+			key = lipgloss.NewStyle().Width(keyColWidth).Render(key)
+			keysStr += key
+		}
+		if descColWidth > 0 {
+			desc = lipgloss.NewStyle().Width(descColWidth).Render(desc)
+			descriptionsStr += desc
+		}
+	}
+
+	// Render the help box
+	var (
+		helpBoxStr string
+	)
+	if helpBoxWidth > 0 {
+		helpBoxStr = lipgloss.NewStyle().Width(helpBoxWidth).Render(keysStr + descriptionsStr)
+	} else {
+		helpBoxStr = ""
+	}
+
+	return helpBoxStr
+}
+
+func (k KeyMap) ViewHelp(colors colors.Theme) string {
+
+	groups := [][]key.Binding{
+		{k.Quit, k.ToggleHelp, k.ShowHiddenEntries, k.OpenFile},
+		{k.MoveCursorUp, k.MoveCursorDown, k.MoveCursorToTop, k.MoveCursorToBottom},
+		{k.GoToParentDirectory, k.GoToSelectedDirectory, k.GoToHomeDirectory, k.GoBack, k.GoForward},
+		{k.MultiSelectAll, k.MultiSelectUp, k.MultiSelectDown, k.MultiSelectToTop, k.MultiSelectToBottom},
+		{k.ScrollPreviewUp, k.ScrollPreviewDown},
+	}
+
+	// Create a slice of text boxes, one for each chunk
 	boxes := make([]string, 0, len(groups))
 	for _, group := range groups {
 
@@ -182,15 +263,20 @@ func (k KeyMap) ViewHelp() string {
 
 		// Join the keys and descriptions into a single column
 		col := lipgloss.JoinHorizontal(lipgloss.Top,
-			lipgloss.NewStyle().Render(strings.Join(keys, "\n")),
-			lipgloss.NewStyle().Render("  "),
-			lipgloss.NewStyle().Render(strings.Join(descriptions, "\n")),
+			// lipgloss.NewStyle().Render(strings.Join(keys, "\n")),
+			// lipgloss.NewStyle().Render("  "),
+			// lipgloss.NewStyle().Render(strings.Join(descriptions, "\n")),
+			strings.Join(keys, "\n"),
+			"  ",
+			strings.Join(descriptions, "\n"),
 		)
 		boxes = append(boxes, col)
 	}
 
-	// This approach could definitely be optimized but it works and it is rarely called
-	// loop continuously combining columns until the width is less than the given width
+	// Loop continuously combining columns into rows
+	// until the width is less than the given width or we have a single column
+	//
+	// This approach could definitely be optimized but it works and it is rarely called.
 	iteration := 0
 	for {
 		// define a slice of strings to hold the columns
@@ -228,7 +314,7 @@ func (k KeyMap) ViewHelp() string {
 		}
 
 		// if the width of the columns is fits in the given width or we only have one column, return the columns
-		rendered := lipgloss.JoinHorizontal(lipgloss.Top, innerBoxes...)
+		rendered := lipgloss.NewStyle().Foreground(colors.TextColor).Render(lipgloss.JoinHorizontal(lipgloss.Top, innerBoxes...))
 		if lipgloss.Width(rendered) <= k.width || len(innerBoxes) == 1 {
 			return rendered
 		}

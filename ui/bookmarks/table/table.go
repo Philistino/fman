@@ -35,10 +35,10 @@ type Table struct {
 	end             int
 	height          int
 	width           int
+	zoneMgr         *zone.Manager
 	lastClickedTime time.Time
 	lastClickedIdx  int // list index of the last clicked item. Must be reset to -1 when the list is updated
 	clickDelay      time.Duration
-	zPrefix         string
 
 	sort tableSort
 }
@@ -168,10 +168,10 @@ func NewTable(doubleClickDelay int, opts ...Option) Table {
 		selected:        map[int]struct{}{0: {}},
 		KeyMap:          DefaultKeyMap(),
 		styles:          DefaultStyles(),
+		zoneMgr:         zone.New(),
 		lastClickedTime: time.Time{},
 		lastClickedIdx:  -1,
 		clickDelay:      time.Duration(time.Millisecond * time.Duration(doubleClickDelay)),
-		zPrefix:         zone.NewPrefix(),
 	}
 	for _, opt := range opts {
 		opt(&m)
@@ -222,7 +222,7 @@ func (m Table) Update(msg tea.Msg) (Table, tea.Cmd) {
 			return m, nil
 		}
 		for i, col := range m.cols {
-			if zone.Get(m.zPrefix + "col" + strconv.Itoa(i)).InBounds(msg) {
+			if m.zoneMgr.Get("col" + strconv.Itoa(i)).InBounds(msg) {
 				log.Println("Clicked on column", col.Title)
 				// m.sortBy = col.Title
 				// m.sortAsc = !m.sortAsc
@@ -231,7 +231,7 @@ func (m Table) Update(msg tea.Msg) (Table, tea.Cmd) {
 		}
 
 		for i := m.start; i <= m.end; i++ {
-			if zone.Get(m.zPrefix + "row" + strconv.Itoa(i)).InBounds(msg) {
+			if m.zoneMgr.Get("row" + strconv.Itoa(i)).InBounds(msg) {
 				log.Println("in bounds", i, m.rows[i])
 			}
 		}

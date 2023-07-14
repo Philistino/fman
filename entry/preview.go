@@ -18,6 +18,10 @@ import (
 	"github.com/spf13/afero"
 )
 
+// becuase reader blocks, we need to read the file in a separate goroutine
+// and send the result back to the main thread. I think I am leaking the goroutine here if the reader blocks forever.
+
+// Preview represents a preview of a file.
 type Preview struct {
 	Content  string
 	Err      error
@@ -25,6 +29,11 @@ type Preview struct {
 	ReadTime time.Time
 }
 
+// CreatePreview generates a preview of the file specified in the Preview struct using the given file system.
+// The preview is generated based on the file's MIME type and is returned as a Preview struct.
+// If the file is not a text file, an error is returned in the Preview struct's Err field.
+// If the context is cancelled, the function returns the original Preview struct.
+// The maxBytes parameter specifies the maximum number of bytes to read from the file.
 func CreatePreview(ctx context.Context, fsys afero.Fs, preview Preview, maxBytes int) Preview {
 	previewChan := make(chan Preview)
 	errc := make(chan error, 1)
@@ -79,6 +88,10 @@ func CreatePreview(ctx context.Context, fsys afero.Fs, preview Preview, maxBytes
 			errc <- ctx.Err()
 		}
 
+		if stat.Size() < int64(maxBytes) {
+			maxBytes = int(stat.Size())
+		}
+
 		content, err := createPreview(ctx, filepath.Base(prev.Path), file, maxBytes)
 		p := Preview{
 			Content:  content,
@@ -100,6 +113,12 @@ func CreatePreview(ctx context.Context, fsys afero.Fs, preview Preview, maxBytes
 	}
 }
 
+func readNBytes2(ctx context.Context, reader io.Reader, nBytes int) (string, error) {
+	buf := make([]byte, nBytes)
+	read, err := io.ReadFull(reader, buf)
+	return string(buf[:read]), err
+}
+
 func readNBytes(ctx context.Context, reader io.Reader, nBytes int) (string, error) {
 	buf := make([]byte, nBytes)
 	nRead, err := io.ReadAtLeast(reader, buf, nBytes)
@@ -110,7 +129,7 @@ func readNBytes(ctx context.Context, reader io.Reader, nBytes int) (string, erro
 }
 
 func createPreview(ctx context.Context, fileName string, reader io.Reader, maxBytes int) (string, error) {
-	preview, err := readNBytes(ctx, reader, maxBytes)
+	preview, err := readNBytes2(ctx, reader, maxBytes)
 	if err != nil || preview == "" {
 		return preview, err
 	}

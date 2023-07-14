@@ -38,8 +38,6 @@ Todo:
     Icons - clean up
     Icons - keep all directory icons the same color
 
-    Help - shift full help from wide to long based on terminal width and make it scrollable
-
     ButtonBar - Add a toggle hidden button - how to track this in history? It's a reload, so just don't record it in history
 
     All buttons - activate or deactivate based on selection/"clipboard" state 
@@ -148,4 +146,5 @@ Finished:
     FS operations - Dialog to confirm Changes
     Infobar - clear "Access denied" message on a dir change 
     Infobar - update storage used every x duration
+    Help - shift full help from wide to long based on terminal width and make it scrollable
 

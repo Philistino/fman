@@ -8,6 +8,7 @@ import (
 	"github.com/Philistino/fman/ui/breadcrumb"
 	"github.com/Philistino/fman/ui/dialog"
 	"github.com/Philistino/fman/ui/filebtns"
+	"github.com/Philistino/fman/ui/help"
 	"github.com/Philistino/fman/ui/infobar"
 	"github.com/Philistino/fman/ui/keys"
 	"github.com/Philistino/fman/ui/list"
@@ -15,8 +16,9 @@ import (
 	"github.com/Philistino/fman/ui/navbtns"
 	"github.com/Philistino/fman/ui/preview"
 	"github.com/Philistino/fman/ui/theme"
+
 	"github.com/Philistino/fman/ui/theme/colors"
-	"github.com/charmbracelet/bubbles/help"
+	// "github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -38,7 +40,7 @@ type App struct {
 	width  int
 	height int
 
-	help     help.Model
+	help     help.Help
 	showHelp bool
 	config   cfg.Cfg
 
@@ -78,10 +80,8 @@ func NewApp(cfg cfg.Cfg, selectedTheme colors.Theme, fsys afero.Fs) *App {
 		breadcrumb: breadcrumb.NewBreadCrumb(),
 		theme:      selectedTheme,
 		config:     cfg,
+		help:       help.New(selectedTheme, keys.Map, theme.EmptyFolderStyle),
 	}
-	app.help.FullSeparator = "   "
-	app.help.ShowAll = true
-
 	return &app
 }
 
@@ -145,13 +145,14 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				cmds = append(cmds, cmd)
 			}
+			app.help.ToggleFocus()
 			app.showHelp = !app.showHelp
 		case key.Matches(msg, keys.Map.Quit):
 			return app, tea.Quit
 		}
 	}
 
-	var listCmd, toolbarCmd, entryCmd, infobarCmd, buttonBarCmd, breadCrmbCmd, dialogCmd tea.Cmd
+	var listCmd, toolbarCmd, entryCmd, infobarCmd, buttonBarCmd, breadCrmbCmd, dialogCmd, helpCmd tea.Cmd
 
 	app.list, listCmd = app.list.Update(msg)
 	app.navBtns, toolbarCmd = app.navBtns.Update(msg)
@@ -160,8 +161,9 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	app.fileBtns, buttonBarCmd = app.fileBtns.Update(msg)
 	app.breadcrumb, breadCrmbCmd = app.breadcrumb.Update(msg)
 	app.dialog, dialogCmd = app.dialog.Update(msg)
+	app.help, helpCmd = app.help.Update(msg)
 
-	cmds = append(cmds, listCmd, toolbarCmd, entryCmd, infobarCmd, buttonBarCmd, breadCrmbCmd, dialogCmd)
+	cmds = append(cmds, listCmd, toolbarCmd, entryCmd, infobarCmd, buttonBarCmd, breadCrmbCmd, dialogCmd, helpCmd)
 
 	return app, tea.Batch(cmds...)
 }
@@ -177,7 +179,7 @@ func (app *App) View() string {
 			app.dialog.View(),
 		)
 	case app.showHelp:
-		view = app.renderFull(theme.EmptyFolderStyle.Render(keys.Map.ViewHelp()))
+		view = app.renderFull(app.help.View())
 	default:
 		view = lipgloss.JoinHorizontal(
 			lipgloss.Top,
@@ -201,7 +203,7 @@ func (app *App) View() string {
 func (app *App) renderFull(str string) string {
 	return lipgloss.Place(
 		app.width,
-		app.height,
+		app.height-lipgloss.Height(app.infobar.View()),
 		lipgloss.Center,
 		lipgloss.Center,
 		str,
@@ -220,7 +222,6 @@ func (app *App) manageSizes(height, width int) {
 	app.preview.SetWidth(width - listWidth)
 	app.dialog.SetHeight(height - lipgloss.Height(app.navBtns.View()) - lipgloss.Height(app.navBtns.View()) - lipgloss.Height(app.fileBtns.View()) - 2)
 	app.dialog.SetWidth(width - listWidth)
-	keys.Map.SetSize(width-theme.EmptyFolderStyle.GetHorizontalPadding(), height-theme.EmptyFolderStyle.GetVerticalPadding())
-	app.help.Width = width
+	app.help.SetSize(app.preview.Height(), width)
 	app.breadcrumb.SetWidth(width - lipgloss.Width(app.navBtns.View()))
 }

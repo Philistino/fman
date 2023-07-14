@@ -1,6 +1,7 @@
 package table
 
 import (
+	"fmt"
 	"reflect"
 	"time"
 
@@ -56,21 +57,19 @@ func (m TableMgr) Update(msg tea.Msg) (TableMgr, tea.Cmd) {
 	return m, nil
 }
 
-func (m *TableMgr) handlePathChange(newDir message.DirChangedMsg) tea.Cmd {
+func (list *TableMgr) handlePathChange(newDir message.DirChangedMsg) tea.Cmd {
 	if newDir.Error() != nil {
 		return nil
 	}
-	m.SetRows(m.entriesToRows(newDir.Entries()))
-
-	m.selected = make(map[int]struct{})
-	m.entries = newDir.Entries()
+	list.selected = make(map[int]struct{})
+	list.entries = newDir.Entries()
 	selected := newDir.Selected()
 	matched := false
-	for i, entry := range m.entries {
+	for i, entry := range list.entries {
 		// set the cursor
 		if entry.Name() == newDir.Cursor() {
 			// list.cursorIdx = i
-			m.selected[i] = struct{}{}
+			list.selected[i] = struct{}{}
 			matched = true
 			continue
 		}
@@ -79,10 +78,10 @@ func (m *TableMgr) handlePathChange(newDir message.DirChangedMsg) tea.Cmd {
 		if !ok {
 			continue
 		}
-		m.selected[i] = struct{}{}
+		list.selected[i] = struct{}{}
 	}
 	if !matched {
-		m.SetCursor(0)
+		// list.cursorIdx = 0
 	}
 
 	// if len(list.entries) == 0 {
@@ -100,8 +99,8 @@ func (m TableMgr) entriesToRows(entries []entry.Entry) []Row {
 		rows = append(
 			rows,
 			Row{
-				lipgloss.NewStyle().Foreground(lipgloss.Color(i.ColorHex())).Render(i.Glyph(), " ") + e.Name(),
-				// fmt.Sprintf("%s%s\033[39m", i.ColorTerm(), i.Glyph()),
+				fmt.Sprintf("%s%s\033[39m", i.ColorTerm(), i.Glyph()),
+				e.Name(),
 				e.SizeStr,
 				e.ModifyTime,
 			},

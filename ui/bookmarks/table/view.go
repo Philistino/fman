@@ -4,7 +4,6 @@ import (
 	"strconv"
 
 	"github.com/charmbracelet/lipgloss"
-	zone "github.com/lrstanley/bubblezone"
 	"github.com/mattn/go-runewidth"
 )
 
@@ -17,6 +16,9 @@ func (m Table) View() string {
 			m.headersView(),
 			lipgloss.Place(m.width, 1, lipgloss.Top, lipgloss.Center, m.emptyMessage),
 		))
+		if m.zoneMgr != nil {
+			view = m.zoneMgr.Scan(view)
+		}
 		return view
 	}
 
@@ -30,6 +32,9 @@ func (m Table) View() string {
 		m.headersView(),
 		lipgloss.JoinVertical(lipgloss.Left, renderedRows...),
 	))
+	if m.zoneMgr != nil {
+		view = m.zoneMgr.Scan(view)
+	}
 	return view
 }
 
@@ -48,7 +53,9 @@ func (m Table) headersView() string {
 		}
 		renderedCell := style.Render(runewidth.Truncate(col.Title, col.Width-len(sortArrow), "…") + sortArrow)
 		renderedCell = m.styles.Header.Render(renderedCell)
-		renderedCell = zone.Mark(m.zPrefix+"col"+strconv.Itoa(i), renderedCell)
+		if m.zoneMgr != nil {
+			renderedCell = m.zoneMgr.Mark("col"+strconv.Itoa(i), renderedCell)
+		}
 		s = append(s, renderedCell)
 	}
 	return lipgloss.JoinHorizontal(lipgloss.Left, s...)
@@ -56,13 +63,9 @@ func (m Table) headersView() string {
 
 func (m *Table) renderRow(rowID int) string {
 	var s = make([]string, 0, len(m.cols))
-	cellStyle := m.styles.EvenCell.Copy()
-	if rowID%2 == 0 {
-		cellStyle = m.styles.OddCell.Copy()
-	}
 	for i, value := range m.rows[rowID] {
 		style := lipgloss.NewStyle().Width(m.cols[i].Width).MaxWidth(m.cols[i].Width).Inline(true)
-		renderedCell := cellStyle.Render(style.Render(runewidth.Truncate(value, m.cols[i].Width, "…")))
+		renderedCell := m.styles.Cell.Render(style.Render(runewidth.Truncate(value, m.cols[i].Width, "…")))
 		s = append(s, renderedCell)
 	}
 
@@ -74,7 +77,12 @@ func (m *Table) renderRow(rowID int) string {
 		row = m.styles.Cursor.Render(row)
 	case selected:
 		row = m.styles.Selected.Render(row)
+	default:
 	}
-	row = zone.Mark(m.zPrefix+"row"+strconv.Itoa(rowID), row)
+
+	if m.zoneMgr != nil {
+		row = m.zoneMgr.Mark("row"+strconv.Itoa(rowID), row)
+	}
+
 	return row
 }

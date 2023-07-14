@@ -27,3 +27,8 @@ func (f *FocusField) Focus() {
 func (f *FocusField) Blur() {
 	f.focused = false
 }
+
+// ToggleFocus toggles the focused field.
+func (f *FocusField) ToggleFocus() {
+	f.focused = !f.focused
+}
