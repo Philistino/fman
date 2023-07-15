@@ -37,18 +37,9 @@ func (list *List) View() string {
 		return lipgloss.JoinVertical(lipgloss.Center, list.flexBox.Render(), lipgloss.Place(list.flexBox.GetWidth(), 1, lipgloss.Center, lipgloss.Center, "This directory is empty"))
 	}
 
-	startIndex := max(0, list.cursorIdx-list.maxEntryToShow)
-	stopIndex := startIndex + list.maxEntryToShow + (list.height * 1 / 4)
-
-	if stopIndex > len(list.entries) {
-		stopIndex = len(list.entries)
-	}
-
-	for index := startIndex; index < stopIndex; index++ {
+	for index := list.table.start; index <= list.table.end; index++ {
 		entry := list.entries[index]
 		content := make([]strings.Builder, cellsLength)
-
-		name := runewidth.Truncate(entry.Name(), list.truncateLimit-2, "...")
 
 		if entry.SymlinkName != "" {
 			content[0].WriteRune(theme.GetActiveIconTheme().SymlinkIcon)
@@ -61,25 +52,27 @@ func (list *List) View() string {
 		}
 
 		content[0].WriteRune(' ')
-		content[0].WriteString(strings.ReplaceAll(name, "-", "‐"))
+		name := runewidth.Truncate(entry.Name(), list.truncateLimit-2, "...")
+		content[0].WriteString(name)
 		content[1].WriteString(entry.SizeStr)
 		content[2].WriteString(entry.ModifyTime)
 
 		var style lipgloss.Style
 		for i := 0; i < cellsLength; i++ {
-			offset := 0
-			if index == list.cursorIdx {
+			if index == list.table.Cursor() {
 				style = theme.SelectedItemStyle
 			} else if index%2 == 0 {
 				style = theme.EvenItemStyle
 			}
 
 			// IDK
-			if i == 2 {
-				offset = 2
-			}
+			// offset := 0
+			// if i == 2 {
+			// 	offset = 2
+			// }
 
-			style = style.Width(list.flexBox.Row(0).Cell(i).GetWidth() - offset)
+			// style = style.Width(list.flexBox.Row(0).Cell(i).GetWidth() - offset)
+			style = style.Width(list.flexBox.Row(0).Cell(i).GetWidth())
 
 			if i == 0 && entry.SymlinkName != "" {
 				style = style.Bold(true).Underline(true)
@@ -88,11 +81,10 @@ func (list *List) View() string {
 			}
 
 			// Colors
-			if index == list.cursorIdx {
+			if index == list.table.Cursor() {
 				style = style.Foreground(list.theme.SelectedItemFgColor)
 			} else if entry.IsHidden {
 				style = style.Foreground(list.theme.HiddenFileColor)
-
 				if entry.IsDir() {
 					style = style.Foreground(list.theme.HiddenFolderColor)
 				}
@@ -102,7 +94,7 @@ func (list *List) View() string {
 				style = style.Foreground(list.theme.TextColor)
 			}
 
-			if i != 0 && index != list.cursorIdx {
+			if i != 0 && index != list.table.Cursor() {
 				style = style.Foreground(list.theme.TextColor)
 			}
 

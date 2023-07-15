@@ -19,6 +19,7 @@ type List struct {
 	selected  map[int]struct{}
 
 	flexBox *stickers.FlexBox
+	table   Table
 
 	maxEntryToShow int
 	truncateLimit  int
@@ -50,6 +51,7 @@ func New(theme colors.Theme, doubleClickDelay int) List {
 		theme:            theme,
 		lastKeyCharacter: 0,
 		focused:          true,
+		table:            NewTable(),
 	}
 
 	rows := []*stickers.FlexBoxRow{
@@ -77,14 +79,14 @@ func (list *List) SelectedEntry() entry.Entry {
 	if len(list.entries) == 0 {
 		return entry.Entry{}
 	}
-	return list.entries[list.cursorIdx]
+	return list.entries[list.table.Cursor()]
 }
 
 func (list *List) SelectedEntryName() string {
 	if len(list.entries) == 0 {
 		return ""
 	}
-	return list.entries[list.cursorIdx].Name()
+	return list.entries[list.table.Cursor()].Name()
 }
 
 // TODO: Change this when reimplementing the list
@@ -118,18 +120,11 @@ func (list *List) SetWidth(width int) {
 func (list *List) SetHeight(height int) {
 	list.height = height
 	list.flexBox.SetHeight(height)
+	list.table.SetHeight(height - 1)
 }
 
 func (list *List) IsEmpty() bool {
 	return len(list.entries) == 0
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-
-	return b
 }
 
 // Focused returns the focus state of the table.

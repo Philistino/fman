@@ -16,24 +16,18 @@ func (list *List) clearLastKey() tea.Cmd {
 	})
 }
 
-func (list *List) restrictIndex() {
-	if list.cursorIdx < 0 {
-		list.cursorIdx = len(list.entries) - 1
-	} else if list.cursorIdx >= len(list.entries) {
-		list.cursorIdx = 0
-	}
-}
-
 func (list *List) handlePathChange(newDir message.DirChangedMsg) tea.Cmd {
 	list.selected = make(map[int]struct{})
+	list.table.selected = make(map[int]struct{})
+
 	list.entries = newDir.Entries()
 	selected := newDir.Selected()
 	matched := false
 	for i, entry := range list.entries {
 		// set the cursor
 		if entry.Name() == newDir.Cursor() {
-			list.cursorIdx = i
-			list.selected[i] = struct{}{}
+			list.table.SetCursor(i)
+			list.table.selected[i] = struct{}{}
 			matched = true
 			continue
 		}
@@ -42,13 +36,13 @@ func (list *List) handlePathChange(newDir message.DirChangedMsg) tea.Cmd {
 		if !ok {
 			continue
 		}
+		list.table.selected[i] = struct{}{}
 		list.selected[i] = struct{}{}
 	}
 	if !matched {
-		list.cursorIdx = 0
+		list.table.SetCursor(0)
 	}
-
-	list.restrictIndex()
+	list.table.SetNRows(len(newDir.Entries()))
 	list.flexBox.ForceRecalculate()
 	if len(list.entries) == 0 {
 		return nil
@@ -65,11 +59,11 @@ func (list *List) handleMouseClick(msg tea.MouseMsg) tea.Cmd {
 	if (y < offset || y > len(list.entries)+offset-1) || x > list.width {
 		return nil
 	}
-	list.cursorIdx = y + max(0, list.cursorIdx-list.maxEntryToShow) - offset
+	list.table.SetCursor(y + max(0, list.table.Cursor()-list.maxEntryToShow) - offset)
 
 	// Double click
-	time := time.Now()
-	if time.Sub(list.lastClickedTime) < list.clickDelay && list.SelectedEntry().IsDir() && list.cursorIdx == list.lastClickedIdx {
+	now := time.Now()
+	if now.Sub(list.lastClickedTime) < list.clickDelay && list.SelectedEntry().IsDir() && list.table.Cursor() == list.lastClickedIdx {
 
 		// If the user doesn't have permission to access the directory, return a notification
 		if list.SelectedEntry().SizeStr == "Access Denied" {
@@ -80,8 +74,8 @@ func (list *List) handleMouseClick(msg tea.MouseMsg) tea.Cmd {
 		list.lastClickedIdx = -1 // reset the last clicked index
 		return message.NavDownCmd(list.SelectedEntry().Name())
 	}
-	list.lastClickedTime = time
-	list.lastClickedIdx = list.cursorIdx
+	list.lastClickedTime = now
+	list.lastClickedIdx = list.table.Cursor()
 
 	// Send message to update the preview pane
 	return message.NewEntryCmd(list.SelectedEntry())
@@ -92,7 +86,8 @@ func (list *List) resizeList() {
 	list.flexBox.SetHeight(list.height)
 	list.flexBox.ForceRecalculate()
 	list.truncateLimit = list.flexBox.Row(0).Cell(0).GetWidth() - 1
-	list.maxEntryToShow = list.height * 3 / 4
+	list.maxEntryToShow = list.height - 1 // 1 for the header
+	list.table.SetHeight(list.maxEntryToShow)
 }
 
 func (list *List) Update(msg tea.Msg) (List, tea.Cmd) {
@@ -132,28 +127,14 @@ func (list *List) Update(msg tea.Msg) (List, tea.Cmd) {
 		// 	return *list, message.SendMessage("Copied!")
 
 		case key.Matches(msg, keys.Map.MoveCursorToTop): // Move to the beginning of the list
-			list.cursorIdx = 0
+			list.table.GoToTop()
 		case key.Matches(msg, keys.Map.MoveCursorToBottom): // Move to the end of the list
-			list.cursorIdx = len(list.entries) - 1
+			list.table.GoToBottom()
 		case key.Matches(msg, keys.Map.MoveCursorUp): // Select entry above
-			if len(list.entries) == 0 {
-				return *list, nil
-			}
-			if list.cursorIdx == 0 {
-				return *list, nil
-			}
-			list.cursorIdx--
-			list.restrictIndex()
+			list.table.MoveUp(1, false)
 			return *list, message.NewEntryCmd(list.SelectedEntry())
 		case key.Matches(msg, keys.Map.MoveCursorDown): // Select entry below
-			if len(list.entries) == 0 {
-				return *list, nil
-			}
-			if list.cursorIdx == len(list.entries)-1 {
-				return *list, nil
-			}
-			list.cursorIdx += 1
-			list.restrictIndex()
+			list.table.MoveDown(1, false)
 			return *list, message.NewEntryCmd(list.SelectedEntry())
 		case key.Matches(msg, keys.Map.GoToParentDirectory): // Get entries from parent directory
 			return *list, message.NavUpCmd()
@@ -180,6 +161,5 @@ func (list *List) Update(msg tea.Msg) (List, tea.Cmd) {
 			return *list, message.ToggleShowHiddenCmd()
 		}
 	}
-	list.restrictIndex()
 	return *list, nil
 }
