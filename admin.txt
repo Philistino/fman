@@ -34,6 +34,8 @@ Todo:
     List - Show "This folder is empty." on empty folder. Once 
     List - ctrl+click for multi select
     List - space for multi select
+    List - type to scroll to? Or filter?
+    List - split header view and rows view
     
     Icons - clean up
     Icons - keep all directory icons the same color
@@ -43,7 +45,8 @@ Todo:
     All buttons - activate or deactivate based on selection/"clipboard" state 
 
     Infobar - need to track state of messages. If a new message comes in before the last one is cleared, clear the old message for a moment and add the new message
-        make sure the old clear duration is ignored when it comes 
+        make sure the old clear duration is ignored when it comes
+    Infobar - prioritize full notification display over selected state
 
     Should I put all keys in one model or handle different key messages based on domain?
         The issue is navigation key presses could go on the nav buttons, file list, or global
@@ -93,6 +96,7 @@ Todo:
         procGetLargestConsoleWindowSize = k32.NewProc("GetLargestConsoleWindowSize") https://github.com/gdamore/tcell/blob/47ec3a77754f83e84481fc9cdd0bc2072cd292ba/console_win.go
         Polling using termenv - https://github.com/charmbracelet/bubbletea/discussions/661 
     Mutliple tabs with shared "clipboard"
+    Drag and drop files into directories?
 
     Ruled out for now:
         List - Use nerd-font icons based on file type - default to emojis.
@@ -147,4 +151,4 @@ Finished:
     Infobar - clear "Access denied" message on a dir change 
     Infobar - update storage used every x duration
     Help - shift full help from wide to long based on terminal width and make it scrollable
-
+    Infobar - show number of items, number of items selected 

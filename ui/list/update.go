@@ -131,9 +131,15 @@ func (list *List) Update(msg tea.Msg) (List, tea.Cmd) {
 		case key.Matches(msg, keys.Map.MoveCursorToBottom): // Move to the end of the list
 			list.table.GoToBottom()
 		case key.Matches(msg, keys.Map.MoveCursorUp): // Select entry above
+			if len(list.entries) == 0 {
+				return *list, nil
+			}
 			list.table.MoveUp(1, false)
 			return *list, message.NewEntryCmd(list.SelectedEntry())
 		case key.Matches(msg, keys.Map.MoveCursorDown): // Select entry below
+			if len(list.entries) == 0 {
+				return *list, nil
+			}
 			list.table.MoveDown(1, false)
 			return *list, message.NewEntryCmd(list.SelectedEntry())
 		case key.Matches(msg, keys.Map.GoToParentDirectory): // Get entries from parent directory

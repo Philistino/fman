@@ -22,7 +22,8 @@ type iconSet struct {
 	CopyIcon    rune
 	PasteIcon   rune
 
-	PinIcon rune
+	PinIcon  rune
+	Selected string
 }
 
 type iconSets map[string]iconSet
@@ -59,6 +60,7 @@ var emoji = iconSet{
 	TrashIcon:           '🗑',
 	PasteIcon:           '📋',
 	PinIcon:             '📌',
+	Selected:            "✔️",
 }
 
 var noIcons = iconSet{

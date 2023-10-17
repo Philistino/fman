@@ -11,8 +11,6 @@ import (
 const DEFAULT_MESSAGE = "--"
 
 type notifications struct {
-	width           int                 // the width of the infobar, which should be the window width
-	progressWidth   int                 // the width of the progress bar
 	message         string              // the current message
 	defaultDuration time.Duration       // the default duration to display a message
 	minDuration     time.Duration       // the minimum duration to display a message
@@ -23,8 +21,6 @@ type notifications struct {
 
 func newNotifications() notifications {
 	return notifications{
-		width:           0,
-		progressWidth:   20,
 		message:         DEFAULT_MESSAGE,
 		defaultDuration: time.Second * 1,
 		minDuration:     time.Millisecond * 250,
@@ -117,4 +113,8 @@ func (m *notifications) handleClearNotificationMsg(msg clearNotificationMsg) tea
 
 func (m *notifications) View() string {
 	return m.message
+}
+
+func (m *notifications) HasNotification() bool {
+	return m.message != DEFAULT_MESSAGE || !m.stack.IsEmpty()
 }

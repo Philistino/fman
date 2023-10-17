@@ -37,7 +37,7 @@ func main() {
 	defer output.SetBackgroundColor(bg)
 
 	a := app.NewApp(cfg, selectedTheme, afero.NewOsFs())
-	p := tea.NewProgram(a, tea.WithAltScreen(), tea.WithMouseCellMotion())
+	p := tea.NewProgram(a, tea.WithAltScreen(), tea.WithMouseCellMotion(), tea.WithoutCatchPanics())
 	_, err = p.Run()
 	if err != nil {
 		println("An error occured: ", err.Error())

@@ -56,25 +56,33 @@ func (m Table) headersView() string {
 
 func (m *Table) renderRow(rowID int) string {
 	var s = make([]string, 0, len(m.cols))
-	cellStyle := m.styles.EvenCell.Copy()
-	if rowID%2 == 0 {
-		cellStyle = m.styles.OddCell.Copy()
+
+	_, selected := m.selected[rowID]
+	var cellStyle lipgloss.Style
+	switch {
+	case rowID == m.cursor:
+		cellStyle = m.styles.Cursor
+	case selected:
+		cellStyle = m.styles.Selected
+	case rowID%2 == 0:
+		cellStyle = m.styles.EvenCell
+	default:
+		cellStyle = m.styles.OddCell
 	}
+
 	for i, value := range m.rows[rowID] {
 		style := lipgloss.NewStyle().Width(m.cols[i].Width).MaxWidth(m.cols[i].Width).Inline(true)
 		renderedCell := cellStyle.Render(style.Render(runewidth.Truncate(value, m.cols[i].Width, "…")))
 		s = append(s, renderedCell)
 	}
-
 	row := lipgloss.JoinHorizontal(lipgloss.Left, s...)
-
-	_, selected := m.selected[rowID]
-	switch {
-	case rowID == m.cursor:
-		row = m.styles.Cursor.Render(row)
-	case selected:
-		row = m.styles.Selected.Render(row)
-	}
+	// _, selected := m.selected[rowID]
+	// switch {
+	// case rowID == m.cursor:
+	// 	row = m.styles.Cursor.Render(row)
+	// case selected:
+	// 	row = m.styles.Selected.Render(row)
+	// }
 	row = zone.Mark(m.zPrefix+"row"+strconv.Itoa(rowID), row)
 	return row
 }

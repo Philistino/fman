@@ -172,6 +172,7 @@ func NewTable(doubleClickDelay int, opts ...Option) Table {
 		lastClickedIdx:  -1,
 		clickDelay:      time.Duration(time.Millisecond * time.Duration(doubleClickDelay)),
 		zPrefix:         zone.NewPrefix(),
+		focus:           true,
 	}
 	for _, opt := range opts {
 		opt(&m)
@@ -224,15 +225,27 @@ func (m Table) Update(msg tea.Msg) (Table, tea.Cmd) {
 		for i, col := range m.cols {
 			if zone.Get(m.zPrefix + "col" + strconv.Itoa(i)).InBounds(msg) {
 				log.Println("Clicked on column", col.Title)
-				// m.sortBy = col.Title
-				// m.sortAsc = !m.sortAsc
-				// m.Sort()
+				// // m.sortBy = col.Title
+				// // m.sortAsc = !m.sortAsc
+				// // m.Sort()
 			}
 		}
 
 		for i := m.start; i <= m.end; i++ {
 			if zone.Get(m.zPrefix + "row" + strconv.Itoa(i)).InBounds(msg) {
-				log.Println("in bounds", i, m.rows[i])
+				if msg.Ctrl {
+					m.selected[i] = struct{}{}
+				} else {
+					m.selected = map[int]struct{}{i: {}}
+				}
+				m.cursor = i
+				if m.lastClickedIdx == i && time.Since(m.lastClickedTime) < m.clickDelay {
+					m.cursor = i
+					// do something else
+				}
+				m.lastClickedTime = time.Now()
+				m.lastClickedIdx = i
+				return m, nil
 			}
 		}
 

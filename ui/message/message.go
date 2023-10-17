@@ -29,6 +29,10 @@ type SelectedMsg struct {
 	selected map[string]struct{}
 }
 
+func (m SelectedMsg) Selected() map[string]struct{} {
+	return m.selected
+}
+
 func SelectedCmd(selected map[string]struct{}) tea.Cmd {
 	return func() tea.Msg {
 		return SelectedMsg{selected}
